@@ -1,0 +1,9 @@
+{
+  "routerMap": [
+    {
+      "name": "VideoPlayer",
+      "pageSourceFile": "src/main/ets/view/VideoPlayerView.ets",
+      "buildFunction": "VideoPlayerBuilder"
+    }
+  ]
+}

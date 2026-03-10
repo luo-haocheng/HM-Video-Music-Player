@@ -1,0 +1,56 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\HaoCheng Luo\\.ohos\\config\\default_AloePlayer_6mfIrurG70wuOCExk3CWpRX3pdp5JP8hc_yE-qRShto=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "00000019BF692D9CAACF427B3BC79DEFED7C22274AEDB75641E5035D38676E1ADB6588F945186FAE19",
+          "profile": "C:\\Users\\HaoCheng Luo\\.ohos\\config\\default_AloePlayer_6mfIrurG70wuOCExk3CWpRX3pdp5JP8hc_yE-qRShto=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\HaoCheng Luo\\.ohos\\config\\default_AloePlayer_6mfIrurG70wuOCExk3CWpRX3pdp5JP8hc_yE-qRShto=.p12",
+          "storePassword": "000000197B3FE4D13A0FC26B8B641E9E26925FEA3EE0786DB9F49400B8AFEA37B97D7222873F3291DC"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "6.0.0(20)",
+        "compatibleSdkVersion": "6.0.0(20)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
