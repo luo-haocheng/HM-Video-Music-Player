@@ -7,6 +7,9 @@ import { media } from '@kit.MediaKit';
 import { util } from '@kit.ArkTS';
 import image from '@ohos.multimedia.image';
 import VideoLibraryStore from '../model/VideoLibraryStore';
+import VideoInfoModel from '../model/VideoInfoModel';
+import FolderInfoModel from '../model/FolderInfoModel';
+import FolderItemViewModel from './FolderItemViewModel';
 
 const VIDEO_DIR = '/videos';
 const THUMBNAIL_DIR = '/thumbnails';
@@ -17,7 +20,12 @@ export class VideoItemViewModelList extends Array<VideoItemViewModel> {
 }
 
 @Observed
+export class FolderItemViewModelList extends Array<FolderItemViewModel> {
+}
+
+@Observed
 export default class VideoListViewModel {
+  @Track folderList: FolderItemViewModelList = new FolderItemViewModelList();
   @Track videoList: VideoItemViewModelList = new VideoItemViewModelList();
   private videoStore: VideoLibraryStore = new VideoLibraryStore();
   private downloadPath: string = '';
@@ -113,7 +121,7 @@ export default class VideoListViewModel {
     }
   }
 
-  private async insert2DB(videoName: string, videoPath: string, thumbnailPath: string): Promise<number> {
+  private async insert2DB(folder: string, name: string, videoPath: string, thumbnailPath: string): Promise<number> {
     let videoFile: fileIo.File | undefined;
     let metadata: media.AVMetadata | undefined;
     let avMetadataExtractor: media.AVMetadataExtractor | undefined;
@@ -135,7 +143,13 @@ export default class VideoListViewModel {
         await fileIo.close(videoFile);
       }
     }
-    return await this.videoStore.insertVideoInfo(videoName, JSON.stringify(metadata), videoPath, thumbnailPath);
+    let info = new VideoInfoModel();
+    info.name = name;
+    info.folder = folder;
+    info.videoPath = videoPath;
+    info.thumbnailPath = thumbnailPath;
+    info.metadata = JSON.stringify(metadata);
+    return await this.videoStore.insertVideoInfo(info);
   }
 
   private async updateVideoList(rowId: number): Promise<void> {
@@ -144,13 +158,12 @@ export default class VideoListViewModel {
       let videoItem = new VideoItemViewModel();
       videoItem.updateVideoItem(info);
       this.videoList.push(videoItem);
-      console.info(`Update video list successfully, ${JSON.stringify(info)}`);
     } catch (error) {
       throw new Error(error);
     }
   }
 
-  private async importVideo(uri: string): Promise<void> {
+  private async importVideo(uri: string, folder: string): Promise<void> {
     // Create video and thumbnail directory
     const videoDir = this.context.filesDir + VIDEO_DIR;
     const thumbnailDir = this.context.filesDir + THUMBNAIL_DIR;
@@ -178,7 +191,7 @@ export default class VideoListViewModel {
     let lastSlashIdx = uri.lastIndexOf('/');
     let videoName = uri.slice(lastSlashIdx + 1);
     try {
-      rowId = await this.insert2DB(videoName, videoPath, thumbnailPath);
+      rowId = await this.insert2DB(folder, videoName, videoPath, thumbnailPath);
     } catch (error) {
       throw new Error(error);
     }
@@ -216,14 +229,14 @@ export default class VideoListViewModel {
       });
   }
 
-  async importVideoFromFileMgr(): Promise<void> {
+  async importVideoFromFileMgr(folder: string): Promise<void> {
     const documentSelectOptions = new picker.DocumentSelectOptions();
     documentSelectOptions.fileSuffixFilters = ['视频|.mp4'];
     const documentViewPicker = new picker.DocumentViewPicker();
     documentViewPicker.select(documentSelectOptions)
       .then(async (selectedUri: string[]) => {
         for (let i = 0; i < selectedUri.length; ++i) {
-          await this.importVideo(selectedUri[i]);
+          await this.importVideo(selectedUri[i], folder);
         }
       })
       .catch((err: BusinessError) => {
@@ -231,7 +244,7 @@ export default class VideoListViewModel {
       });
   }
 
-  async importVideoFromMediaLib(): Promise<void> {
+  async importVideoFromMediaLib(folder: string): Promise<void> {
     const photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
     photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.VIDEO_TYPE;
     photoSelectOptions.isPhotoTakingSupported = false;
@@ -240,7 +253,7 @@ export default class VideoListViewModel {
       .then(async (result: photoAccessHelper.PhotoSelectResult) => {
         let selectedUri = result.photoUris;
         for (let i = 0; i < selectedUri.length; ++i) {
-          await this.importVideo(selectedUri[i]);
+          await this.importVideo(selectedUri[i], folder);
         }
       })
       .catch((err: BusinessError) => {
@@ -248,7 +261,7 @@ export default class VideoListViewModel {
       });
   }
 
-  async importVideoFromDownloadDir(): Promise<void> {
+  async importVideoFromDownloadDir(folder: string): Promise<void> {
     try {
       const downloadVideoPath = this.downloadPath + DOWNLOAD_VIDEO_DIR;
       let traverseDir = async (dir: string) => {
@@ -259,7 +272,7 @@ export default class VideoListViewModel {
           if (stat.isDirectory()) {
             await traverseDir(path);
           } else {
-            await this.importVideo(path);
+            await this.importVideo(path, folder);
           }
         }
       };
@@ -269,18 +282,42 @@ export default class VideoListViewModel {
     }
   }
 
-  async createVideoDir(): Promise<void> {
-    // todo
+  async createVideoFolder(folder: string, parent: string): Promise<void> {
+    // Insert data to database
+    let folderInfo = new FolderInfoModel();
+    folderInfo.path = folder;
+    folderInfo.parent = parent;
+    let rowId = -1;
+    try {
+      rowId = await this.videoStore.insertFolderInfo(folderInfo);
+    } catch (error) {
+      throw new Error(error);
+    }
+    // update folder list
+    try {
+      let info = await this.videoStore.selectFolderById(rowId);
+      let folderItem = new FolderItemViewModel();
+      folderItem.updateFolderItem(info);
+      this.folderList.push(folderItem);
+    } catch (error) {
+      throw new Error(error);
+    }
   }
 
-  async init(): Promise<void> {
+  async init(folder: string): Promise<void> {
     await this.videoStore.initStore(this.context);
     await this.createVideoDownloadDir();
-    await this.loadVideoList();
+    await this.loadVideoList(folder);
   }
 
-  async loadVideoList(): Promise<void> {
-    let videoInfoList = await this.videoStore.selectAllVideoInfo();
+  async loadVideoList(folder: string): Promise<void> {
+    let folderInfoList = await this.videoStore.selectFolderByFolder(folder);
+    for (const info of folderInfoList) {
+      let folderItem = new FolderItemViewModel();
+      folderItem.updateFolderItem(info);
+      this.folderList.push(folderItem);
+    }
+    let videoInfoList = await this.videoStore.selectVideoByFolder(folder);
     for (const info of videoInfoList) {
       let videoItem = new VideoItemViewModel();
       videoItem.updateVideoItem(info);

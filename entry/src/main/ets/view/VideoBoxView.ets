@@ -18,8 +18,8 @@ export struct VideoBoxView {
           .fontSize(12)
           .fontColor(Color.Black);
 
-        Row({ space: 8 }) {
-          Row({ space: 2 }) {
+        Row({ space: 12 }) {
+          Row({ space: 3 }) {
             Image($r('app.media.clock'))
               .width(12)
               .aspectRatio(1)
@@ -29,7 +29,7 @@ export struct VideoBoxView {
               .fontColor(Color.Gray);
           };
 
-          Row({ space: 2 }) {
+          Row({ space: 3 }) {
             Image($r('app.media.save'))
               .width(12)
               .aspectRatio(1)

@@ -4,6 +4,11 @@
       "name": "VideoPlayer",
       "pageSourceFile": "src/main/ets/view/VideoPlayerView.ets",
       "buildFunction": "VideoPlayerBuilder"
+    },
+    {
+      "name": "VideoList",
+      "pageSourceFile": "src/main/ets/view/VideoListView.ets",
+      "buildFunction": "VideoListBuilder"
     }
   ]
 }

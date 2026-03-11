@@ -188,7 +188,8 @@ export default class VideoPlayerViewModel {
 
   async updateHorizontalSlide(offsetX: number): Promise<void> {
     console.info(`PanGesture Horizontal Update: ${offsetX}`);
-    this.seekTime = this.startSeekTime + (offsetX / ONE_HUNDRED_VP) * SEEK_TIME;
+    let seekTime = this.startSeekTime + (offsetX / ONE_HUNDRED_VP) * SEEK_TIME;
+    this.seekTime = Math.max(0, Math.min(seekTime, this.duration));
   }
 
   async endHorizontalSlide(): Promise<void> {

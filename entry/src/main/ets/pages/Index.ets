@@ -1,13 +1,16 @@
 import { VideoListView } from '../view/VideoListView';
 
+const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Entry
 @Component
 struct Index {
   @State selectIdx: number = 0;
+  @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Provide('MainPageStack') mainPageStack: NavPathStack = new NavPathStack();
+  @Provide('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
 
   @Builder
   tabBarBuilder(icon: ResourceStr, name: ResourceStr, index: number) {
@@ -35,7 +38,28 @@ struct Index {
       }) {
         Tabs({ barPosition: BarPosition.End }) {
           TabContent() {
-            VideoListView();
+            Flex({
+              direction: FlexDirection.Column,
+              justifyContent: FlexAlign.Start,
+              alignItems: ItemAlign.Center
+            }) {
+              Row() {
+                Text('视频')
+                  .fontSize(24)
+                  .fontColor(Color.Black);
+              }
+              .width('100%')
+              .margin({ top: 8, bottom: 8 })
+              .justifyContent(FlexAlign.Center)
+              .alignItems(VerticalAlign.Center);
+
+              Navigation(this.videoTabStack) {
+                VideoListView();
+              }
+              .hideToolBar(true)
+              .mode(NavigationMode.Stack);
+            }
+            .margin({ top: this.getUIContext().px2vp(this.topRectHeight) });
           }
           .tabBar(this.tabBarBuilder($r('app.media.video'), '视频库', 0));
 
