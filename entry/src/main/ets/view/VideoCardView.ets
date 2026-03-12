@@ -1,4 +1,4 @@
-import VideoItemViewModel from '../viewmodel/VideoItemViewModel';
+import { VideoItemViewModel } from '../viewmodel/VideoItemViewModel';
 
 @Component
 export struct VideoCardView {

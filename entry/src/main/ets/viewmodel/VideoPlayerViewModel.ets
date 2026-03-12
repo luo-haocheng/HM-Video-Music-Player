@@ -6,7 +6,7 @@ import { settings } from '@kit.BasicServicesKit';
 import { audio } from '@kit.AudioKit';
 import { MediaSessionManager } from '../model/ModelSession';
 import { avSession as AVSessionManager } from '@kit.AVSessionKit';
-import VideoInfoModel from '../model/VideoInfoModel';
+import { VideoInfoModel } from '../model/VideoInfoModel';
 
 const SEEK_TIME = 10000;
 const BRIGHT_VALUE = 0.1;
@@ -17,7 +17,7 @@ const MAX_WINDOW_BRIGHTNESS = 1.0;
 const MAX_SCREEN_BRIGHTNESS = 255;
 
 @Observed
-export default class VideoPlayerViewModel {
+export class VideoPlayerViewModel {
   @Track name: string = '';
   @Track duration: number = 0;
   @Track currTime: number = 0;

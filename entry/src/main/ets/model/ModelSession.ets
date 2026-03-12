@@ -2,7 +2,7 @@ import { avSession as AVSessionMananger } from '@kit.AVSessionKit';
 import { media } from '@kit.MediaKit';
 import image from '@ohos.multimedia.image';
 import { util } from '@kit.ArkTS';
-import VideoInfoModel from './VideoInfoModel';
+import { VideoInfoModel } from './VideoInfoModel';
 
 export class MediaSessionManager {
   private context: Context;

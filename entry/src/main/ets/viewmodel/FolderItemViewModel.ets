@@ -1,7 +1,7 @@
-import FolderInfoModel from '../model/FolderInfoModel';
+import { FolderInfoModel } from '../model/FolderInfoModel';
 
 @Observed
-export default class FolderItemViewModel {
+export class FolderItemViewModel {
   @Track folderName: string = '';
   @Track dateAdd: string = '';
   public folderInfo: FolderInfoModel = new FolderInfoModel();

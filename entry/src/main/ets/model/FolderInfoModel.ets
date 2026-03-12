@@ -1,4 +1,4 @@
-export default class FolderInfoModel {
+export class FolderInfoModel {
   public id: number = 0;
   public path: string = '';
   public parent: string = '';

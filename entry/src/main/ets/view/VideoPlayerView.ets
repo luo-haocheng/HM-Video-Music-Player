@@ -1,9 +1,9 @@
-import VideoPlayerViewModel from '../viewmodel/VideoPlayerViewModel';
+import { VideoPlayerViewModel } from '../viewmodel/VideoPlayerViewModel';
 import { common } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { media } from '@kit.MediaKit';
 import { AVVolumePanel } from '@kit.AudioKit';
-import VideoInfoModel from '../model/VideoInfoModel';
+import { VideoInfoModel } from '../model/VideoInfoModel';
 
 @Builder
 export function VideoPlayerBuilder() {

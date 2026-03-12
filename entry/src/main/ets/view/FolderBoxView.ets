@@ -1,4 +1,4 @@
-import FolderItemViewModel from '../viewmodel/FolderItemViewModel';
+import { FolderItemViewModel } from '../viewmodel/FolderItemViewModel';
 
 @Component
 export struct FolderBoxView {

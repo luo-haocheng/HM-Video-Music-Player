@@ -1,10 +1,10 @@
-import VideoInfoModel from '../model/VideoInfoModel';
+import { VideoInfoModel } from '../model/VideoInfoModel';
 import image from '@ohos.multimedia.image';
 import { fileIo } from '@kit.CoreFileKit';
 import { media } from '@kit.MediaKit';
 
 @Observed
-export default class VideoItemViewModel {
+export class VideoItemViewModel {
   @Track public videoName: string = '';
   @Track public videoSize: string = '';
   @Track public duration: string = '';

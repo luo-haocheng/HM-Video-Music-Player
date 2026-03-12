@@ -1,6 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
-import FolderInfoModel from './FolderInfoModel';
-import VideoInfoModel from './VideoInfoModel';
+import { FolderInfoModel } from './FolderInfoModel';
+import { VideoInfoModel } from './VideoInfoModel';
 
 const STORE_NAME = 'VideoStore.db';
 const VIDEO_TABLE_NAME = 'VIDEO_IMPORTED';
@@ -10,7 +10,7 @@ const SQL_CREATE_VIDEO_TABLE =
 const SQL_CREATE_FOLDER_TABLE =
   `CREATE TABLE IF NOT EXISTS ${FOLDER_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, PATH TEXT NOT NULL UNIQUE, PARENT TEXT NOT NULL, DATE_ADD INTEGER NOT NULL)`;
 
-export default class VideoLibraryStore {
+export class VideoLibraryStore {
   private store?: relationalStore.RdbStore;
 
   async initStore(context: Context): Promise<void> {
@@ -169,4 +169,5 @@ export default class VideoLibraryStore {
     }
     return folderInfoList;
   }
-};
+}
+;

@@ -1,4 +1,4 @@
-export default class VideoInfoModel {
+export class VideoInfoModel {
   public id: number = 0;
   public name: string = '';
   public folder: string = '';

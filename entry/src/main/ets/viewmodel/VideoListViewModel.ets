@@ -1,4 +1,4 @@
-import VideoItemViewModel from './VideoItemViewModel';
+import { VideoItemViewModel } from './VideoItemViewModel';
 import { Context } from '@kit.AbilityKit';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import picker from '@ohos.file.picker';
@@ -6,10 +6,10 @@ import { fileIo, fileUri } from '@kit.CoreFileKit';
 import { media } from '@kit.MediaKit';
 import { util } from '@kit.ArkTS';
 import image from '@ohos.multimedia.image';
-import VideoLibraryStore from '../model/VideoLibraryStore';
-import VideoInfoModel from '../model/VideoInfoModel';
-import FolderInfoModel from '../model/FolderInfoModel';
-import FolderItemViewModel from './FolderItemViewModel';
+import { VideoLibraryStore } from '../model/VideoLibraryStore';
+import { VideoInfoModel } from '../model/VideoInfoModel';
+import { FolderInfoModel } from '../model/FolderInfoModel';
+import { FolderItemViewModel } from './FolderItemViewModel';
 
 const VIDEO_DIR = '/videos';
 const THUMBNAIL_DIR = '/thumbnails';
@@ -24,7 +24,7 @@ export class FolderItemViewModelList extends Array<FolderItemViewModel> {
 }
 
 @Observed
-export default class VideoListViewModel {
+export class VideoListViewModel {
   @Track folderList: FolderItemViewModelList = new FolderItemViewModelList();
   @Track videoList: VideoItemViewModelList = new VideoItemViewModelList();
   private videoStore: VideoLibraryStore = new VideoLibraryStore();
