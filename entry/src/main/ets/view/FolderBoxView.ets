@@ -43,7 +43,7 @@ export struct FolderBoxView {
     .justifyContent(FlexAlign.Start)
     .alignItems(VerticalAlign.Center)
     .onClick(() => {
-      this.videoTabStack.pushPath({ name: "VideoList", param: this.folderItem.folderInfo });
+      this.videoTabStack.pushPath({ name: "VideoList", param: this.folderItem.folderInfo.path });
     });
   }
 }

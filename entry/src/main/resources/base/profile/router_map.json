@@ -7,7 +7,7 @@
     },
     {
       "name": "VideoList",
-      "pageSourceFile": "src/main/ets/view/VideoListView.ets",
+      "pageSourceFile": "src/main/ets/view/VideoLibraryView.ets",
       "buildFunction": "VideoListBuilder"
     }
   ]
