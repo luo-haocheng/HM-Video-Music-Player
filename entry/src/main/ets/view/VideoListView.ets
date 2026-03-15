@@ -12,14 +12,12 @@ const CURRENT_FOLDER = 'CurrentFolder';
 
 @Component
 export struct VideoListView {
-  @State videoListVM: VideoListViewModel = new VideoListViewModel(this.getUIContext().getHostContext() as Context);
-  private folder: string = '/';
-  private parent: string = '/';
+  @State videoListVM: VideoListViewModel = new VideoListViewModel();
   private createFolderCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
     if (event.data) {
       let folder = event.data['folder'] as string;
       let rowId = event.data['rowId'] as number;
-      if (folder === this.folder) {
+      if (folder === this.videoListVM.folder) {
         this.videoListVM.updateFolderList(rowId);
       }
     }
@@ -28,7 +26,7 @@ export struct VideoListView {
     if (event.data) {
       let folder = event.data['folder'] as string;
       let rowId = event.data['rowId'] as number;
-      if (folder === this.folder) {
+      if (folder === this.videoListVM.folder) {
         this.videoListVM.updateVideoList(rowId);
       }
     }
@@ -51,7 +49,11 @@ export struct VideoListView {
         justifyContent: FlexAlign.Start,
         alignItems: ItemAlign.Center
       }) {
-        ListView({ folderList: this.videoListVM.folderList, videoList: this.videoListVM.videoList });
+        ListView({
+          folderList: this.videoListVM.folderList,
+          videoList: this.videoListVM.videoList,
+          videoListVM: this.videoListVM,
+        });
       }
       .width('100%')
       .height('100%');
@@ -60,16 +62,15 @@ export struct VideoListView {
     .onReady((navContext: NavDestinationContext) => {
       if (navContext.pathInfo.param !== undefined) {
         let folderInfo = navContext.pathInfo.param as FolderInfoModel;
-        this.parent = folderInfo.parent;
-        this.folder = folderInfo.path;
-        AppStorage.setOrCreate(CURRENT_FOLDER, this.folder);
+        this.videoListVM.parent = folderInfo.parent;
+        this.videoListVM.folder = folderInfo.path;
+        AppStorage.setOrCreate(CURRENT_FOLDER, this.videoListVM.folder);
       }
-      console.info(`Video List Ready: ${this.folder}`);
-      this.videoListVM.init(this.folder);
+      let context = this.getUIContext().getHostContext() as Context;
+      this.videoListVM.init(this.videoListVM.folder, context);
     })
     .onBackPressed(() => {
-      console.info(`Video List Back: ${this.parent}`);
-      AppStorage.setOrCreate(CURRENT_FOLDER, this.parent);
+      AppStorage.setOrCreate(CURRENT_FOLDER, this.videoListVM.parent);
       return false;
     });
   }
@@ -79,6 +80,7 @@ export struct VideoListView {
 struct ListView {
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
+  @Link videoListVM: VideoListViewModel;
 
   @Builder
   folderSwipeEnd(index: number) {
@@ -108,7 +110,10 @@ struct ListView {
           .fillColor(Color.White);
       }
       .padding(8)
-      .backgroundColor(Color.Red);
+      .backgroundColor(Color.Red)
+      .onClick(() => {
+        this.videoListVM.deleteFolder(this.folderList[index].folderInfo, index);
+      });
     }
     .padding({ left: 8, right: 8 });
   }
@@ -141,14 +146,12 @@ struct ListView {
           .fillColor(Color.White);
       }
       .padding(8)
-      .backgroundColor(Color.Red);
+      .backgroundColor(Color.Red)
+      .onClick(() => {
+        this.videoListVM.deleteVideo(this.videoList[index].videoInfo, index);
+      });
     }
     .padding({ left: 8, right: 8 });
-  }
-
-  @Builder
-  videoLongPressDialog(index: number) {
-    VideoBoxView({ videoItem: this.videoList[index] });
   }
 
   build() {
@@ -191,7 +194,7 @@ struct ListView {
               .onAction(() => {
                 this.getUIContext().getPromptAction().openCustomDialog({
                   builder: () => {
-                    this.videoLongPressDialog(index);
+                    console.info(`Video Item Long Press`);
                   }
                 })
                   .catch((err: BusinessError) => {

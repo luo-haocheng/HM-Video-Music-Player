@@ -76,6 +76,43 @@ export class VideoLibraryStore {
     return rowId;
   }
 
+  async deleteVideoById(rowId: number): Promise<void> {
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
+        predicate.equalTo('ID', rowId);
+        await this.store.delete(predicate);
+      } catch (error) {
+        console.info(`Failed to delete video by id=${rowId}. Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
+      }
+    }
+  }
+
+  async deleteFolderAndVideo(folderList: FolderInfoModel[], videoList: VideoInfoModel[]): Promise<void> {
+    if (this.store !== undefined) {
+      let transaction: relationalStore.Transaction | undefined;
+      try {
+        transaction = await this.store.createTransaction();
+        for (let i = 0; i < folderList.length; ++i) {
+          let predicate = new relationalStore.RdbPredicates(FOLDER_TABLE_NAME);
+          predicate.equalTo('ID', folderList[i].id);
+          await transaction.delete(predicate);
+        }
+        for (let i = 0; i < videoList.length; ++i) {
+          let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
+          predicate.equalTo('ID', videoList[i].id);
+          await transaction.delete(predicate);
+        }
+        await transaction.commit();
+      } catch (error) {
+        console.error(`Failed to delete ${JSON.stringify(folderList)} and ${JSON.stringify(videoList)}. Cause: ${JSON.stringify(error)}`);
+        await transaction?.rollback();
+        throw new Error(error);
+      }
+    }
+  }
+
   async selectVideoById(rowId: number): Promise<VideoInfoModel> {
     let videoInfo = new VideoInfoModel();
     if (this.store !== undefined) {
