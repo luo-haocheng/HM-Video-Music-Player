@@ -13,7 +13,8 @@ import { emitter } from '@kit.BasicServicesKit';
 const VIDEO_DIR = '/videos';
 const THUMBNAIL_DIR = '/thumbnails';
 const DOWNLOAD_VIDEO_DIR = '/Videos';
-
+const IMPORT_VIDEO_EVENT = 'ImportVideo';
+const CREATE_FOLDER_EVENT = 'CreateFolder';
 
 @Observed
 export class VideoLibraryViewModel {
@@ -181,7 +182,7 @@ export class VideoLibraryViewModel {
         'rowId': rowId
       }
     };
-    emitter.emit('ImportVideo', eventData);
+    emitter.emit(IMPORT_VIDEO_EVENT, eventData);
   }
 
   private async createVideoDownloadDir(): Promise<void> {
@@ -281,7 +282,7 @@ export class VideoLibraryViewModel {
         'rowId': rowId
       }
     };
-    emitter.emit('CreateFolder', eventData);
+    emitter.emit(CREATE_FOLDER_EVENT, eventData);
   }
 
   async init(): Promise<void> {

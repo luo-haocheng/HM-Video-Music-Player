@@ -4,33 +4,44 @@ import { FolderItemViewModelList, VideoItemViewModelList, VideoListViewModel } f
 import { FolderBoxView } from './FolderBoxView';
 import { VideoBoxView } from './VideoBoxView';
 import { emitter } from '@kit.BasicServicesKit';
+import { FolderInfoModel } from '../model/FolderInfoModel';
 
+const CREATE_FOLDER_EVENT = 'CreateFolder';
+const IMPORT_VIDEO_EVENT = 'ImportVideo';
 const CURRENT_FOLDER = 'CurrentFolder';
 
 @Component
 export struct VideoListView {
   @State videoListVM: VideoListViewModel = new VideoListViewModel(this.getUIContext().getHostContext() as Context);
   private folder: string = '/';
+  private parent: string = '/';
+  private createFolderCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
+    if (event.data) {
+      let folder = event.data['folder'] as string;
+      let rowId = event.data['rowId'] as number;
+      if (folder === this.folder) {
+        this.videoListVM.updateFolderList(rowId);
+      }
+    }
+  };
+  private importVideoCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
+    if (event.data) {
+      let folder = event.data['folder'] as string;
+      let rowId = event.data['rowId'] as number;
+      if (folder === this.folder) {
+        this.videoListVM.updateVideoList(rowId);
+      }
+    }
+  };
 
   aboutToAppear(): void {
-    emitter.on('CreateFolder', (event: emitter.EventData) => {
-      if (event.data) {
-        let folder = event.data['folder'] as string;
-        let rowId = event.data['rowId'] as number;
-        if (folder === this.folder) {
-          this.videoListVM.updateFolderList(rowId);
-        }
-      }
-    });
-    emitter.on('ImportVideo', (event: emitter.EventData) => {
-      if (event.data) {
-        let folder = event.data['folder'] as string;
-        let rowId = event.data['rowId'] as number;
-        if (folder === this.folder) {
-          this.videoListVM.updateVideoList(rowId);
-        }
-      }
-    });
+    emitter.on(CREATE_FOLDER_EVENT, this.createFolderCallback);
+    emitter.on(IMPORT_VIDEO_EVENT, this.importVideoCallback);
+  }
+
+  aboutToDisappear(): void {
+    emitter.off(CREATE_FOLDER_EVENT, this.createFolderCallback);
+    emitter.off(IMPORT_VIDEO_EVENT, this.importVideoCallback);
   }
 
   build() {
@@ -48,10 +59,18 @@ export struct VideoListView {
     .hideBackButton(true)
     .onReady((navContext: NavDestinationContext) => {
       if (navContext.pathInfo.param !== undefined) {
-        this.folder = navContext.pathInfo.param as string;
+        let folderInfo = navContext.pathInfo.param as FolderInfoModel;
+        this.parent = folderInfo.parent;
+        this.folder = folderInfo.path;
         AppStorage.setOrCreate(CURRENT_FOLDER, this.folder);
       }
+      console.info(`Video List Ready: ${this.folder}`);
       this.videoListVM.init(this.folder);
+    })
+    .onBackPressed(() => {
+      console.info(`Video List Back: ${this.parent}`);
+      AppStorage.setOrCreate(CURRENT_FOLDER, this.parent);
+      return false;
     });
   }
 }

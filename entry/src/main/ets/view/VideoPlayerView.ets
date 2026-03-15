@@ -344,9 +344,9 @@ export struct VideoPlayerView {
       return false;
     })
     .hideBackButton(true)
-    .onReady((ctx: NavDestinationContext) => {
-      this.navPathStack = ctx.pathStack;
-      this.videoPlayerVM.videoInfo = ctx.pathInfo.param as VideoInfoModel;
+    .onReady((navContext: NavDestinationContext) => {
+      this.navPathStack = navContext.pathStack;
+      this.videoPlayerVM.videoInfo = navContext.pathInfo.param as VideoInfoModel;
     });
   }
 }
