@@ -80,15 +80,99 @@ struct ListView {
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
 
+  @Builder
+  folderSwipeEnd(index: number) {
+    Row({ space: 8 }) {
+      Button({ type: ButtonType.Circle, stateEffect: false }) {
+        Image($r('app.media.arrow_right_folder_fill'))
+          .width(24)
+          .aspectRatio(1)
+          .fillColor(Color.White);
+      }
+      .padding(8)
+      .backgroundColor(Color.Blue);
+
+      Button({ type: ButtonType.Circle, stateEffect: false }) {
+        Image($r('app.media.rename'))
+          .width(24)
+          .aspectRatio(1)
+          .fillColor(Color.White);
+      }
+      .padding(8)
+      .backgroundColor(Color.Orange);
+
+      Button({ type: ButtonType.Circle, stateEffect: false }) {
+        Image($r('app.media.trash_fill'))
+          .width(24)
+          .aspectRatio(1)
+          .fillColor(Color.White);
+      }
+      .padding(8)
+      .backgroundColor(Color.Red);
+    }
+    .padding({ left: 8, right: 8 });
+  }
+
+  @Builder
+  videoSwipeEnd(index: number) {
+    Row({ space: 8 }) {
+      Button({ type: ButtonType.Circle, stateEffect: false }) {
+        Image($r('app.media.arrow_right_folder_fill'))
+          .width(24)
+          .aspectRatio(1)
+          .fillColor(Color.White);
+      }
+      .padding(8)
+      .backgroundColor(Color.Blue);
+
+      Button({ type: ButtonType.Circle, stateEffect: false }) {
+        Image($r('app.media.rename'))
+          .width(24)
+          .aspectRatio(1)
+          .fillColor(Color.White);
+      }
+      .padding(8)
+      .backgroundColor(Color.Orange);
+
+      Button({ type: ButtonType.Circle, stateEffect: false }) {
+        Image($r('app.media.trash_fill'))
+          .width(24)
+          .aspectRatio(1)
+          .fillColor(Color.White);
+      }
+      .padding(8)
+      .backgroundColor(Color.Red);
+    }
+    .padding({ left: 8, right: 8 });
+  }
+
+  @Builder
+  videoLongPressDialog(index: number) {
+    VideoBoxView({ videoItem: this.videoList[index] });
+  }
+
   build() {
     List() {
       ForEach(
         this.folderList,
-        (item: FolderItemViewModel) => {
+        (item: FolderItemViewModel, index: number) => {
           ListItem() {
             FolderBoxView({ folderItem: item });
           }
-          .padding({ left: 8, right: 8 });
+          .padding({ left: 8, right: 8 })
+          .gesture(
+            LongPressGesture({ repeat: false })
+              .onAction(() => {
+                console.info(`Folder Item Long Press`);
+              })
+          )
+          .swipeAction({
+            end: {
+              builder: () => {
+                this.folderSwipeEnd(index);
+              }
+            }
+          });
         },
         (item: FolderItemViewModel, index: number) => {
           return item.folderName + `_${index}`;
@@ -97,11 +181,31 @@ struct ListView {
 
       ForEach(
         this.videoList,
-        (item: VideoItemViewModel) => {
+        (item: VideoItemViewModel, index: number) => {
           ListItem() {
             VideoBoxView({ videoItem: item });
           }
-          .padding({ left: 8, right: 8 });
+          .padding({ left: 8, right: 8 })
+          .gesture(
+            LongPressGesture({ repeat: false })
+              .onAction(() => {
+                this.getUIContext().getPromptAction().openCustomDialog({
+                  builder: () => {
+                    this.videoLongPressDialog(index);
+                  }
+                })
+                  .catch((err: BusinessError) => {
+                    console.error(`Failed to open video long press dialog. Cause: ${JSON.stringify(err)}`);
+                  });
+              })
+          )
+          .swipeAction({
+            end: {
+              builder: () => {
+                this.videoSwipeEnd(index);
+              }
+            }
+          });
         },
         (item: VideoItemViewModel, index: number) => {
           return item.videoName + `_${index}`;

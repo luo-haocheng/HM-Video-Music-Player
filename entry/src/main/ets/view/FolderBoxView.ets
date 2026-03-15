@@ -10,6 +10,7 @@ export struct FolderBoxView {
       Image($r('app.media.folder_fill'))
         .height('90%')
         .borderRadius(12)
+        .draggable(false)
         .aspectRatio(16 / 9)
         .fillColor(Color.Orange)
         .objectFit(ImageFit.Contain)
@@ -24,6 +25,7 @@ export struct FolderBoxView {
           Image($r('app.media.calendar'))
             .width(12)
             .aspectRatio(1)
+            .draggable(false)
             .fillColor(Color.Green);
 
           Text(this.folderItem.dateAdd)

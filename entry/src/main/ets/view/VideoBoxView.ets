@@ -11,6 +11,7 @@ export struct VideoBoxView {
         .height('90%')
         .aspectRatio(16 / 9)
         .borderRadius(12)
+        .draggable(false)
         .objectFit(ImageFit.Cover);
 
       Column() {
@@ -23,6 +24,7 @@ export struct VideoBoxView {
             Image($r('app.media.clock'))
               .width(12)
               .aspectRatio(1)
+              .draggable(false)
               .fillColor(Color.Green);
             Text(this.videoItem.duration)
               .fontSize(10)
@@ -33,6 +35,7 @@ export struct VideoBoxView {
             Image($r('app.media.save'))
               .width(12)
               .aspectRatio(1)
+              .draggable(false)
               .fillColor(Color.Green);
             Text(this.videoItem.videoSize)
               .fontSize(10)
