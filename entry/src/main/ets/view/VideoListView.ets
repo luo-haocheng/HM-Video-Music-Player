@@ -81,6 +81,86 @@ struct ListView {
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
   @Link videoListVM: VideoListViewModel;
+  private renameDialogId: number = 0;
+  private newName?: string = '';
+
+  @Builder
+  renameDialogBuilder(index: number, type: 'folder' | 'video') {
+    Column() {
+      Row() {
+        Text('重命名')
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold);
+
+        Button({ type: ButtonType.Circle, stateEffect: false }) {
+          Image($r('app.media.xmark'))
+            .width(18)
+            .aspectRatio(1)
+            .fillColor(Color.Black);
+        }
+        .padding(6)
+        .backgroundColor('#AADCDCDC')
+        .onClick(() => {
+          try {
+            this.getUIContext().getPromptAction().closeCustomDialog(this.renameDialogId);
+          } catch (error) {
+            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+          }
+        });
+      }
+      .width('100%')
+      .margin({ bottom: 12 })
+      .justifyContent(FlexAlign.SpaceBetween);
+
+      TextInput({ placeholder: '请输入文件夹名称' })
+        .borderRadius(12)
+        .onChange((value: string) => {
+          this.newName = value;
+        });
+
+      Row() {
+        Button({ type: ButtonType.Capsule, stateEffect: false }) {
+          Text('取消')
+            .fontSize(16);
+        }
+        .padding(8)
+        .width('45%')
+        .backgroundColor('#DCDCDC')
+        .onClick(() => {
+          try {
+            this.getUIContext().getPromptAction().closeCustomDialog(this.renameDialogId);
+          } catch (error) {
+            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+          }
+        });
+
+        Button({ type: ButtonType.Capsule, stateEffect: false }) {
+          Text('确认')
+            .fontSize(16);
+        }
+        .padding(8)
+        .width('45%')
+        .onClick(() => {
+          try {
+            this.getUIContext().getPromptAction().closeCustomDialog(this.renameDialogId);
+          } catch (error) {
+            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+          }
+          if (this.newName !== undefined) {
+            if (type === 'video') {
+              this.videoListVM.renameVideo(this.newName, this.videoList[index].videoInfo, index);
+            } else {
+              this.videoListVM.renameFolder(this.newName, this.folderList[index].folderInfo, index);
+            }
+          }
+        });
+      }
+      .width('100%')
+      .margin({ top: 12 })
+      .justifyContent(FlexAlign.SpaceBetween);
+    }
+    .padding(16);
+  }
 
   @Builder
   folderSwipeEnd(index: number) {
@@ -92,7 +172,10 @@ struct ListView {
           .fillColor(Color.White);
       }
       .padding(8)
-      .backgroundColor(Color.Blue);
+      .backgroundColor(Color.Blue)
+      .onClick(() => {
+        // todo
+      });
 
       Button({ type: ButtonType.Circle, stateEffect: false }) {
         Image($r('app.media.rename'))
@@ -101,7 +184,28 @@ struct ListView {
           .fillColor(Color.White);
       }
       .padding(8)
-      .backgroundColor(Color.Orange);
+      .backgroundColor(Color.Orange)
+      .onClick(() => {
+        this.getUIContext()
+          .getPromptAction()
+          .openCustomDialog({
+            builder: () => {
+              this.renameDialogBuilder(index, 'folder');
+            },
+            width: '100%',
+            alignment: DialogAlignment.Center,
+            transition: TransitionEffect.SLIDE,
+            onWillAppear: () => {
+              this.newName = undefined;
+            }
+          })
+          .then((dialogId: number) => {
+            this.renameDialogId = dialogId;
+          })
+          .catch((err: BusinessError) => {
+            console.error(`Failed to open create folder dialog. Cuase: ${JSON.stringify(err)}`);
+          });
+      });
 
       Button({ type: ButtonType.Circle, stateEffect: false }) {
         Image($r('app.media.trash_fill'))
@@ -128,7 +232,10 @@ struct ListView {
           .fillColor(Color.White);
       }
       .padding(8)
-      .backgroundColor(Color.Blue);
+      .backgroundColor(Color.Blue)
+      .onClick(() => {
+        // todo
+      });
 
       Button({ type: ButtonType.Circle, stateEffect: false }) {
         Image($r('app.media.rename'))
@@ -137,7 +244,28 @@ struct ListView {
           .fillColor(Color.White);
       }
       .padding(8)
-      .backgroundColor(Color.Orange);
+      .backgroundColor(Color.Orange)
+      .onClick(() => {
+        this.getUIContext()
+          .getPromptAction()
+          .openCustomDialog({
+            builder: () => {
+              this.renameDialogBuilder(index, 'video');
+            },
+            width: '100%',
+            alignment: DialogAlignment.Center,
+            transition: TransitionEffect.SLIDE,
+            onWillAppear: () => {
+              this.newName = undefined;
+            }
+          })
+          .then((dialogId: number) => {
+            this.renameDialogId = dialogId;
+          })
+          .catch((err: BusinessError) => {
+            console.error(`Failed to open create folder dialog. Cuase: ${JSON.stringify(err)}`);
+          });
+      });
 
       Button({ type: ButtonType.Circle, stateEffect: false }) {
         Image($r('app.media.trash_fill'))

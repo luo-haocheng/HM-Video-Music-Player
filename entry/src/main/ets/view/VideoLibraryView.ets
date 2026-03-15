@@ -230,7 +230,6 @@ export struct VideoLibraryView {
             .catch((err: BusinessError) => {
               console.error(`Failed to open create folder dialog. Cuase: ${JSON.stringify(err)}`);
             });
-
         });
 
         ListItem() {

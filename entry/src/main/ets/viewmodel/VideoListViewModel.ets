@@ -44,6 +44,43 @@ export class VideoListViewModel {
     }
   }
 
+  async renameVideo(newName: string, videoInfo: VideoInfoModel, index: number): Promise<void> {
+    // Rename in database
+    await this.videoStore.renameVideo(videoInfo, newName);
+    // Rename in list
+    this.videoList[index].videoName = newName;
+  }
+
+  async renameFolder(newName: string, folderInfo: FolderInfoModel, index: number): Promise<void> {
+    console.info(`Rename Folder Start`);
+    // traverse folder
+    let updateVideoList: VideoInfoModel[] = [];
+    let updateFolderList: FolderInfoModel[] = [];
+    let traverseFolder = async (info: FolderInfoModel, newPath: string) => {
+      let folders = await this.videoStore.selectFolderByFolder(info.path);
+      let videos = await this.videoStore.selectVideoByFolder(info.path);
+      info.path = newPath;
+      updateFolderList.push(info);
+      for (let i = 0; i < videos.length; ++i) {
+        videos[i].folder = newPath;
+      }
+      updateVideoList.push(...videos);
+      for (let i = 0; i < folders.length; ++i) {
+        folders[i].parent = newPath;
+        let prevSlashIdx = folders[i].path.lastIndexOf('/', folders[i].path.length - 2);
+        let folderName = folders[i].path.slice(prevSlashIdx + 1, folders[i].path.length - 1);
+        let folderPath = newPath + `${folderName}/`;
+        await traverseFolder(folders[i], folderPath);
+      }
+    };
+    let newPath = folderInfo.parent + `${newName}/`;
+    await traverseFolder(folderInfo, newPath);
+    await this.videoStore.renameFolder(updateVideoList, updateFolderList);
+    // update list
+    this.folderList[index].folderName = newName;
+  }
+
+
   async deleteFolder(folderInfo: FolderInfoModel, index: number): Promise<void> {
     // traverse folder
     let delVideoList: VideoInfoModel[] = [];
@@ -65,13 +102,42 @@ export class VideoListViewModel {
       try {
         await fileIo.unlink(delVideoList[i].videoPath);
       } catch (error) {
-        console.error(`Failed to unlink video file: ${delVideoList[i].videoPath}. Cause: ${JSON.stringify(error)}`);
+        console.error(`Failed
+  to
+  unlink
+  video
+  file: $
+  {delVideoList
+  [i]
+  .videoPath
+}
+
+.
+Cause: $
+{
+  JSON.stringify(error)
+}
+`);
         throw new Error(error);
       }
       try {
         await fileIo.unlink(delVideoList[i].thumbnailPath);
       } catch (error) {
-        console.error(`Failed to unlink thumbnail file: ${delVideoList[i].thumbnailPath}. Cause: ${JSON.stringify(error)}`);
+        console.error(`
+Failed
+to
+unlink
+thumbnail
+file: $
+{
+  delVideoList[i].thumbnailPath
+}
+.
+Cause: $
+{
+  JSON.stringify(error)
+}
+`);
         throw new Error(error);
       }
     }
@@ -86,13 +152,41 @@ export class VideoListViewModel {
     try {
       await fileIo.unlink(videoInfo.videoPath);
     } catch (error) {
-      console.error(`Failed to unlink video file: ${videoInfo.videoPath}. Cause: ${JSON.stringify(error)}`);
+      console.error(`
+Failed
+to
+unlink
+video
+file: $
+{
+  videoInfo.videoPath
+}
+.
+Cause: $
+{
+  JSON.stringify(error)
+}
+`);
       throw new Error(error);
     }
     try {
       await fileIo.unlink(videoInfo.thumbnailPath);
     } catch (error) {
-      console.error(`Failed to unlink thumbnail file: ${videoInfo.thumbnailPath}. Cause: ${JSON.stringify(error)}`);
+      console.error(`
+Failed
+to
+unlink
+thumbnail
+file: $
+{
+  videoInfo.thumbnailPath
+}
+.
+Cause: $
+{
+  JSON.stringify(error)
+}
+`);
       throw new Error(error);
     }
     // Remove the video from list

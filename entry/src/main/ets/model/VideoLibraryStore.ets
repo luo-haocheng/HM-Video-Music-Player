@@ -76,6 +76,55 @@ export class VideoLibraryStore {
     return rowId;
   }
 
+  async renameVideo(videoInfo: VideoInfoModel, newName: string) {
+    if (this.store !== undefined) {
+      try {
+        const valueBucket: relationalStore.ValuesBucket = {
+          NAME: newName,
+        };
+        let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
+        predicate.equalTo('ID', videoInfo.id);
+        await this.store.update(valueBucket, predicate);
+      } catch (error) {
+        console.error(`Failed to rename video id=${videoInfo.id}. Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
+      }
+    }
+  }
+
+  async renameFolder(updateVideos: VideoInfoModel[], updateFolders: FolderInfoModel[]) {
+    if (this.store !== undefined) {
+      let transaction: relationalStore.Transaction | undefined;
+      try {
+        transaction = await this.store.createTransaction();
+        // Update sub videos folder
+        for (let i = 0; i < updateVideos.length; ++i) {
+          const valueBucketFolder: relationalStore.ValuesBucket = {
+            FOLDER: updateVideos[i].folder,
+          };
+          let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
+          predicate.equalTo('ID', updateVideos[i].id);
+          await transaction.update(valueBucketFolder, predicate);
+        }
+        // Update sub folders parent
+        for (let i = 0; i < updateFolders.length; ++i) {
+          const valueBucketParent: relationalStore.ValuesBucket = {
+            PARENT: updateFolders[i].parent,
+            PATH: updateFolders[i].path,
+          };
+          let predicate = new relationalStore.RdbPredicates(FOLDER_TABLE_NAME);
+          predicate.equalTo('ID', updateFolders[i].id);
+          await transaction.update(valueBucketParent, predicate);
+        }
+        await transaction.commit();
+      } catch (error) {
+        console.error(`Failed to rename folder. Cause: ${JSON.stringify(error)}`);
+        await transaction?.rollback();
+        throw new Error(error);
+      }
+    }
+  }
+
   async deleteVideoById(rowId: number): Promise<void> {
     if (this.store !== undefined) {
       try {
@@ -83,30 +132,30 @@ export class VideoLibraryStore {
         predicate.equalTo('ID', rowId);
         await this.store.delete(predicate);
       } catch (error) {
-        console.info(`Failed to delete video by id=${rowId}. Cause: ${JSON.stringify(error)}`);
+        console.error(`Failed to delete video by id=${rowId}. Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
       }
     }
   }
 
-  async deleteFolderAndVideo(folderList: FolderInfoModel[], videoList: VideoInfoModel[]): Promise<void> {
+  async deleteFolderAndVideo(subFolders: FolderInfoModel[], subVideos: VideoInfoModel[]): Promise<void> {
     if (this.store !== undefined) {
       let transaction: relationalStore.Transaction | undefined;
       try {
         transaction = await this.store.createTransaction();
-        for (let i = 0; i < folderList.length; ++i) {
+        for (let i = 0; i < subFolders.length; ++i) {
           let predicate = new relationalStore.RdbPredicates(FOLDER_TABLE_NAME);
-          predicate.equalTo('ID', folderList[i].id);
+          predicate.equalTo('ID', subFolders[i].id);
           await transaction.delete(predicate);
         }
-        for (let i = 0; i < videoList.length; ++i) {
+        for (let i = 0; i < subVideos.length; ++i) {
           let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
-          predicate.equalTo('ID', videoList[i].id);
+          predicate.equalTo('ID', subVideos[i].id);
           await transaction.delete(predicate);
         }
         await transaction.commit();
       } catch (error) {
-        console.error(`Failed to delete ${JSON.stringify(folderList)} and ${JSON.stringify(videoList)}. Cause: ${JSON.stringify(error)}`);
+        console.error(`Failed to delete ${JSON.stringify(subFolders)} and ${JSON.stringify(subVideos)}. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
         throw new Error(error);
       }
