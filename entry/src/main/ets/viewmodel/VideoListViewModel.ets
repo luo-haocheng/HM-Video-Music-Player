@@ -6,6 +6,8 @@ import { FolderInfoModel } from '../model/FolderInfoModel';
 import { VideoInfoModel } from '../model/VideoInfoModel';
 import { fileIo } from '@kit.CoreFileKit';
 
+const ROOT_FOLDER = '/';
+
 @Observed
 export class VideoItemViewModelList extends Array<VideoItemViewModel> {
 }
@@ -16,10 +18,10 @@ export class FolderItemViewModelList extends Array<FolderItemViewModel> {
 
 @Observed
 export class VideoListViewModel {
-  @Track folderList: FolderItemViewModelList = new FolderItemViewModelList();
   @Track videoList: VideoItemViewModelList = new VideoItemViewModelList();
-  public folder: string = '/';
-  public parent: string = '/';
+  @Track folderList: FolderItemViewModelList = new FolderItemViewModelList();
+  public folder: string = ROOT_FOLDER;
+  public parent: string = ROOT_FOLDER;
   private videoStore: VideoLibraryStore = new VideoLibraryStore();
 
   async updateVideoList(rowId: number): Promise<void> {
@@ -44,14 +46,19 @@ export class VideoListViewModel {
     }
   }
 
-  async renameVideo(newName: string, videoInfo: VideoInfoModel, index: number): Promise<void> {
+  async renameVideo(newName: string, videoInfo: VideoInfoModel): Promise<void> {
     // Rename in database
     await this.videoStore.renameVideo(videoInfo, newName);
     // Rename in list
-    this.videoList[index].videoName = newName;
+    let idx = this.videoList.findIndex((item: VideoItemViewModel) => {
+      return item.videoInfo.id === videoInfo.id;
+    });
+    if (idx !== -1) {
+      this.videoList[idx].videoName = newName;
+    }
   }
 
-  async renameFolder(newName: string, folderInfo: FolderInfoModel, index: number): Promise<void> {
+  async renameFolder(newName: string, folderInfo: FolderInfoModel): Promise<void> {
     console.info(`Rename Folder Start`);
     // traverse folder
     let updateVideoList: VideoInfoModel[] = [];
@@ -77,11 +84,15 @@ export class VideoListViewModel {
     await traverseFolder(folderInfo, newPath);
     await this.videoStore.renameFolder(updateVideoList, updateFolderList);
     // update list
-    this.folderList[index].folderName = newName;
+    let idx = this.folderList.findIndex((item: FolderItemViewModel) => {
+      return item.folderInfo.id === folderInfo.id;
+    });
+    if (idx !== -1) {
+      this.folderList[idx].folderName = newName;
+    }
   }
 
-
-  async deleteFolder(folderInfo: FolderInfoModel, index: number): Promise<void> {
+  async deleteFolder(folderInfo: FolderInfoModel): Promise<void> {
     // traverse folder
     let delVideoList: VideoInfoModel[] = [];
     let delFolderList: FolderInfoModel[] = [];
@@ -102,103 +113,57 @@ export class VideoListViewModel {
       try {
         await fileIo.unlink(delVideoList[i].videoPath);
       } catch (error) {
-        console.error(`Failed
-  to
-  unlink
-  video
-  file: $
-  {delVideoList
-  [i]
-  .videoPath
-}
-
-.
-Cause: $
-{
-  JSON.stringify(error)
-}
-`);
+        console.error(`Failed to unlink video file: ${delVideoList[i].videoPath}. Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
       }
       try {
         await fileIo.unlink(delVideoList[i].thumbnailPath);
       } catch (error) {
-        console.error(`
-Failed
-to
-unlink
-thumbnail
-file: $
-{
-  delVideoList[i].thumbnailPath
-}
-.
-Cause: $
-{
-  JSON.stringify(error)
-}
-`);
+        console.error(`Failed to unlink thumbnail file: ${delVideoList[i].thumbnailPath}. Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
       }
     }
     // delete from list
-    this.folderList.splice(index, 1);
+    let idx = this.folderList.findIndex((item: FolderItemViewModel) => {
+      return item.folderInfo.id === folderInfo.id;
+    });
+    if (idx !== -1) {
+      this.folderList.splice(idx, 1);
+    }
   }
 
-  async deleteVideo(videoInfo: VideoInfoModel, index: number): Promise<void> {
+  async deleteVideo(videoInfo: VideoInfoModel): Promise<void> {
     // Delete the video record from database
     await this.videoStore.deleteVideoById(videoInfo.id);
     // Delete video file and thumbnail file in sandbox
     try {
       await fileIo.unlink(videoInfo.videoPath);
     } catch (error) {
-      console.error(`
-Failed
-to
-unlink
-video
-file: $
-{
-  videoInfo.videoPath
-}
-.
-Cause: $
-{
-  JSON.stringify(error)
-}
-`);
+      console.error(`Failed to unlink video file: ${videoInfo.videoPath}. Cause: ${JSON.stringify(error)}`);
       throw new Error(error);
     }
     try {
       await fileIo.unlink(videoInfo.thumbnailPath);
     } catch (error) {
-      console.error(`
-Failed
-to
-unlink
-thumbnail
-file: $
-{
-  videoInfo.thumbnailPath
-}
-.
-Cause: $
-{
-  JSON.stringify(error)
-}
-`);
+      console.error(`Failed to unlink thumbnail file: $ {videoInfo.thumbnailPath}. Cause: ${JSON.stringify(error)}`);
       throw new Error(error);
     }
     // Remove the video from list
-    this.videoList.splice(index, 1);
+    let idx = this.videoList.findIndex((item: VideoItemViewModel) => {
+      return item.videoInfo.id === videoInfo.id;
+    });
+    console.info(`Index of video: ${idx}`);
+    if (idx !== -1) {
+      this.videoList.splice(idx, 1);
+    }
   }
 
   async init(folder: string, context: Context): Promise<void> {
     await this.videoStore.initStore(context);
-    await this.loadVideoList(folder);
+    await this.loadVideoFolderList(folder);
   }
 
-  async loadVideoList(folder: string): Promise<void> {
+  private async loadVideoFolderList(folder: string): Promise<void> {
     let folderInfoList = await this.videoStore.selectFolderByFolder(folder);
     for (const info of folderInfoList) {
       let folderItem = new FolderItemViewModel();

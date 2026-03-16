@@ -1,83 +1,13 @@
+import { FolderInfoModel } from '../model/FolderInfoModel';
+import { VideoInfoModel } from '../model/VideoInfoModel';
 import { FolderItemViewModel } from '../viewmodel/FolderItemViewModel';
 import { VideoItemViewModel } from '../viewmodel/VideoItemViewModel';
 import { FolderItemViewModelList, VideoItemViewModelList, VideoListViewModel } from '../viewmodel/VideoListViewModel';
 import { FolderBoxView } from './FolderBoxView';
 import { VideoBoxView } from './VideoBoxView';
-import { emitter } from '@kit.BasicServicesKit';
-import { FolderInfoModel } from '../model/FolderInfoModel';
-
-const CREATE_FOLDER_EVENT = 'CreateFolder';
-const IMPORT_VIDEO_EVENT = 'ImportVideo';
-const CURRENT_FOLDER = 'CurrentFolder';
 
 @Component
-export struct VideoListView {
-  @State videoListVM: VideoListViewModel = new VideoListViewModel();
-  private createFolderCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
-    if (event.data) {
-      let folder = event.data['folder'] as string;
-      let rowId = event.data['rowId'] as number;
-      if (folder === this.videoListVM.folder) {
-        this.videoListVM.updateFolderList(rowId);
-      }
-    }
-  };
-  private importVideoCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
-    if (event.data) {
-      let folder = event.data['folder'] as string;
-      let rowId = event.data['rowId'] as number;
-      if (folder === this.videoListVM.folder) {
-        this.videoListVM.updateVideoList(rowId);
-      }
-    }
-  };
-
-  aboutToAppear(): void {
-    emitter.on(CREATE_FOLDER_EVENT, this.createFolderCallback);
-    emitter.on(IMPORT_VIDEO_EVENT, this.importVideoCallback);
-  }
-
-  aboutToDisappear(): void {
-    emitter.off(CREATE_FOLDER_EVENT, this.createFolderCallback);
-    emitter.off(IMPORT_VIDEO_EVENT, this.importVideoCallback);
-  }
-
-  build() {
-    NavDestination() {
-      Flex({
-        direction: FlexDirection.Column,
-        justifyContent: FlexAlign.Start,
-        alignItems: ItemAlign.Center
-      }) {
-        ListView({
-          folderList: this.videoListVM.folderList,
-          videoList: this.videoListVM.videoList,
-          videoListVM: this.videoListVM,
-        });
-      }
-      .width('100%')
-      .height('100%');
-    }
-    .hideBackButton(true)
-    .onReady((navContext: NavDestinationContext) => {
-      if (navContext.pathInfo.param !== undefined) {
-        let folderInfo = navContext.pathInfo.param as FolderInfoModel;
-        this.videoListVM.parent = folderInfo.parent;
-        this.videoListVM.folder = folderInfo.path;
-        AppStorage.setOrCreate(CURRENT_FOLDER, this.videoListVM.folder);
-      }
-      let context = this.getUIContext().getHostContext() as Context;
-      this.videoListVM.init(this.videoListVM.folder, context);
-    })
-    .onBackPressed(() => {
-      AppStorage.setOrCreate(CURRENT_FOLDER, this.videoListVM.parent);
-      return false;
-    });
-  }
-}
-
-@Component
-struct ListView {
+export struct VideoFolderListView {
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
   @Link videoListVM: VideoListViewModel;
@@ -85,7 +15,7 @@ struct ListView {
   private newName?: string = '';
 
   @Builder
-  renameDialogBuilder(index: number, type: 'folder' | 'video') {
+  renameDialogBuilder(info: VideoInfoModel | FolderInfoModel, type: 'folder' | 'video') {
     Column() {
       Row() {
         Text('重命名')
@@ -148,9 +78,9 @@ struct ListView {
           }
           if (this.newName !== undefined) {
             if (type === 'video') {
-              this.videoListVM.renameVideo(this.newName, this.videoList[index].videoInfo, index);
+              this.videoListVM.renameVideo(this.newName, info as VideoInfoModel);
             } else {
-              this.videoListVM.renameFolder(this.newName, this.folderList[index].folderInfo, index);
+              this.videoListVM.renameFolder(this.newName, info as FolderInfoModel);
             }
           }
         });
@@ -163,7 +93,7 @@ struct ListView {
   }
 
   @Builder
-  folderSwipeEnd(index: number) {
+  folderSwipeEnd(info: FolderInfoModel) {
     Row({ space: 8 }) {
       Button({ type: ButtonType.Circle, stateEffect: false }) {
         Image($r('app.media.arrow_right_folder_fill'))
@@ -190,7 +120,7 @@ struct ListView {
           .getPromptAction()
           .openCustomDialog({
             builder: () => {
-              this.renameDialogBuilder(index, 'folder');
+              this.renameDialogBuilder(info, 'folder');
             },
             width: '100%',
             alignment: DialogAlignment.Center,
@@ -216,14 +146,14 @@ struct ListView {
       .padding(8)
       .backgroundColor(Color.Red)
       .onClick(() => {
-        this.videoListVM.deleteFolder(this.folderList[index].folderInfo, index);
+        this.videoListVM.deleteFolder(info);
       });
     }
     .padding({ left: 8, right: 8 });
   }
 
   @Builder
-  videoSwipeEnd(index: number) {
+  videoSwipeEnd(info: VideoInfoModel) {
     Row({ space: 8 }) {
       Button({ type: ButtonType.Circle, stateEffect: false }) {
         Image($r('app.media.arrow_right_folder_fill'))
@@ -250,7 +180,7 @@ struct ListView {
           .getPromptAction()
           .openCustomDialog({
             builder: () => {
-              this.renameDialogBuilder(index, 'video');
+              this.renameDialogBuilder(info, 'video');
             },
             width: '100%',
             alignment: DialogAlignment.Center,
@@ -276,7 +206,7 @@ struct ListView {
       .padding(8)
       .backgroundColor(Color.Red)
       .onClick(() => {
-        this.videoListVM.deleteVideo(this.videoList[index].videoInfo, index);
+        this.videoListVM.deleteVideo(info);
       });
     }
     .padding({ left: 8, right: 8 });
@@ -286,7 +216,7 @@ struct ListView {
     List() {
       ForEach(
         this.folderList,
-        (item: FolderItemViewModel, index: number) => {
+        (item: FolderItemViewModel) => {
           ListItem() {
             FolderBoxView({ folderItem: item });
           }
@@ -300,19 +230,20 @@ struct ListView {
           .swipeAction({
             end: {
               builder: () => {
-                this.folderSwipeEnd(index);
+                this.folderSwipeEnd(item.folderInfo);
               }
             }
           });
         },
         (item: FolderItemViewModel, index: number) => {
-          return item.folderName + `_${index}`;
+          index;
+          return item.folderInfo.id.toString();
         }
       );
 
       ForEach(
         this.videoList,
-        (item: VideoItemViewModel, index: number) => {
+        (item: VideoItemViewModel) => {
           ListItem() {
             VideoBoxView({ videoItem: item });
           }
@@ -333,13 +264,14 @@ struct ListView {
           .swipeAction({
             end: {
               builder: () => {
-                this.videoSwipeEnd(index);
+                this.videoSwipeEnd(item.videoInfo);
               }
             }
           });
         },
         (item: VideoItemViewModel, index: number) => {
-          return item.videoName + `_${index}`;
+          index;
+          return item.videoInfo.id.toString();
         }
       );
     }

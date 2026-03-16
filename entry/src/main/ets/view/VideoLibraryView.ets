@@ -1,5 +1,5 @@
 import { VideoLibraryViewModel } from '../viewmodel/VideoLibraryViewModel';
-import { VideoListView } from './VideoListView';
+import { VideoBrowserView } from './VideoBrowserView';
 
 const CURRENT_FOLDER = 'CurrentFolder';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
@@ -20,7 +20,7 @@ interface ImportOption {
 
 @Builder
 export function VideoListBuilder() {
-  VideoListView();
+  VideoBrowserView();
 }
 
 @Component
@@ -269,7 +269,7 @@ export struct VideoLibraryView {
 
       Stack({ alignContent: Alignment.BottomEnd }) {
         Navigation(this.videoTabStack) {
-          VideoListView();
+          VideoBrowserView();
         }
         .hideToolBar(true)
         .mode(NavigationMode.Stack);

@@ -241,12 +241,12 @@ export class VideoLibraryStore {
         predicate.equalTo('PARENT', folder);
         let resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
-          let videoInfo = new FolderInfoModel();
-          videoInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
-          videoInfo.path = resultSet.getString(resultSet.getColumnIndex('PATH'));
-          videoInfo.parent = resultSet.getString(resultSet.getColumnIndex('PARENT'));
-          videoInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
-          folderInfoList.push(videoInfo);
+          let folderInfo = new FolderInfoModel();
+          folderInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
+          folderInfo.path = resultSet.getString(resultSet.getColumnIndex('PATH'));
+          folderInfo.parent = resultSet.getString(resultSet.getColumnIndex('PARENT'));
+          folderInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
+          folderInfoList.push(folderInfo);
         }
       } catch (error) {
         console.error(`Failed to execute query folder by folder=${folder}. Cause: ${JSON.stringify(error)}`);
