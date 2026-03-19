@@ -9,6 +9,11 @@
       "name": "VideoList",
       "pageSourceFile": "src/main/ets/view/VideoLibraryView.ets",
       "buildFunction": "VideoListBuilder"
+    },
+    {
+      "name": "FolderBrowser",
+      "pageSourceFile": "src/main/ets/view/MovingToDialog.ets",
+      "buildFunction": "FolderBrowserBuilder"
     }
   ]
 }

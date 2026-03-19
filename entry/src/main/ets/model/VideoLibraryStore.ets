@@ -76,7 +76,57 @@ export class VideoLibraryStore {
     return rowId;
   }
 
-  async renameVideo(videoInfo: VideoInfoModel, newName: string) {
+  async moveVideo(videoInfo: VideoInfoModel, moveFolder: string): Promise<void> {
+    if (this.store !== undefined) {
+      try {
+        const valueBucket: relationalStore.ValuesBucket = {
+          FOLDER: moveFolder,
+        };
+        let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
+        predicate.equalTo('ID', videoInfo.id);
+        await this.store.update(valueBucket, predicate);
+      } catch (error) {
+        console.error(`Failed to move video id=${videoInfo.id} to ${moveFolder}. Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
+      }
+    }
+  }
+
+  async moveFolder(updateVideos: VideoInfoModel[], updateFolders: FolderInfoModel[]): Promise<void> {
+    // traverse folder
+    if (this.store !== undefined) {
+      let transaction: relationalStore.Transaction | undefined;
+      try {
+        transaction = await this.store.createTransaction();
+        // Update sub videos folder
+        for (let i = 0; i < updateVideos.length; ++i) {
+          const valueBucketFolder: relationalStore.ValuesBucket = {
+            FOLDER: updateVideos[i].folder,
+          };
+          let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
+          predicate.equalTo('ID', updateVideos[i].id);
+          await transaction.update(valueBucketFolder, predicate);
+        }
+        // Update sub folders parent
+        for (let i = 0; i < updateFolders.length; ++i) {
+          const valueBucketParent: relationalStore.ValuesBucket = {
+            PARENT: updateFolders[i].parent,
+            PATH: updateFolders[i].path,
+          };
+          let predicate = new relationalStore.RdbPredicates(FOLDER_TABLE_NAME);
+          predicate.equalTo('ID', updateFolders[i].id);
+          await transaction.update(valueBucketParent, predicate);
+        }
+        await transaction.commit();
+      } catch (error) {
+        console.error(`Failed to move folder. Cause: ${JSON.stringify(error)}`);
+        await transaction?.rollback();
+        throw new Error(error);
+      }
+    }
+  }
+
+  async renameVideo(videoInfo: VideoInfoModel, newName: string): Promise<void> {
     if (this.store !== undefined) {
       try {
         const valueBucket: relationalStore.ValuesBucket = {
@@ -92,7 +142,7 @@ export class VideoLibraryStore {
     }
   }
 
-  async renameFolder(updateVideos: VideoInfoModel[], updateFolders: FolderInfoModel[]) {
+  async renameFolder(updateVideos: VideoInfoModel[], updateFolders: FolderInfoModel[]): Promise<void> {
     if (this.store !== undefined) {
       let transaction: relationalStore.Transaction | undefined;
       try {

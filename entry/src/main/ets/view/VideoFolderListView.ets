@@ -4,13 +4,19 @@ import { FolderItemViewModel } from '../viewmodel/FolderItemViewModel';
 import { VideoItemViewModel } from '../viewmodel/VideoItemViewModel';
 import { FolderItemViewModelList, VideoItemViewModelList, VideoListViewModel } from '../viewmodel/VideoListViewModel';
 import { FolderBoxView } from './FolderBoxView';
+import { MovingToDialog } from './MovingToDialog';
 import { VideoBoxView } from './VideoBoxView';
+
+const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
 export struct VideoFolderListView {
+  @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
   @Link videoListVM: VideoListViewModel;
+  private moveDialogController?: CustomDialogController;
+  private scroller: ListScroller = new ListScroller();
   private renameDialogId: number = 0;
   private newName?: string = '';
 
@@ -104,7 +110,20 @@ export struct VideoFolderListView {
       .padding(8)
       .backgroundColor(Color.Blue)
       .onClick(() => {
-        // todo
+        this.moveDialogController = new CustomDialogController({
+          width: '100%',
+          height: '60%',
+          alignment: DialogAlignment.Bottom,
+          builder: MovingToDialog({ origFolder: this.videoListVM.folder, moveFolderList: [info] }),
+          offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
+        });
+        this.moveDialogController.open();
+
+        try {
+          this.scroller.closeAllSwipeActions();
+        } catch (error) {
+          console.error(`Failed to invoke ListScroller.closeAllSwipeActions. Cause: ${JSON.stringify(error)}`);
+        }
       });
 
       Button({ type: ButtonType.Circle, stateEffect: false }) {
@@ -135,6 +154,12 @@ export struct VideoFolderListView {
           .catch((err: BusinessError) => {
             console.error(`Failed to open create folder dialog. Cuase: ${JSON.stringify(err)}`);
           });
+
+        try {
+          this.scroller.closeAllSwipeActions();
+        } catch (error) {
+          console.error(`Failed to invoke ListScroller.closeAllSwipeActions. Cause: ${JSON.stringify(error)}`);
+        }
       });
 
       Button({ type: ButtonType.Circle, stateEffect: false }) {
@@ -164,7 +189,20 @@ export struct VideoFolderListView {
       .padding(8)
       .backgroundColor(Color.Blue)
       .onClick(() => {
-        // todo
+        this.moveDialogController = new CustomDialogController({
+          width: '100%',
+          height: '60%',
+          alignment: DialogAlignment.Bottom,
+          builder: MovingToDialog({ origFolder: this.videoListVM.folder, moveVideoList: [info] }),
+          offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
+        });
+        this.moveDialogController.open();
+
+        try {
+          this.scroller.closeAllSwipeActions();
+        } catch (error) {
+          console.error(`Failed to invoke ListScroller.closeAllSwipeActions. Cause: ${JSON.stringify(error)}`);
+        }
       });
 
       Button({ type: ButtonType.Circle, stateEffect: false }) {
@@ -195,6 +233,12 @@ export struct VideoFolderListView {
           .catch((err: BusinessError) => {
             console.error(`Failed to open create folder dialog. Cuase: ${JSON.stringify(err)}`);
           });
+
+        try {
+          this.scroller.closeAllSwipeActions();
+        } catch (error) {
+          console.error(`Failed to invoke ListScroller.closeAllSwipeActions. Cause: ${JSON.stringify(error)}`);
+        }
       });
 
       Button({ type: ButtonType.Circle, stateEffect: false }) {
@@ -213,7 +257,7 @@ export struct VideoFolderListView {
   }
 
   build() {
-    List() {
+    List({ scroller: this.scroller }) {
       ForEach(
         this.folderList,
         (item: FolderItemViewModel) => {

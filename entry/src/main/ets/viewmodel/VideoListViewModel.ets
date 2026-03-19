@@ -59,7 +59,6 @@ export class VideoListViewModel {
   }
 
   async renameFolder(newName: string, folderInfo: FolderInfoModel): Promise<void> {
-    console.info(`Rename Folder Start`);
     // traverse folder
     let updateVideoList: VideoInfoModel[] = [];
     let updateFolderList: FolderInfoModel[] = [];

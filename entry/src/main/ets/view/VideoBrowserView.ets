@@ -2,9 +2,13 @@ import { VideoListViewModel } from '../viewmodel/VideoListViewModel';
 import { emitter } from '@kit.BasicServicesKit';
 import { FolderInfoModel } from '../model/FolderInfoModel';
 import { VideoFolderListView } from './VideoFolderListView';
+import { VideoItemViewModel } from '../viewmodel/VideoItemViewModel';
+import { FolderItemViewModel } from '../viewmodel/FolderItemViewModel';
 
 const CREATE_FOLDER_EVENT = 'CreateFolder';
 const IMPORT_VIDEO_EVENT = 'ImportVideo';
+const MOVE_FOLDER_EVENT = 'FolderVideo';
+const MOVE_VIDEO_EVENT = 'MoveVideo';
 const CURRENT_FOLDER = 'CurrentFolder';
 
 @Component
@@ -28,15 +32,55 @@ export struct VideoBrowserView {
       }
     }
   };
+  private moveVideoCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
+    if (event.data) {
+      let from = event.data['from'] as string;
+      let to = event.data['to'] as string;
+      let id = event.data['id'] as number;
+      if (this.videoListVM.folder === from) {
+        let idx = this.videoListVM.videoList.findIndex((item: VideoItemViewModel) => {
+          return item.videoInfo.id === id;
+        });
+        if (idx !== -1) {
+          this.videoListVM.videoList.splice(idx, 1);
+        }
+      }
+      if (this.videoListVM.folder === to) {
+        this.videoListVM.updateVideoList(id);
+      }
+    }
+  };
+  private moveFolderCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
+    if (event.data) {
+      let from = event.data['from'] as string;
+      let to = event.data['to'] as string;
+      let id = event.data['id'] as number;
+      if (this.videoListVM.folder === from) {
+        let idx = this.videoListVM.folderList.findIndex((item: FolderItemViewModel) => {
+          return item.folderInfo.id === id;
+        });
+        if (idx !== -1) {
+          this.videoListVM.folderList.splice(idx, 1);
+        }
+      }
+      if (this.videoListVM.folder === to) {
+        this.videoListVM.updateFolderList(id);
+      }
+    }
+  };
 
   aboutToAppear(): void {
     emitter.on(CREATE_FOLDER_EVENT, this.createFolderCallback);
     emitter.on(IMPORT_VIDEO_EVENT, this.importVideoCallback);
+    emitter.on(MOVE_FOLDER_EVENT, this.moveFolderCallback);
+    emitter.on(MOVE_VIDEO_EVENT, this.moveVideoCallback);
   }
 
   aboutToDisappear(): void {
     emitter.off(CREATE_FOLDER_EVENT, this.createFolderCallback);
     emitter.off(IMPORT_VIDEO_EVENT, this.importVideoCallback);
+    emitter.off(MOVE_FOLDER_EVENT, this.moveFolderCallback);
+    emitter.off(MOVE_VIDEO_EVENT, this.moveVideoCallback);
   }
 
   build() {
