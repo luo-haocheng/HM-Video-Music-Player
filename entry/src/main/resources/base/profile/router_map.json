@@ -6,9 +6,9 @@
       "buildFunction": "VideoPlayerBuilder"
     },
     {
-      "name": "VideoList",
+      "name": "VideoBrowser",
       "pageSourceFile": "src/main/ets/view/VideoLibraryView.ets",
-      "buildFunction": "VideoListBuilder"
+      "buildFunction": "VideoBrowserBuilder"
     },
     {
       "name": "FolderBrowser",

@@ -1,6 +1,7 @@
 import { VideoLibraryViewModel } from '../viewmodel/VideoLibraryViewModel';
 import { VideoBrowserView } from './VideoBrowserView';
 
+const ROOT_FOLDER = '/';
 const CURRENT_FOLDER = 'CurrentFolder';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
@@ -19,13 +20,13 @@ interface ImportOption {
 };
 
 @Builder
-export function VideoListBuilder() {
+export function VideoBrowserBuilder() {
   VideoBrowserView();
 }
 
 @Component
 export struct VideoLibraryView {
-  @StorageProp(CURRENT_FOLDER) folder: string = '/';
+  @Provide(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Provide('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
@@ -34,8 +35,9 @@ export struct VideoLibraryView {
   private importDialogId: number = 0;
   private createFolderDialogId: number = 0;
 
-  aboutToAppear(): void {
-    this.videoLibVM.init();
+  async aboutToAppear(): Promise<void> {
+    await this.videoLibVM.init();
+    this.videoTabStack.pushPath({ name: 'VideoBrowser' });
   }
 
   @Builder
@@ -125,8 +127,8 @@ export struct VideoLibraryView {
             console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
           }
           if (this.newFolderName != undefined) {
-            let newFolder = this.folder + this.newFolderName + '/';
-            this.videoLibVM.createVideoFolder(newFolder, this.folder);
+            let newFolder = this.currFolder + this.newFolderName + '/';
+            this.videoLibVM.createVideoFolder(newFolder, this.currFolder);
           }
         });
       }
@@ -175,7 +177,7 @@ export struct VideoLibraryView {
           } catch (error) {
             console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
           }
-          this.videoLibVM.importVideoFromMediaLib(this.folder);
+          this.videoLibVM.importVideoFromMediaLib(this.currFolder);
         });
 
         ListItem() {
@@ -187,7 +189,7 @@ export struct VideoLibraryView {
           } catch (error) {
             console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
           }
-          this.videoLibVM.importVideoFromFileMgr(this.folder);
+          this.videoLibVM.importVideoFromFileMgr(this.currFolder);
         });
 
         ListItem() {
@@ -199,7 +201,7 @@ export struct VideoLibraryView {
           } catch (error) {
             console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
           }
-          this.videoLibVM.importVideoFromDownloadDir(this.folder);
+          this.videoLibVM.importVideoFromDownloadDir(this.currFolder);
         });
 
         ListItem() {
@@ -269,7 +271,7 @@ export struct VideoLibraryView {
 
       Stack({ alignContent: Alignment.BottomEnd }) {
         Navigation(this.videoTabStack) {
-          VideoBrowserView();
+          // Nothing, waiting from push
         }
         .hideToolBar(true)
         .mode(NavigationMode.Stack);

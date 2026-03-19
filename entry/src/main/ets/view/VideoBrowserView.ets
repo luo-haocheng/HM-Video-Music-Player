@@ -1,10 +1,13 @@
+import { common } from '@kit.AbilityKit';
 import { VideoListViewModel } from '../viewmodel/VideoListViewModel';
 import { emitter } from '@kit.BasicServicesKit';
 import { FolderInfoModel } from '../model/FolderInfoModel';
 import { VideoFolderListView } from './VideoFolderListView';
 import { VideoItemViewModel } from '../viewmodel/VideoItemViewModel';
 import { FolderItemViewModel } from '../viewmodel/FolderItemViewModel';
+import { window } from '@kit.ArkUI';
 
+const ROOT_FOLDER = '/';
 const CREATE_FOLDER_EVENT = 'CreateFolder';
 const IMPORT_VIDEO_EVENT = 'ImportVideo';
 const MOVE_FOLDER_EVENT = 'FolderVideo';
@@ -13,6 +16,7 @@ const CURRENT_FOLDER = 'CurrentFolder';
 
 @Component
 export struct VideoBrowserView {
+  @Consume(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
   @State videoListVM: VideoListViewModel = new VideoListViewModel();
   private createFolderCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
     if (event.data) {
@@ -105,13 +109,28 @@ export struct VideoBrowserView {
         let folderInfo = navContext.pathInfo.param as FolderInfoModel;
         this.videoListVM.parent = folderInfo.parent;
         this.videoListVM.folder = folderInfo.path;
-        AppStorage.setOrCreate(CURRENT_FOLDER, this.videoListVM.folder);
       }
       let context = this.getUIContext().getHostContext() as Context;
       this.videoListVM.init(this.videoListVM.folder, context);
     })
+    .onActive(() => {
+      this.currFolder = this.videoListVM.folder;
+    })
     .onBackPressed(() => {
-      AppStorage.setOrCreate(CURRENT_FOLDER, this.videoListVM.parent);
+      if (this.currFolder === ROOT_FOLDER) {
+        let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+        context.windowStage.getMainWindow()
+          .then((windowClass: window.Window) => {
+            windowClass.minimize()
+              .catch((err: BusinessError) => {
+                console.error(`Failed to invoke Window.minize(). Cause: ${JSON.stringify(err)}`);
+              });
+          })
+          .catch((err: BusinessError) => {
+            console.error(`Failed to WindowStage.getMainWindow. Cause: ${JSON.stringify(err)}`);
+          });
+        return true;
+      }
       return false;
     });
   }
