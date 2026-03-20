@@ -2,6 +2,7 @@ import { VideoLibraryViewModel } from '../viewmodel/VideoLibraryViewModel';
 import { VideoBrowserView } from './VideoBrowserView';
 
 const ROOT_FOLDER = '/';
+const MULTI_CHOICE = 'MultiChoice';
 const CURRENT_FOLDER = 'CurrentFolder';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
@@ -26,6 +27,7 @@ export function VideoBrowserBuilder() {
 
 @Component
 export struct VideoLibraryView {
+  @Provide(MULTI_CHOICE) multiChoice: boolean = false;
   @Provide(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
@@ -33,11 +35,45 @@ export struct VideoLibraryView {
   @State videoLibVM: VideoLibraryViewModel = new VideoLibraryViewModel(this.getUIContext().getHostContext() as Context);
   private newFolderName?: string;
   private importDialogId: number = 0;
+  private multiChoiceDialogId: number = 0;
   private createFolderDialogId: number = 0;
+  private moreOptionsMenuList: MenuElement[] = [
+    {
+      value: '宫格视图',
+      action: () => {
+      }
+    },
+    {
+      value: '排序方式',
+      action: () => {
+      }
+    },
+    {
+      value: '保险柜',
+      action: () => {
+      }
+    },
+    {
+      value: '设置',
+      action: () => {
+      }
+    },
+    {
+      value: '关于',
+      action: () => {
+      }
+    },
+  ];
 
   async aboutToAppear(): Promise<void> {
     await this.videoLibVM.init();
     this.videoTabStack.pushPath({ name: 'VideoBrowser' });
+  }
+
+  private getFolderName(path: string): string {
+    let prevSlashIdx = path.lastIndexOf('/', path.length - 2);
+    let folderName = path.slice(prevSlashIdx + 1, path.length - 1);
+    return folderName;
   }
 
   @Builder
@@ -253,58 +289,202 @@ export struct VideoLibraryView {
     .padding(16);
   }
 
+  @Builder
+  ChoiceOptionBuilder(icon: ResourceStr, name: ResourceStr) {
+    Column({ space: 2 }) {
+      Image(icon)
+        .width(24)
+        .aspectRatio(1)
+        .fillColor(Color.Black);
+      Text(name)
+        .fontSize(12)
+        .fontColor(Color.Black);
+    }
+    .height('100%')
+    .padding({ top: 8 })
+    .justifyContent(FlexAlign.Start)
+    .alignItems(HorizontalAlign.Center);
+  }
+
+  @Builder
+  multiChoiceBuilder() {
+    Row() {
+      this.ChoiceOptionBuilder($r('app.media.trash'), '删除');
+
+      this.ChoiceOptionBuilder($r('app.media.arrow_right_folder_circle'), '移动');
+
+      this.ChoiceOptionBuilder($r('app.media.lock'), '保险柜');
+
+      this.ChoiceOptionBuilder($r('app.media.share'), '分享');
+    }
+    .width('100%')
+    .height('100%')
+    .padding({ left: 32, right: 32 })
+    .alignItems(VerticalAlign.Top)
+    .justifyContent(FlexAlign.SpaceBetween);
+  }
+
   build() {
     Flex({
       direction: FlexDirection.Column,
       justifyContent: FlexAlign.Start,
       alignItems: ItemAlign.Center
     }) {
-      Row() {
-        Text('视频')
-          .fontSize(24)
-          .fontColor(Color.Black);
-      }
-      .width('100%')
-      .margin({ top: 8, bottom: 8 })
-      .justifyContent(FlexAlign.Center)
-      .alignItems(VerticalAlign.Center);
+      if (!this.multiChoice) {
+        Row() {
+          Row({ space: 12 }) {
+            if (this.currFolder !== ROOT_FOLDER) {
+              Button({ type: ButtonType.Circle, stateEffect: false }) {
+                Image($r('app.media.back'))
+                  .width(14)
+                  .aspectRatio(1)
+                  .fillColor(Color.Black);
+              }
+              .width(36)
+              .aspectRatio(1)
+              .backgroundColor('#AADCDCDC')
+              .onClick(() => {
+                this.videoTabStack.pop();
+              });
+            }
 
-      Stack({ alignContent: Alignment.BottomEnd }) {
-        Navigation(this.videoTabStack) {
-          // Nothing, waiting from push
-        }
-        .hideToolBar(true)
-        .mode(NavigationMode.Stack);
+            Text(this.currFolder === ROOT_FOLDER ? '视频' : this.getFolderName(this.currFolder))
+              .fontSize(20)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold);
+          };
 
-        Button({ type: ButtonType.Circle, stateEffect: false }) {
-          Image($r('app.media.plus'))
+          Row({ space: 12 }) {
+            Button({ type: ButtonType.Capsule, stateEffect: false }) {
+              Text('多选')
+                .fontSize(14)
+                .fontColor(Color.Black);
+            }
+            .width(36 * 1.5)
+            .aspectRatio(1.5)
+            .backgroundColor('#AADCDCDC')
+            .onClick(() => {
+              this.getUIContext()
+                .getPromptAction()
+                .openCustomDialog({
+                  builder: () => {
+                    this.multiChoiceBuilder();
+                  },
+                  width: '100%',
+                  height: 56 + this.getUIContext().px2vp(this.bottomRectHeight),
+                  isModal: false,
+                  cornerRadius: 0,
+                  alignment: DialogAlignment.Bottom,
+                  transition: TransitionEffect.SLIDE,
+                  offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) },
+                  onWillAppear: () => {
+                    this.multiChoice = true;
+                  },
+                  onWillDisappear: () => {
+                    this.multiChoice = false;
+                  }
+                })
+                .then((dialogId: number) => {
+                  this.multiChoiceDialogId = dialogId;
+                })
+                .catch((err: BusinessError) => {
+                  console.error(`Failed to open import dialog. Cuase: ${JSON.stringify(err)}`);
+                });
+            });
+
+            Button({ type: ButtonType.Circle, stateEffect: false }) {
+              Image($r('app.media.plus'))
+                .width(24)
+                .aspectRatio(1)
+                .fillColor(Color.Black);
+            }
             .width(36)
             .aspectRatio(1)
-            .fillColor(Color.White);
-        }
-        .padding(5)
-        .margin({ right: 32, bottom: 32 })
-        .backgroundColor(Color.Green)
-        .onClick(() => {
-          this.getUIContext()
-            .getPromptAction()
-            .openCustomDialog({
-              builder: () => {
-                this.importDialogBuilder();
-              },
-              width: '100%',
-              alignment: DialogAlignment.Bottom,
-              transition: TransitionEffect.SLIDE,
-              offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
-            })
-            .then((dialogId: number) => {
-              this.importDialogId = dialogId;
-            })
-            .catch((err: BusinessError) => {
-              console.error(`Failed to open import dialog. Cuase: ${JSON.stringify(err)}`);
+            .backgroundColor('#AADCDCDC')
+            .onClick(() => {
+              this.getUIContext()
+                .getPromptAction()
+                .openCustomDialog({
+                  builder: () => {
+                    this.importDialogBuilder();
+                  },
+                  width: '100%',
+                  alignment: DialogAlignment.Bottom,
+                  transition: TransitionEffect.SLIDE,
+                  offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
+                })
+                .then((dialogId: number) => {
+                  this.importDialogId = dialogId;
+                })
+                .catch((err: BusinessError) => {
+                  console.error(`Failed to open import dialog. Cuase: ${JSON.stringify(err)}`);
+                });
             });
-        });
-      };
+
+            Button({ type: ButtonType.Circle, stateEffect: false }) {
+              Image($r('app.media.dot_grid_2x2'))
+                .width(24)
+                .aspectRatio(1)
+                .fillColor(Color.Black);
+            }
+            .width(36)
+            .aspectRatio(1)
+            .backgroundColor('#AADCDCDC')
+            .bindMenu(this.moreOptionsMenuList);
+          };
+        }
+        .padding(16)
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.SpaceBetween);
+      } else {
+        Row() {
+          Row({ space: 12 }) {
+            Button({ type: ButtonType.Circle, stateEffect: false }) {
+              Image($r('app.media.xmark'))
+                .width(24)
+                .aspectRatio(1)
+                .fillColor(Color.Black);
+            }
+            .width(36)
+            .aspectRatio(1)
+            .backgroundColor('#AADCDCDC')
+            .onClick(() => {
+              try {
+                this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+              } catch (error) {
+                console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+              }
+            });
+
+            Text('未选择')
+              .fontSize(18)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold);
+          };
+
+          Button({ type: ButtonType.Capsule, stateEffect: false }) {
+            Text('全选')
+              .fontSize(14)
+              .fontColor(Color.Black);
+          }
+          .width(36 * 1.5)
+          .aspectRatio(1.5)
+          .backgroundColor('#AADCDCDC');
+
+        }
+        .padding(16)
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.SpaceBetween);
+      }
+
+      Navigation(this.videoTabStack) {
+        // Nothing, waiting from push
+      }
+      .hideToolBar(true)
+      .mode(NavigationMode.Stack);
+
     }
     .width('100%')
     .height('100%')
