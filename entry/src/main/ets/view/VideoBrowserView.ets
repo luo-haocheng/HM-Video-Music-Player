@@ -13,6 +13,7 @@ const IMPORT_VIDEO_EVENT = 'ImportVideo';
 const MOVE_FOLDER_EVENT = 'FolderVideo';
 const MOVE_VIDEO_EVENT = 'MoveVideo';
 const CURRENT_FOLDER = 'CurrentFolder';
+const CHOICE_ALL_EVENT = 'ChoiceAll';
 
 @Component
 export struct VideoBrowserView {
@@ -72,12 +73,27 @@ export struct VideoBrowserView {
       }
     }
   };
+  private choiceAllCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
+    if (this.currFolder !== this.videoListVM.folder) {
+      return;
+    }
+    if (event.data) {
+      let choiceAll = event.data['choiceAll'] as boolean;
+      this.videoListVM.videoList.forEach((item: VideoItemViewModel) => {
+        item.isChoice = choiceAll;
+      });
+      this.videoListVM.folderList.forEach((item: FolderItemViewModel) => {
+        item.isChoice = choiceAll;
+      });
+    }
+  };
 
   aboutToAppear(): void {
     emitter.on(CREATE_FOLDER_EVENT, this.createFolderCallback);
     emitter.on(IMPORT_VIDEO_EVENT, this.importVideoCallback);
     emitter.on(MOVE_FOLDER_EVENT, this.moveFolderCallback);
     emitter.on(MOVE_VIDEO_EVENT, this.moveVideoCallback);
+    emitter.on(CHOICE_ALL_EVENT, this.choiceAllCallback);
   }
 
   aboutToDisappear(): void {
@@ -85,6 +101,7 @@ export struct VideoBrowserView {
     emitter.off(IMPORT_VIDEO_EVENT, this.importVideoCallback);
     emitter.off(MOVE_FOLDER_EVENT, this.moveFolderCallback);
     emitter.off(MOVE_VIDEO_EVENT, this.moveVideoCallback);
+    emitter.off(CHOICE_ALL_EVENT, this.choiceAllCallback);
   }
 
   build() {

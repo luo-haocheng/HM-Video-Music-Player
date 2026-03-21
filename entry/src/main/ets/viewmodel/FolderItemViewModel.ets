@@ -2,6 +2,7 @@ import { FolderInfoModel } from '../model/FolderInfoModel';
 
 @Observed
 export class FolderItemViewModel {
+  @Track isChoice: boolean = false;
   @Track folderName: string = '';
   @Track dateAdd: string = '';
   public folderInfo: FolderInfoModel = new FolderInfoModel();

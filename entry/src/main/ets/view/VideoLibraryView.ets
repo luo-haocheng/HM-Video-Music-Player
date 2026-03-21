@@ -1,7 +1,10 @@
 import { VideoLibraryViewModel } from '../viewmodel/VideoLibraryViewModel';
 import { VideoBrowserView } from './VideoBrowserView';
+import { emitter } from '@kit.BasicServicesKit';
 
 const ROOT_FOLDER = '/';
+const CHOICE_ALL = 'ChoiceAll';
+const CHOICE_ALL_EVENT = 'ChoiceAll';
 const MULTI_CHOICE = 'MultiChoice';
 const CURRENT_FOLDER = 'CurrentFolder';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
@@ -27,6 +30,7 @@ export function VideoBrowserBuilder() {
 
 @Component
 export struct VideoLibraryView {
+  @Provide(CHOICE_ALL) choiceAll: boolean = true;
   @Provide(MULTI_CHOICE) multiChoice: boolean = false;
   @Provide(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
@@ -349,10 +353,14 @@ export struct VideoLibraryView {
             }
 
             Text(this.currFolder === ROOT_FOLDER ? '视频' : this.getFolderName(this.currFolder))
+              .maxLines(1)
               .fontSize(20)
+              .layoutWeight(1)
               .fontColor(Color.Black)
-              .fontWeight(FontWeight.Bold);
-          };
+              .fontWeight(FontWeight.Bold)
+              .textOverflow({ overflow: TextOverflow.Ellipsis });
+          }
+          .layoutWeight(1);
 
           Row({ space: 12 }) {
             Button({ type: ButtonType.Capsule, stateEffect: false }) {
@@ -382,6 +390,7 @@ export struct VideoLibraryView {
                   },
                   onWillDisappear: () => {
                     this.multiChoice = false;
+                    this.choiceAll = true;
                   }
                 })
                 .then((dialogId: number) => {
@@ -431,7 +440,8 @@ export struct VideoLibraryView {
             .aspectRatio(1)
             .backgroundColor('#AADCDCDC')
             .bindMenu(this.moreOptionsMenuList);
-          };
+          }
+          .layoutWeight(0);
         }
         .padding(16)
         .width('100%')
@@ -464,14 +474,22 @@ export struct VideoLibraryView {
           };
 
           Button({ type: ButtonType.Capsule, stateEffect: false }) {
-            Text('全选')
+            Text(this.choiceAll ? '全选' : '取消全选')
               .fontSize(14)
               .fontColor(Color.Black);
           }
-          .width(36 * 1.5)
-          .aspectRatio(1.5)
-          .backgroundColor('#AADCDCDC');
-
+          .width(36 * (this.choiceAll ? 1.5 : 2))
+          .aspectRatio(this.choiceAll ? 1.5 : 2)
+          .backgroundColor('#AADCDCDC')
+          .onClick(() => {
+            let eventData: emitter.EventData = {
+              data: {
+                'choiceAll': this.choiceAll,
+              }
+            };
+            this.choiceAll = !this.choiceAll;
+            emitter.emit(CHOICE_ALL_EVENT, eventData);
+          });
         }
         .padding(16)
         .width('100%')

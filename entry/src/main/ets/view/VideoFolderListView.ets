@@ -7,11 +7,13 @@ import { FolderBoxView } from './FolderBoxView';
 import { MovingToDialog } from './MovingToDialog';
 import { VideoBoxView } from './VideoBoxView';
 
+const CHOICE_ALL = 'ChoiceAll';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
 export struct VideoFolderListView {
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
+  @Consume(CHOICE_ALL) choiceAll: boolean = false;
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
   @Link videoListVM: VideoListViewModel;
@@ -19,6 +21,15 @@ export struct VideoFolderListView {
   private scroller: ListScroller = new ListScroller();
   private renameDialogId: number = 0;
   private newName?: string = '';
+  private isAllChoice: Callback<void> = () => {
+    const folderAllChoice = this.folderList.find((item: FolderItemViewModel) => {
+      return !item.isChoice;
+    });
+    const videoAllChoice = this.videoList.find((item: VideoItemViewModel) => {
+      return !item.isChoice;
+    });
+    this.choiceAll = (folderAllChoice !== undefined) || (videoAllChoice !== undefined);
+  };
 
   @Builder
   renameDialogBuilder(info: VideoInfoModel | FolderInfoModel, type: 'folder' | 'video') {
@@ -262,7 +273,11 @@ export struct VideoFolderListView {
         this.folderList,
         (item: FolderItemViewModel) => {
           ListItem() {
-            FolderBoxView({ folderItem: item });
+            FolderBoxView({
+              folderItem: item, isAllChoice: () => {
+                this.isAllChoice();
+              }
+            });
           }
           .padding({ left: 8, right: 8 })
           .gesture(
@@ -289,7 +304,11 @@ export struct VideoFolderListView {
         this.videoList,
         (item: VideoItemViewModel) => {
           ListItem() {
-            VideoBoxView({ videoItem: item });
+            VideoBoxView({
+              videoItem: item, isAllChoice: () => {
+                this.isAllChoice();
+              }
+            });
           }
           .padding({ left: 8, right: 8 })
           .gesture(

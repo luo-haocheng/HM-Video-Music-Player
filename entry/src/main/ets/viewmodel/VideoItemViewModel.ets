@@ -5,6 +5,7 @@ import { media } from '@kit.MediaKit';
 
 @Observed
 export class VideoItemViewModel {
+  @Track public isChoice: boolean = false;
   @Track public videoName: string = '';
   @Track public videoSize: string = '';
   @Track public duration: string = '';
