@@ -3,6 +3,7 @@ import { VideoBrowserView } from './VideoBrowserView';
 import { emitter } from '@kit.BasicServicesKit';
 
 const ROOT_FOLDER = '/';
+const INVALID_VALUES = '/\\:*?"<>|';
 const CHOICE_ALL = 'ChoiceAll';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
 const MOVE_CHOICE_EVENT = 'MoveChoice';
@@ -38,6 +39,7 @@ export struct VideoLibraryView {
   @Provide(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
   @Provide('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
   @State videoLibVM: VideoLibraryViewModel = new VideoLibraryViewModel(this.getUIContext().getHostContext() as Context);
+  @State invalidName: boolean = false;
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   private newFolderName?: string;
@@ -122,16 +124,32 @@ export struct VideoLibraryView {
       TextInput({ placeholder: '新建文件夹' })
         .id('createFolderTextInput')
         .fontSize(14)
+        .maxLength(100)
         .showUnderline(true)
         .underlineColor(Color.Gray)
         .placeholderFont({ size: 14 })
         .backgroundColor(Color.Transparent)
+        .bindPopup(this.invalidName, {
+          message: `文件名不能包含以下任何字符: ${INVALID_VALUES}`,
+          placement: Placement.BottomRight,
+        })
         .onAppear(() => {
           try {
             this.getUIContext().getFocusController().requestFocus('createFolderTextInput');
           } catch (error) {
             console.error(`Failed to request focus for createFolder TextInput. Cause: ${JSON.stringify(error)}`);
           }
+        })
+        .onWillInsert((value: InsertValue) => {
+          if (INVALID_VALUES.includes(value.insertValue)) {
+            this.invalidName = true;
+            setTimeout(() => {
+              this.invalidName = false;
+            }, 3000);
+          } else {
+            this.invalidName = false;
+          }
+          return !this.invalidName;
         })
         .onChange((value: string) => {
           this.newFolderName = value;

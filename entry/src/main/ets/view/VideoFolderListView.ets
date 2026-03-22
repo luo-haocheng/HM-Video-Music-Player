@@ -9,6 +9,7 @@ import { VideoBoxView } from './VideoBoxView';
 import { common } from '@kit.AbilityKit';
 
 const CHOICE_ALL = 'ChoiceAll';
+const INVALID_VALUES = '/\\:*?"<>|';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
@@ -17,6 +18,7 @@ export struct VideoFolderListView {
   @Consume(CHOICE_ALL) choiceAll: boolean = false;
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
+  @State invalidName: boolean = false;
   @Link videoListVM: VideoListViewModel;
   private moveDialogController?: CustomDialogController;
   private scroller: ListScroller = new ListScroller();
@@ -47,16 +49,32 @@ export struct VideoFolderListView {
       TextInput({ placeholder: '重命名' })
         .id('renameTextInput')
         .fontSize(14)
+        .maxLength(100)
         .showUnderline(true)
         .underlineColor(Color.Gray)
         .placeholderFont({ size: 14 })
         .backgroundColor(Color.Transparent)
+        .bindPopup(this.invalidName, {
+          message: `文件名不能包含以下任何字符: ${INVALID_VALUES}`,
+          placement: Placement.BottomRight,
+        })
         .onAppear(() => {
           try {
             this.getUIContext().getFocusController().requestFocus('renameTextInput');
           } catch (error) {
             console.error(`Failed to request focus for renameTextInput. Cause: ${JSON.stringify(error)}`);
           }
+        })
+        .onWillInsert((value: InsertValue) => {
+          if (INVALID_VALUES.includes(value.insertValue)) {
+            this.invalidName = true;
+            setTimeout(() => {
+              this.invalidName = false;
+            }, 3000);
+          } else {
+            this.invalidName = false;
+          }
+          return !this.invalidName;
         })
         .onChange((value: string) => {
           this.newName = value;
