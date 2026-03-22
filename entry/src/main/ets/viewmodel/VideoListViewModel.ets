@@ -91,6 +91,29 @@ export class VideoListViewModel {
     }
   }
 
+  async deleteChoiceItem(): Promise<void> {
+    // Delete choice videos
+    let choiceVideos: VideoInfoModel[] = [];
+    this.videoList.forEach((item: VideoItemViewModel) => {
+      if (item.isChoice) {
+        choiceVideos.push(item.videoInfo);
+      }
+    });
+    for (let i = 0; i < choiceVideos.length; ++i) {
+      await this.deleteVideo(choiceVideos[i]);
+    }
+    // Delete choice folders
+    let choiceFolders: FolderInfoModel[] = [];
+    this.folderList.forEach((item: FolderItemViewModel) => {
+      if (item.isChoice) {
+        choiceFolders.push(item.folderInfo);
+      }
+    });
+    for (let i = 0; i < choiceFolders.length; ++i) {
+      await this.deleteFolder(choiceFolders[i]);
+    }
+  }
+
   async deleteFolder(folderInfo: FolderInfoModel): Promise<void> {
     // traverse folder
     let delVideoList: VideoInfoModel[] = [];

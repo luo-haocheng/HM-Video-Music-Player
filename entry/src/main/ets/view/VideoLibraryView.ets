@@ -5,6 +5,7 @@ import { emitter } from '@kit.BasicServicesKit';
 const ROOT_FOLDER = '/';
 const CHOICE_ALL = 'ChoiceAll';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
+const DELETE_CHOICE_EVENT = 'DeleteChoice';
 const MULTI_CHOICE = 'MultiChoice';
 const CURRENT_FOLDER = 'CurrentFolder';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
@@ -33,10 +34,10 @@ export struct VideoLibraryView {
   @Provide(CHOICE_ALL) choiceAll: boolean = true;
   @Provide(MULTI_CHOICE) multiChoice: boolean = false;
   @Provide(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
-  @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
-  @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Provide('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
   @State videoLibVM: VideoLibraryViewModel = new VideoLibraryViewModel(this.getUIContext().getHostContext() as Context);
+  @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
+  @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   private newFolderName?: string;
   private importDialogId: number = 0;
   private multiChoiceDialogId: number = 0;
@@ -294,7 +295,7 @@ export struct VideoLibraryView {
   }
 
   @Builder
-  ChoiceOptionBuilder(icon: ResourceStr, name: ResourceStr) {
+  ChoiceOptionBuilder(icon: ResourceStr, name: ResourceStr, callback: Callback<void>) {
     Column({ space: 2 }) {
       Image(icon)
         .width(24)
@@ -307,19 +308,33 @@ export struct VideoLibraryView {
     .height('100%')
     .padding({ top: 8 })
     .justifyContent(FlexAlign.Start)
-    .alignItems(HorizontalAlign.Center);
+    .alignItems(HorizontalAlign.Center)
+    .onClick(() => {
+      callback();
+    });
   }
 
   @Builder
   multiChoiceBuilder() {
     Row() {
-      this.ChoiceOptionBuilder($r('app.media.trash'), '删除');
+      this.ChoiceOptionBuilder($r('app.media.trash'), '删除', () => {
+        emitter.emit(DELETE_CHOICE_EVENT);
+      });
 
-      this.ChoiceOptionBuilder($r('app.media.arrow_right_folder_circle'), '移动');
+      this.ChoiceOptionBuilder($r('app.media.arrow_right_folder_circle'), '移动', () => {
+        console.info(`Move all choice video and folders`);
+        // todo
+      });
 
-      this.ChoiceOptionBuilder($r('app.media.lock'), '保险柜');
+      this.ChoiceOptionBuilder($r('app.media.lock'), '保险柜', () => {
+        console.info('Move all choice videos and folders to secret folder');
+        // todo
+      });
 
-      this.ChoiceOptionBuilder($r('app.media.share'), '分享');
+      this.ChoiceOptionBuilder($r('app.media.share'), '分享', () => {
+        console.info('Share all choice videos and folder');
+        // todo
+      });
     }
     .width('100%')
     .height('100%')

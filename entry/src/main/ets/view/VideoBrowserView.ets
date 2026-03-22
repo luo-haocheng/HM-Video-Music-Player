@@ -8,6 +8,7 @@ import { FolderItemViewModel } from '../viewmodel/FolderItemViewModel';
 import { window } from '@kit.ArkUI';
 
 const ROOT_FOLDER = '/';
+const DELETE_CHOICE_EVENT = 'DeleteChoice';
 const CREATE_FOLDER_EVENT = 'CreateFolder';
 const IMPORT_VIDEO_EVENT = 'ImportVideo';
 const MOVE_FOLDER_EVENT = 'FolderVideo';
@@ -87,6 +88,12 @@ export struct VideoBrowserView {
       });
     }
   };
+  private deleteChoiceCallback: Callback<emitter.EventData> = () => {
+    if (this.currFolder !== this.videoListVM.folder) {
+      return;
+    }
+    this.videoListVM.deleteChoiceItem();
+  };
 
   aboutToAppear(): void {
     emitter.on(CREATE_FOLDER_EVENT, this.createFolderCallback);
@@ -94,6 +101,7 @@ export struct VideoBrowserView {
     emitter.on(MOVE_FOLDER_EVENT, this.moveFolderCallback);
     emitter.on(MOVE_VIDEO_EVENT, this.moveVideoCallback);
     emitter.on(CHOICE_ALL_EVENT, this.choiceAllCallback);
+    emitter.on(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
   }
 
   aboutToDisappear(): void {
@@ -102,6 +110,7 @@ export struct VideoBrowserView {
     emitter.off(MOVE_FOLDER_EVENT, this.moveFolderCallback);
     emitter.off(MOVE_VIDEO_EVENT, this.moveVideoCallback);
     emitter.off(CHOICE_ALL_EVENT, this.choiceAllCallback);
+    emitter.off(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
   }
 
   build() {
