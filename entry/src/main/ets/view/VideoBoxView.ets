@@ -2,10 +2,12 @@ import { VideoItemViewModel } from '../viewmodel/VideoItemViewModel';
 import { LengthMetrics } from '@kit.ArkUI';
 
 const MULTI_CHOICE = 'MultiChoice';
+const CHOICE_COUNT = 'ChoiceCount';
 
 @Component
 export struct VideoBoxView {
   @ObjectLink videoItem: VideoItemViewModel;
+  @Consume(CHOICE_COUNT) choiceCount: number = 0;
   @Consume(MULTI_CHOICE) multiChoice: boolean = false;
   @Consume('MainPageStack') mainPageStack: NavPathStack;
   public isAllChoice: Callback<void> = () => {
@@ -80,7 +82,8 @@ export struct VideoBoxView {
                   this.videoItem.isChoice = false;
                 }, 200);
               })
-              .onChange(() => {
+              .onChange((value: boolean) => {
+                this.choiceCount += value ? 1 : -1;
                 this.isAllChoice();
               });
           }

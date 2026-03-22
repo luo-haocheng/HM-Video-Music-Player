@@ -2,10 +2,12 @@ import { FolderItemViewModel } from '../viewmodel/FolderItemViewModel';
 import { LengthMetrics } from '@kit.ArkUI';
 
 const MULTI_CHOICE = 'MultiChoice';
+const CHOICE_COUNT = 'ChoiceCount';
 
 @Component
 export struct FolderBoxView {
   @ObjectLink folderItem: FolderItemViewModel;
+  @Consume(CHOICE_COUNT) choiceCount: number = 0;
   @Consume(MULTI_CHOICE) multiChoice: boolean = false;
   @Consume('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
   public isAllChoice: Callback<void> = () => {
@@ -69,7 +71,8 @@ export struct FolderBoxView {
                   this.folderItem.isChoice = false;
                 }, 200);
               })
-              .onChange(() => {
+              .onChange((value: boolean) => {
+                this.choiceCount += value ? 1 : -1;
                 this.isAllChoice();
               });
           }

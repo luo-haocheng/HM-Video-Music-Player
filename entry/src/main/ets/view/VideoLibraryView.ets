@@ -5,6 +5,7 @@ import { emitter } from '@kit.BasicServicesKit';
 const ROOT_FOLDER = '/';
 const INVALID_VALUES = '/\\:*?"<>|';
 const CHOICE_ALL = 'ChoiceAll';
+const CHOICE_COUNT = 'ChoiceCount';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
 const MOVE_CHOICE_EVENT = 'MoveChoice';
 const SHARE_CHOICE_EVENT = 'ShareChoice';
@@ -35,6 +36,7 @@ export function VideoBrowserBuilder() {
 @Component
 export struct VideoLibraryView {
   @Provide(CHOICE_ALL) choiceAll: boolean = true;
+  @Provide(CHOICE_COUNT) choiceCount: number = 0;
   @Provide(MULTI_CHOICE) multiChoice: boolean = false;
   @Provide(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
   @Provide('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
@@ -445,6 +447,7 @@ export struct VideoLibraryView {
                   onWillDisappear: () => {
                     this.multiChoice = false;
                     this.choiceAll = true;
+                    this.choiceCount = 0;
                   }
                 })
                 .then((dialogId: number) => {
@@ -521,7 +524,7 @@ export struct VideoLibraryView {
               }
             });
 
-            Text('未选择')
+            Text(this.choiceCount === 0 ? '未选择' : `已选择 ${this.choiceCount} 项`)
               .fontSize(18)
               .fontColor(Color.Black)
               .fontWeight(FontWeight.Bold);
