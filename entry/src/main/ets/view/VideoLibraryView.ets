@@ -44,7 +44,6 @@ export struct VideoLibraryView {
   private importDialogId: number = 0;
   private multiChoiceDialogId: number = 0;
   private createFolderDialogId: number = 0;
-  private moveDialogController?: CustomDialogController;
   private moreOptionsMenuList: MenuElement[] = [
     {
       value: '宫格视图',
@@ -113,31 +112,27 @@ export struct VideoLibraryView {
     Column() {
       Row() {
         Text('新建文件夹')
-          .fontSize(18)
+          .fontSize(16)
           .fontWeight(FontWeight.Bold);
-
-        Button({ type: ButtonType.Circle, stateEffect: false }) {
-          Image($r('app.media.xmark'))
-            .width(18)
-            .aspectRatio(1)
-            .fillColor(Color.Black);
-        }
-        .padding(6)
-        .backgroundColor('#AADCDCDC')
-        .onClick(() => {
-          try {
-            this.getUIContext().getPromptAction().closeCustomDialog(this.createFolderDialogId);
-          } catch (error) {
-            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
-          }
-        });
       }
       .width('100%')
       .margin({ bottom: 12 })
-      .justifyContent(FlexAlign.SpaceBetween);
+      .justifyContent(FlexAlign.Center);
 
-      TextInput({ placeholder: '请输入文件夹名称' })
-        .borderRadius(12)
+      TextInput({ placeholder: '新建文件夹' })
+        .id('createFolderTextInput')
+        .fontSize(14)
+        .showUnderline(true)
+        .underlineColor(Color.Gray)
+        .placeholderFont({ size: 14 })
+        .backgroundColor(Color.Transparent)
+        .onAppear(() => {
+          try {
+            this.getUIContext().getFocusController().requestFocus('createFolderTextInput');
+          } catch (error) {
+            console.error(`Failed to request focus for createFolder TextInput. Cause: ${JSON.stringify(error)}`);
+          }
+        })
         .onChange((value: string) => {
           this.newFolderName = value;
         });
@@ -145,11 +140,12 @@ export struct VideoLibraryView {
       Row() {
         Button({ type: ButtonType.Capsule, stateEffect: false }) {
           Text('取消')
-            .fontSize(16);
+            .fontSize(14)
+            .fontColor('#FF4876FF');
         }
         .padding(8)
-        .width('45%')
-        .backgroundColor('#DCDCDC')
+        .width('50%')
+        .backgroundColor(Color.Transparent)
         .onClick(() => {
           try {
             this.getUIContext().getPromptAction().closeCustomDialog(this.createFolderDialogId);
@@ -158,12 +154,20 @@ export struct VideoLibraryView {
           }
         });
 
+        Divider()
+          .height(24)
+          .vertical(true)
+          .strokeWidth(1)
+          .color('#DCDCDC');
+
         Button({ type: ButtonType.Capsule, stateEffect: false }) {
           Text('创建')
-            .fontSize(16);
+            .fontSize(14)
+            .fontColor('#FF4876FF');
         }
         .padding(8)
-        .width('45%')
+        .width('50%')
+        .backgroundColor(Color.Transparent)
         .onClick(() => {
           try {
             this.getUIContext().getPromptAction().closeCustomDialog(this.createFolderDialogId);
@@ -263,7 +267,8 @@ export struct VideoLibraryView {
               builder: () => {
                 this.createFolderDialogBuilder();
               },
-              width: '100%',
+              width: '90%',
+              autoCancel: false,
               alignment: DialogAlignment.Center,
               transition: TransitionEffect.SLIDE,
               onWillAppear: () => {

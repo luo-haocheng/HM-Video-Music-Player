@@ -37,31 +37,27 @@ export struct VideoFolderListView {
     Column() {
       Row() {
         Text('重命名')
-          .fontSize(18)
+          .fontSize(16)
           .fontWeight(FontWeight.Bold);
-
-        Button({ type: ButtonType.Circle, stateEffect: false }) {
-          Image($r('app.media.xmark'))
-            .width(18)
-            .aspectRatio(1)
-            .fillColor(Color.Black);
-        }
-        .padding(6)
-        .backgroundColor('#AADCDCDC')
-        .onClick(() => {
-          try {
-            this.getUIContext().getPromptAction().closeCustomDialog(this.renameDialogId);
-          } catch (error) {
-            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
-          }
-        });
       }
       .width('100%')
       .margin({ bottom: 12 })
-      .justifyContent(FlexAlign.SpaceBetween);
+      .justifyContent(FlexAlign.Center);
 
-      TextInput({ placeholder: '请输入文件夹名称' })
-        .borderRadius(12)
+      TextInput({ placeholder: '重命名' })
+        .id('renameTextInput')
+        .fontSize(14)
+        .showUnderline(true)
+        .underlineColor(Color.Gray)
+        .placeholderFont({ size: 14 })
+        .backgroundColor(Color.Transparent)
+        .onAppear(() => {
+          try {
+            this.getUIContext().getFocusController().requestFocus('renameTextInput');
+          } catch (error) {
+            console.error(`Failed to request focus for renameTextInput. Cause: ${JSON.stringify(error)}`);
+          }
+        })
         .onChange((value: string) => {
           this.newName = value;
         });
@@ -69,11 +65,12 @@ export struct VideoFolderListView {
       Row() {
         Button({ type: ButtonType.Capsule, stateEffect: false }) {
           Text('取消')
-            .fontSize(16);
+            .fontSize(14)
+            .fontColor('#FF4876FF');
         }
         .padding(8)
         .width('45%')
-        .backgroundColor('#DCDCDC')
+        .backgroundColor(Color.Transparent)
         .onClick(() => {
           try {
             this.getUIContext().getPromptAction().closeCustomDialog(this.renameDialogId);
@@ -82,12 +79,20 @@ export struct VideoFolderListView {
           }
         });
 
+        Divider()
+          .height(24)
+          .vertical(true)
+          .strokeWidth(1)
+          .color('#DCDCDC');
+
         Button({ type: ButtonType.Capsule, stateEffect: false }) {
           Text('确认')
-            .fontSize(16);
+            .fontSize(14)
+            .fontColor('#FF4876FF');
         }
         .padding(8)
         .width('45%')
+        .backgroundColor(Color.Transparent)
         .onClick(() => {
           try {
             this.getUIContext().getPromptAction().closeCustomDialog(this.renameDialogId);
@@ -153,7 +158,8 @@ export struct VideoFolderListView {
             builder: () => {
               this.renameDialogBuilder(info, 'folder');
             },
-            width: '100%',
+            width: '90%',
+            autoCancel: false,
             alignment: DialogAlignment.Center,
             transition: TransitionEffect.SLIDE,
             onWillAppear: () => {
@@ -251,7 +257,8 @@ export struct VideoFolderListView {
             builder: () => {
               this.renameDialogBuilder(info, 'video');
             },
-            width: '100%',
+            width: '90%',
+            autoCancel: false,
             alignment: DialogAlignment.Center,
             transition: TransitionEffect.SLIDE,
             onWillAppear: () => {
