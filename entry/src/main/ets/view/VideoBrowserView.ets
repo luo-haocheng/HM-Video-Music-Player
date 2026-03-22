@@ -6,20 +6,26 @@ import { VideoFolderListView } from './VideoFolderListView';
 import { VideoItemViewModel } from '../viewmodel/VideoItemViewModel';
 import { FolderItemViewModel } from '../viewmodel/FolderItemViewModel';
 import { window } from '@kit.ArkUI';
+import { MovingToDialog } from './MovingToDialog';
+import { VideoInfoModel } from '../model/VideoInfoModel';
 
 const ROOT_FOLDER = '/';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
+const MOVE_CHOICE_EVENT = 'MoveChoice';
 const CREATE_FOLDER_EVENT = 'CreateFolder';
 const IMPORT_VIDEO_EVENT = 'ImportVideo';
 const MOVE_FOLDER_EVENT = 'FolderVideo';
 const MOVE_VIDEO_EVENT = 'MoveVideo';
 const CURRENT_FOLDER = 'CurrentFolder';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
+const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
 export struct VideoBrowserView {
   @Consume(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
+  @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @State videoListVM: VideoListViewModel = new VideoListViewModel();
+  private moveDialogController?: CustomDialogController;
   private createFolderCallback: Callback<emitter.EventData> = (event: emitter.EventData) => {
     if (event.data) {
       let folder = event.data['folder'] as string;
@@ -94,6 +100,37 @@ export struct VideoBrowserView {
     }
     this.videoListVM.deleteChoiceItem();
   };
+  private moveChoiceCallback: Callback<emitter.EventData> = () => {
+    if (this.currFolder !== this.videoListVM.folder) {
+      return;
+    }
+
+    let choiceVideoList: VideoInfoModel[] = [];
+    this.videoListVM.videoList.forEach((item: VideoItemViewModel) => {
+      if (item.isChoice) {
+        choiceVideoList.push(item.videoInfo);
+      }
+    });
+    let choiceFolderList: FolderInfoModel[] = [];
+    this.videoListVM.folderList.forEach((item: FolderItemViewModel) => {
+      if (item.isChoice) {
+        choiceFolderList.push(item.folderInfo);
+      }
+    });
+
+    this.moveDialogController = new CustomDialogController({
+      width: '100%',
+      height: '60%',
+      alignment: DialogAlignment.Bottom,
+      builder: MovingToDialog({
+        origFolder: this.videoListVM.folder,
+        moveFolderList: choiceFolderList,
+        moveVideoList: choiceVideoList
+      }),
+      offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
+    });
+    this.moveDialogController.open();
+  };
 
   aboutToAppear(): void {
     emitter.on(CREATE_FOLDER_EVENT, this.createFolderCallback);
@@ -101,6 +138,7 @@ export struct VideoBrowserView {
     emitter.on(MOVE_FOLDER_EVENT, this.moveFolderCallback);
     emitter.on(MOVE_VIDEO_EVENT, this.moveVideoCallback);
     emitter.on(CHOICE_ALL_EVENT, this.choiceAllCallback);
+    emitter.on(MOVE_CHOICE_EVENT, this.moveChoiceCallback);
     emitter.on(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
   }
 
@@ -110,6 +148,7 @@ export struct VideoBrowserView {
     emitter.off(MOVE_FOLDER_EVENT, this.moveFolderCallback);
     emitter.off(MOVE_VIDEO_EVENT, this.moveVideoCallback);
     emitter.off(CHOICE_ALL_EVENT, this.choiceAllCallback);
+    emitter.off(MOVE_CHOICE_EVENT, this.moveChoiceCallback);
     emitter.off(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
   }
 

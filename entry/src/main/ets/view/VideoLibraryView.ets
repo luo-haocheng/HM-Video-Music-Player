@@ -5,6 +5,7 @@ import { emitter } from '@kit.BasicServicesKit';
 const ROOT_FOLDER = '/';
 const CHOICE_ALL = 'ChoiceAll';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
+const MOVE_CHOICE_EVENT = 'MoveChoice';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
 const MULTI_CHOICE = 'MultiChoice';
 const CURRENT_FOLDER = 'CurrentFolder';
@@ -42,6 +43,7 @@ export struct VideoLibraryView {
   private importDialogId: number = 0;
   private multiChoiceDialogId: number = 0;
   private createFolderDialogId: number = 0;
+  private moveDialogController?: CustomDialogController;
   private moreOptionsMenuList: MenuElement[] = [
     {
       value: '宫格视图',
@@ -319,11 +321,20 @@ export struct VideoLibraryView {
     Row() {
       this.ChoiceOptionBuilder($r('app.media.trash'), '删除', () => {
         emitter.emit(DELETE_CHOICE_EVENT);
+        try {
+          this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+        } catch (error) {
+          console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+        }
       });
 
       this.ChoiceOptionBuilder($r('app.media.arrow_right_folder_circle'), '移动', () => {
-        console.info(`Move all choice video and folders`);
-        // todo
+        emitter.emit(MOVE_CHOICE_EVENT);
+        try {
+          this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+        } catch (error) {
+          console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+        }
       });
 
       this.ChoiceOptionBuilder($r('app.media.lock'), '保险柜', () => {

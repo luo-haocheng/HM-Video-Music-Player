@@ -12,15 +12,24 @@ const MOVE_FOLDER_EVENT = 'FolderVideo';
 @Observed
 export class FolderBrowserViewModel {
   public origFolder: string = ROOT_PATH;
+  public moveFolderList: FolderInfoModel[] = [];
   private videoStore: VideoLibraryStore = new VideoLibraryStore();
 
   async initFolderList(folder: string, context: Context): Promise<FolderItemViewModelList> {
     await this.videoStore.initStore(context);
     let folderInfoList = await this.videoStore.selectFolderByFolder(folder);
     let folderItemList = new FolderItemViewModelList();
-    for (const info of folderInfoList) {
+    for (const folderInfo of folderInfoList) {
+      // Can't move folder to self
+      let isMoveFolder = this.moveFolderList.find((moveFolderInfo: FolderInfoModel) => {
+        return moveFolderInfo.id === folderInfo.id;
+      });
+      if (isMoveFolder !== undefined) {
+        continue;
+      }
+      // Other folders
       let folderItem = new FolderItemViewModel();
-      folderItem.updateFolderItem(info);
+      folderItem.updateFolderItem(folderInfo);
       folderItemList.push(folderItem);
     }
     return folderItemList;

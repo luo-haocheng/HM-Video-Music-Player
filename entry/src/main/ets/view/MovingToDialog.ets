@@ -15,7 +15,7 @@ export function FolderBrowserBuilder() {
 @Component
 struct FolderBrowserView {
   @State folderList: FolderItemViewModelList = new FolderItemViewModelList();
-  @Consume('MoveFolder') moveFolder: string = ROOT_PATH;
+  @Consume('MoveToFolder') moveToFolder: string = ROOT_PATH;
   @Consume('MoveNavPath') moveNavPath: NavPathStack = new NavPathStack();
   @Consume('FolderBrowserViewModel') folderBrowserVM: FolderBrowserViewModel = new FolderBrowserViewModel();
   private origFolder: string = ROOT_PATH;
@@ -97,7 +97,7 @@ struct FolderBrowserView {
       this.folderList = await this.folderBrowserVM.initFolderList(this.origFolder, context);
     })
     .onActive(() => {
-      this.moveFolder = this.origFolder;
+      this.moveToFolder = this.origFolder;
     });
   }
 }
@@ -105,15 +105,16 @@ struct FolderBrowserView {
 @CustomDialog
 export struct MovingToDialog {
   origFolder: string = ROOT_PATH;
-  controller: CustomDialogController;
   moveVideoList: VideoInfoModel[] = [];
   moveFolderList: FolderInfoModel[] = [];
-  @Provide('MoveFolder') moveFolder: string = ROOT_PATH;
+  controller: CustomDialogController;
+  @Provide('MoveToFolder') moveToFolder: string = ROOT_PATH;
   @Provide('MoveNavPath') moveNavPath: NavPathStack = new NavPathStack();
   @Provide('FolderBrowserViewModel') folderBrowserVM: FolderBrowserViewModel = new FolderBrowserViewModel();
 
   aboutToAppear(): void {
-    this.moveFolder = this.origFolder;
+    this.moveToFolder = this.origFolder;
+    this.folderBrowserVM.moveFolderList = this.moveFolderList;
     this.moveNavPath.pushPath({ name: 'FolderBrowser', param: this.origFolder });
   }
 
@@ -128,20 +129,20 @@ export struct MovingToDialog {
           Image($r('app.media.arrow_left'))
             .width(24)
             .aspectRatio(1)
-            .fillColor(Color.Black);
+            .fillColor(this.moveToFolder === ROOT_PATH ? '#55000000' : Color.Black);
         }
         .padding(6)
-        .backgroundColor('#AADCDCDC')
+        .backgroundColor(this.moveToFolder === ROOT_PATH ? '#55DCDCDC' : '#AADCDCDC')
         .onClick(() => {
-          if (this.moveFolder === ROOT_PATH) {
+          if (this.moveToFolder === ROOT_PATH) {
             return;
           }
           if (this.moveNavPath.size() > 1) {
             this.moveNavPath.pop();
           } else {
             // Get Parent Path
-            const lastSecondSlashIdx = this.moveFolder.lastIndexOf('/', this.moveFolder.length - 2);
-            const parentPath = this.moveFolder.slice(0, lastSecondSlashIdx + 1);
+            const lastSecondSlashIdx = this.moveToFolder.lastIndexOf('/', this.moveToFolder.length - 2);
+            const parentPath = this.moveToFolder.slice(0, lastSecondSlashIdx + 1);
             // Replace nav stack to parent path
             this.moveNavPath.replacePath({ name: 'FolderBrowser', param: parentPath });
           }
@@ -151,18 +152,19 @@ export struct MovingToDialog {
           Image($r('app.media.checkmark'))
             .width(24)
             .aspectRatio(1)
-            .fillColor(Color.Black);
+            .fillColor(this.moveToFolder === this.origFolder ? '#55000000' : Color.Black);
         }
         .padding(6)
-        .backgroundColor('#AADCDCDC')
+        .backgroundColor(this.moveToFolder === this.origFolder ? '#55DCDCDC' : '#AADCDCDC')
         .onClick(async () => {
-          // todo
-          console.info(`Move Folder: ${this.moveFolder}`);
+          if (this.moveToFolder === this.origFolder) {
+            return;
+          }
           for (let i = 0; i < this.moveVideoList.length; ++i) {
-            await this.folderBrowserVM.moveVideo(this.moveVideoList[i], this.moveFolder);
+            await this.folderBrowserVM.moveVideo(this.moveVideoList[i], this.moveToFolder);
           }
           for (let i = 0; i < this.moveFolderList.length; ++i) {
-            await this.folderBrowserVM.moveFolder(this.moveFolderList[i], this.moveFolder);
+            await this.folderBrowserVM.moveFolder(this.moveFolderList[i], this.moveToFolder);
           }
           this.controller.close();
         });
