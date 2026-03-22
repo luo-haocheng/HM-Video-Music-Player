@@ -75,7 +75,10 @@ export struct VideoBoxView {
               .aspectRatio(1)
               .select($$this.videoItem.isChoice)
               .onDisAppear(() => {
-                this.videoItem.isChoice = false;
+                // delay some time for getting choice item
+                setTimeout(() => {
+                  this.videoItem.isChoice = false;
+                }, 200);
               })
               .onChange(() => {
                 this.isAllChoice();

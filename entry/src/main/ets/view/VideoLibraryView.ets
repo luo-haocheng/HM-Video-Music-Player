@@ -6,6 +6,7 @@ const ROOT_FOLDER = '/';
 const CHOICE_ALL = 'ChoiceAll';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
 const MOVE_CHOICE_EVENT = 'MoveChoice';
+const SHARE_CHOICE_EVENT = 'ShareChoice';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
 const MULTI_CHOICE = 'MultiChoice';
 const CURRENT_FOLDER = 'CurrentFolder';
@@ -343,8 +344,12 @@ export struct VideoLibraryView {
       });
 
       this.ChoiceOptionBuilder($r('app.media.share'), '分享', () => {
-        console.info('Share all choice videos and folder');
-        // todo
+        emitter.emit(SHARE_CHOICE_EVENT);
+        try {
+          this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+        } catch (error) {
+          console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+        }
       });
     }
     .width('100%')

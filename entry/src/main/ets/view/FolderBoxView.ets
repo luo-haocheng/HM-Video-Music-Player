@@ -64,7 +64,10 @@ export struct FolderBoxView {
               .aspectRatio(1)
               .select($$this.folderItem.isChoice)
               .onDisAppear(() => {
-                this.folderItem.isChoice = false;
+                // delay some time for getting choice item
+                setTimeout(() => {
+                  this.folderItem.isChoice = false;
+                }, 200);
               })
               .onChange(() => {
                 this.isAllChoice();

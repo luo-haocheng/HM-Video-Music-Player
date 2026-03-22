@@ -1,10 +1,12 @@
 import { VideoItemViewModel } from './VideoItemViewModel';
-import { Context } from '@kit.AbilityKit';
+import { common, Context } from '@kit.AbilityKit';
 import { VideoLibraryStore } from '../model/VideoLibraryStore';
 import { FolderItemViewModel } from './FolderItemViewModel';
 import { FolderInfoModel } from '../model/FolderInfoModel';
 import { VideoInfoModel } from '../model/VideoInfoModel';
-import { fileIo } from '@kit.CoreFileKit';
+import { fileIo, fileUri } from '@kit.CoreFileKit';
+import { systemShare } from '@kit.ShareKit';
+import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 
 const ROOT_FOLDER = '/';
 
@@ -44,6 +46,45 @@ export class VideoListViewModel {
     } catch (error) {
       throw new Error(error);
     }
+  }
+
+  async shareVideos(shareVideos: VideoInfoModel[], context: common.UIAbilityContext): Promise<void> {
+    if (shareVideos.length <= 0) {
+      return;
+    }
+
+    let utdTypeId = utd.getUniformDataTypeByFilenameExtension('.mp4', utd.UniformDataType.VIDEO);
+    let shareData: systemShare.SharedData | undefined = undefined;
+    shareData = new systemShare.SharedData({
+      utd: utdTypeId,
+      title: shareVideos[0].name,
+      uri: fileUri.getUriFromPath(shareVideos[0].videoPath),
+      thumbnailUri: fileUri.getUriFromPath(shareVideos[0].thumbnailPath),
+    });
+    for (let i = 1; i < shareVideos.length; ++i) {
+      try {
+        shareData.addRecord({
+          utd: utdTypeId,
+          title: shareVideos[i].name,
+          uri: fileUri.getUriFromPath(shareVideos[i].videoPath),
+          thumbnailUri: fileUri.getUriFromPath(shareVideos[i].thumbnailPath),
+        });
+      } catch (error) {
+        console.error(`Failed to invoke ShareData.addRecord. Cause: ${JSON.stringify(error)}`);
+      }
+    }
+    let controller: systemShare.ShareController = new systemShare.ShareController(shareData);
+    let selectionMode = shareVideos.length === 1 ? systemShare.SelectionMode.SINGLE : systemShare.SelectionMode.BATCH;
+    await controller.show(context, ({
+      selectionMode: selectionMode,
+      previewMode: systemShare.SharePreviewMode.DETAIL,
+    }))
+      .then(() => {
+        console.info(`ShareController show success.`);
+      })
+      .catch((err: BusinessError<void>) => {
+        console.error(`ShareController show error. Cause: ${JSON.stringify(err)}`);
+      });
   }
 
   async renameVideo(newName: string, videoInfo: VideoInfoModel): Promise<void> {
@@ -99,9 +140,6 @@ export class VideoListViewModel {
         choiceVideos.push(item.videoInfo);
       }
     });
-    for (let i = 0; i < choiceVideos.length; ++i) {
-      await this.deleteVideo(choiceVideos[i]);
-    }
     // Delete choice folders
     let choiceFolders: FolderInfoModel[] = [];
     this.folderList.forEach((item: FolderItemViewModel) => {
@@ -109,6 +147,9 @@ export class VideoListViewModel {
         choiceFolders.push(item.folderInfo);
       }
     });
+    for (let i = 0; i < choiceVideos.length; ++i) {
+      await this.deleteVideo(choiceVideos[i]);
+    }
     for (let i = 0; i < choiceFolders.length; ++i) {
       await this.deleteFolder(choiceFolders[i]);
     }
@@ -174,7 +215,6 @@ export class VideoListViewModel {
     let idx = this.videoList.findIndex((item: VideoItemViewModel) => {
       return item.videoInfo.id === videoInfo.id;
     });
-    console.info(`Index of video: ${idx}`);
     if (idx !== -1) {
       this.videoList.splice(idx, 1);
     }

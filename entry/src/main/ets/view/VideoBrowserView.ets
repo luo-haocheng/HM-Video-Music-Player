@@ -11,6 +11,7 @@ import { VideoInfoModel } from '../model/VideoInfoModel';
 
 const ROOT_FOLDER = '/';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
+const SHARE_CHOICE_EVENT = 'ShareChoice';
 const MOVE_CHOICE_EVENT = 'MoveChoice';
 const CREATE_FOLDER_EVENT = 'CreateFolder';
 const IMPORT_VIDEO_EVENT = 'ImportVideo';
@@ -104,7 +105,6 @@ export struct VideoBrowserView {
     if (this.currFolder !== this.videoListVM.folder) {
       return;
     }
-
     let choiceVideoList: VideoInfoModel[] = [];
     this.videoListVM.videoList.forEach((item: VideoItemViewModel) => {
       if (item.isChoice) {
@@ -131,6 +131,19 @@ export struct VideoBrowserView {
     });
     this.moveDialogController.open();
   };
+  private shareChoiceCallback: Callback<emitter.EventData> = () => {
+    if (this.currFolder !== this.videoListVM.folder) {
+      return;
+    }
+    let shareVideos: VideoInfoModel[] = [];
+    this.videoListVM.videoList.forEach((item: VideoItemViewModel) => {
+      if (item.isChoice) {
+        shareVideos.push(item.videoInfo);
+      }
+    });
+    let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    this.videoListVM.shareVideos(shareVideos, context);
+  };
 
   aboutToAppear(): void {
     emitter.on(CREATE_FOLDER_EVENT, this.createFolderCallback);
@@ -139,6 +152,7 @@ export struct VideoBrowserView {
     emitter.on(MOVE_VIDEO_EVENT, this.moveVideoCallback);
     emitter.on(CHOICE_ALL_EVENT, this.choiceAllCallback);
     emitter.on(MOVE_CHOICE_EVENT, this.moveChoiceCallback);
+    emitter.on(SHARE_CHOICE_EVENT, this.shareChoiceCallback);
     emitter.on(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
   }
 
@@ -149,6 +163,7 @@ export struct VideoBrowserView {
     emitter.off(MOVE_VIDEO_EVENT, this.moveVideoCallback);
     emitter.off(CHOICE_ALL_EVENT, this.choiceAllCallback);
     emitter.off(MOVE_CHOICE_EVENT, this.moveChoiceCallback);
+    emitter.off(SHARE_CHOICE_EVENT, this.shareChoiceCallback);
     emitter.off(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
   }
 
