@@ -49,28 +49,174 @@ export struct VideoLibraryView {
   @Provide('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
   @State videoLibVM: VideoLibraryViewModel = new VideoLibraryViewModel(this.getUIContext().getHostContext() as Context);
   @State invalidName: boolean = false;
+  @State isSortExpand: boolean = false;
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   private newFolderName?: string;
   private importDialogId: number = 0;
   private multiChoiceDialogId: number = 0;
   private createFolderDialogId: number = 0;
-  private moreOptionsMenuList: MenuElement[] = [
-    {
-      value: '宫格视图',
-      action: () => {
-        // todo
+
+  async aboutToAppear(): Promise<void> {
+    await this.videoLibVM.init();
+    this.videoTabStack.pushPath({ name: 'VideoBrowser' });
+  }
+
+  private async getRandom(len: number): Promise<Uint8Array | undefined> {
+    try {
+      let rand = cryptoFramework.createRandom();
+      let result = await rand.generateRandom(len);
+      return result.data;
+    } catch (error) {
+      console.error(`Failed to generate random. Cause: ${JSON.stringify(error)}`);
+      return undefined;
+    }
+  }
+
+  private currFolderName(folder: string): string {
+    if (folder === ROOT_FOLDER) {
+      return '视频';
+    } else if (folder === SECRET_FOLDER) {
+      return '保险柜';
+    } else {
+      let prevSlashIdx = folder.lastIndexOf('/', folder.length - 2);
+      let folderName = folder.slice(prevSlashIdx + 1, folder.length - 1);
+      return folderName;
+    }
+  }
+
+  @Builder
+  sortHeader() {
+    Row() {
+      Text('排序方式')
+        .fontSize(14)
+        .fontColor(Color.Black);
+
+      Image(this.isSortExpand ? $r('app.media.chevron_up') : $r('app.media.chevron_down'))
+        .width(20)
+        .aspectRatio(1)
+        .backgroundColor(Color.Transparent);
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.SpaceBetween)
+    .onClick(() => {
+      this.isSortExpand = !this.isSortExpand;
+    })
+    .onTouch((event) => {
+      event.stopPropagation();
+    });
+  }
+
+  @Builder
+  moreOptionsBuilder() {
+    List() {
+      ListItem() {
+        Row() {
+          Text('宫格视图')
+            .fontSize(14)
+            .fontColor(Color.Black);
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start);
       }
-    },
-    {
-      value: '排序方式',
-      action: () => {
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(() => {
         // todo
+      });
+
+      ListItemGroup({
+        header: this.sortHeader(),
+        style: ListItemGroupStyle.NONE,
+      }) {
+        if (this.isSortExpand) {
+          ListItem() {
+            Row({ space: 8 }) {
+              Text('创建时间')
+                .fontSize(14)
+                .fontColor(Color.Black);
+
+              Image($r('app.media.text_and_arrow_down'))
+                .width(20)
+                .aspectRatio(1)
+                .backgroundColor(Color.Transparent);
+            }
+            .width('100%')
+            .justifyContent(FlexAlign.Start);
+          }
+          .width('100%')
+          .margin({ left: 16 })
+          .borderColor('#DCDCDC')
+          .borderWidth({ bottom: 0.5 })
+          .padding({ top: 16, bottom: 16 })
+          .onClick(() => {
+            console.info(`Sort By CreateTime`);
+          });
+
+          ListItem() {
+            Row({ space: 8 }) {
+              Text('文件名称')
+                .fontSize(14)
+                .fontColor(Color.Black);
+
+              Image($r('app.media.text_and_arrow_down'))
+                .width(20)
+                .aspectRatio(1)
+                .backgroundColor(Color.Transparent);
+            }
+            .width('100%')
+            .justifyContent(FlexAlign.Start);
+          }
+          .width('100%')
+          .margin({ left: 16 })
+          .borderColor('#DCDCDC')
+          .borderWidth({ bottom: 0.5 })
+          .padding({ top: 16, bottom: 16 })
+          .onClick(() => {
+            console.info(`Sort By FoldrName`);
+          });
+
+          ListItem() {
+            Row({ space: 8 }) {
+              Text('文件大小')
+                .fontSize(14)
+                .fontColor(Color.Black);
+
+              Image($r('app.media.text_and_arrow_down'))
+                .width(20)
+                .aspectRatio(1)
+                .backgroundColor(Color.Transparent);
+            }
+            .width('100%')
+            .justifyContent(FlexAlign.Start);
+          }
+          .width('100%')
+          .margin({ left: 16 })
+          .padding({ top: 16 })
+          .onClick(() => {
+            console.info(`Sort By FileSize`);
+          });
+        }
       }
-    },
-    {
-      value: '保险柜',
-      action: async () => {
+      .width('100%')
+      .padding({ top: 16, bottom: 16 });
+
+      // .onTouch((event) => {
+      //   event.stopPropagation();
+      // });
+
+      ListItem() {
+        Row() {
+          Text('保险柜')
+            .fontSize(14)
+            .fontColor(Color.Black);
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start);
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(async () => {
         try {
           const randData = await this.getRandom(32);
           if (!randData) {
@@ -104,72 +250,45 @@ export struct VideoLibraryView {
         } catch (error) {
           console.error(`Initial UserAuth failed. Cause: ${JSON.stringify(error)}`);
         }
+      });
+
+      ListItem() {
+        Row() {
+          Text('设置')
+            .fontSize(14)
+            .fontColor(Color.Black);
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start);
       }
-    },
-    {
-      value: '设置',
-      action: () => {
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(() => {
         // todo
+      });
+
+      ListItem() {
+        Row() {
+          Text('关于')
+            .fontSize(14)
+            .fontColor(Color.Black);
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start);
       }
-    },
-    {
-      value: '关于',
-      action: () => {
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(() => {
         // todo
-      }
-    },
-  ];
-
-  async aboutToAppear(): Promise<void> {
-    await this.videoLibVM.init();
-    this.videoTabStack.pushPath({ name: 'VideoBrowser' });
-  }
-
-  private async getRandom(len: number): Promise<Uint8Array | undefined> {
-    try {
-      let rand = cryptoFramework.createRandom();
-      let result = await rand.generateRandom(len);
-      return result.data;
-    } catch (error) {
-      console.error(`Failed to generate random. Cause: ${JSON.stringify(error)}`);
-      return undefined;
+      });
     }
-  }
-
-  private currFolderName(folder: string): string {
-    if (folder === ROOT_FOLDER) {
-      return '视频';
-    } else if (folder === SECRET_FOLDER) {
-      return '保险柜';
-    } else {
-      let prevSlashIdx = folder.lastIndexOf('/', folder.length - 2);
-      let folderName = folder.slice(prevSlashIdx + 1, folder.length - 1);
-      return folderName;
-    }
-  }
-
-  @Builder
-  importOptionBuilder(option: ImportOption) {
-    Row({ space: 12 }) {
-      Image(option.icon)
-        .width(30)
-        .aspectRatio(1)
-        .fillColor(option.color)
-        .backgroundColor(Color.Transparent);
-
-      Text(option.text)
-        .fontSize(16)
-        .fontWeight(FontWeight.Normal);
-
-      Blank();
-
-      Image($r('app.media.chevron_right'))
-        .width(12)
-        .aspectRatio(1)
-        .backgroundColor(Color.Transparent);
-    }
-    .width('100%')
-    .padding({ top: 12, bottom: 12 });
+    .width(200)
+    .divider({
+      strokeWidth: 0.5,
+      color: '#DCDCDC'
+    })
+    .padding({ left: 8, right: 8 })
+    .backgroundColor(Color.White);
   }
 
   @Builder
@@ -266,6 +385,30 @@ export struct VideoLibraryView {
       .justifyContent(FlexAlign.SpaceBetween);
     }
     .padding(16);
+  }
+
+  @Builder
+  importOptionBuilder(option: ImportOption) {
+    Row({ space: 12 }) {
+      Image(option.icon)
+        .width(30)
+        .aspectRatio(1)
+        .fillColor(option.color)
+        .backgroundColor(Color.Transparent);
+
+      Text(option.text)
+        .fontSize(16)
+        .fontWeight(FontWeight.Normal);
+
+      Blank();
+
+      Image($r('app.media.chevron_right'))
+        .width(12)
+        .aspectRatio(1)
+        .backgroundColor(Color.Transparent);
+    }
+    .width('100%')
+    .padding({ top: 12, bottom: 12 });
   }
 
   @Builder
@@ -573,7 +716,11 @@ export struct VideoLibraryView {
               .width(36)
               .aspectRatio(1)
               .backgroundColor('#AADCDCDC')
-              .bindMenu(this.moreOptionsMenuList);
+              .bindMenu(this.moreOptionsBuilder, {
+                onDisappear: () => {
+                  this.isSortExpand = false;
+                }
+              });
             }
           }
           .layoutWeight(0);
