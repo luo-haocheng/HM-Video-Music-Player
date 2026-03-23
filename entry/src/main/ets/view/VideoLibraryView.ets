@@ -2,6 +2,8 @@ import { VideoLibraryViewModel } from '../viewmodel/VideoLibraryViewModel';
 import { VideoBrowserView } from './VideoBrowserView';
 import { emitter } from '@kit.BasicServicesKit';
 import { FolderInfoModel } from '../model/FolderInfoModel';
+import { cryptoFramework } from '@kit.CryptoArchitectureKit';
+import { userAuth } from '@kit.UserAuthenticationKit';
 
 const ROOT_FOLDER = '/';
 const SECRET_FOLDER = '/*/';
@@ -68,12 +70,40 @@ export struct VideoLibraryView {
     },
     {
       value: '保险柜',
-      action: () => {
-        // todo
-        let folderInfo = new FolderInfoModel();
-        folderInfo.path = SECRET_FOLDER;
-        folderInfo.parent = ROOT_FOLDER;
-        this.videoTabStack.pushPath({ name: 'VideoBrowser', param: folderInfo });
+      action: async () => {
+        try {
+          const randData = await this.getRandom(32);
+          if (!randData) {
+            return;
+          }
+          // 设置认证参数
+          const authParam: userAuth.AuthParam = {
+            challenge: randData,
+            authTrustLevel: userAuth.AuthTrustLevel.ATL3,
+            authType: [userAuth.UserAuthType.FINGERPRINT, userAuth.UserAuthType.PIN],
+          };
+          // 配置认证界面
+          const widgetParam: userAuth.WidgetParam = {
+            title: '用于解锁保险柜'
+          };
+          // 获取认证对象
+          const userAuthInstance = userAuth.getUserAuthInstance(authParam, widgetParam);
+          // 订阅认证结果
+          userAuthInstance.on('result', {
+            onResult: (result: userAuth.UserAuthResult) => {
+              if (result.result === userAuth.UserAuthResultCode.SUCCESS) {
+                let folderInfo = new FolderInfoModel();
+                folderInfo.path = SECRET_FOLDER;
+                folderInfo.parent = ROOT_FOLDER;
+                this.videoTabStack.pushPath({ name: 'VideoBrowser', param: folderInfo });
+              }
+              userAuthInstance.off('result');
+            }
+          });
+          userAuthInstance.start();
+        } catch (error) {
+          console.error(`Initial UserAuth failed. Cause: ${JSON.stringify(error)}`);
+        }
       }
     },
     {
@@ -93,6 +123,17 @@ export struct VideoLibraryView {
   async aboutToAppear(): Promise<void> {
     await this.videoLibVM.init();
     this.videoTabStack.pushPath({ name: 'VideoBrowser' });
+  }
+
+  private async getRandom(len: number): Promise<Uint8Array | undefined> {
+    try {
+      let rand = cryptoFramework.createRandom();
+      let result = await rand.generateRandom(len);
+      return result.data;
+    } catch (error) {
+      console.error(`Failed to generate random. Cause: ${JSON.stringify(error)}`);
+      return undefined;
+    }
   }
 
   private currFolderName(folder: string): string {

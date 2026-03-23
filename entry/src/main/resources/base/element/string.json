@@ -19,6 +19,10 @@
     {
       "name": "Read_Write_Download_Directory_Reason",
       "value": "For Audio/Video File Import"
+    },
+    {
+      "name": "Access_Biometric_Reason",
+      "value": "For verify user identity"
     }
   ]
 }
