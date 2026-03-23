@@ -70,7 +70,7 @@ export class FolderBrowserViewModel {
       }
     };
     await traverseFolder(folderInfo, moveFolder);
-    await this.videoStore.renameFolder(updateVideoList, updateFolderList);
+    await this.videoStore.moveFolder(updateVideoList, updateFolderList);
     // Update View
     let eventData: emitter.EventData = {
       data: {

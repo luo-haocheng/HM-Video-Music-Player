@@ -1,17 +1,21 @@
 import { VideoLibraryViewModel } from '../viewmodel/VideoLibraryViewModel';
 import { VideoBrowserView } from './VideoBrowserView';
 import { emitter } from '@kit.BasicServicesKit';
+import { FolderInfoModel } from '../model/FolderInfoModel';
 
 const ROOT_FOLDER = '/';
+const SECRET_FOLDER = '/*/';
 const INVALID_VALUES = '/\\:*?"<>|';
 const CHOICE_ALL = 'ChoiceAll';
 const CHOICE_COUNT = 'ChoiceCount';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
+const MOVE_SECRET_EVENT = 'MoveSecret';
 const MOVE_CHOICE_EVENT = 'MoveChoice';
 const SHARE_CHOICE_EVENT = 'ShareChoice';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
 const MULTI_CHOICE = 'MultiChoice';
 const CURRENT_FOLDER = 'CurrentFolder';
+const IN_SECRET_FOLDER = 'InSecretFolder';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const IMPORT_OPTS: ImportOption[] = [
@@ -39,6 +43,7 @@ export struct VideoLibraryView {
   @Provide(CHOICE_COUNT) choiceCount: number = 0;
   @Provide(MULTI_CHOICE) multiChoice: boolean = false;
   @Provide(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
+  @Provide(IN_SECRET_FOLDER) inSecretFolder: boolean = false;
   @Provide('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
   @State videoLibVM: VideoLibraryViewModel = new VideoLibraryViewModel(this.getUIContext().getHostContext() as Context);
   @State invalidName: boolean = false;
@@ -52,26 +57,35 @@ export struct VideoLibraryView {
     {
       value: '宫格视图',
       action: () => {
+        // todo
       }
     },
     {
       value: '排序方式',
       action: () => {
+        // todo
       }
     },
     {
       value: '保险柜',
       action: () => {
+        // todo
+        let folderInfo = new FolderInfoModel();
+        folderInfo.path = SECRET_FOLDER;
+        folderInfo.parent = ROOT_FOLDER;
+        this.videoTabStack.pushPath({ name: 'VideoBrowser', param: folderInfo });
       }
     },
     {
       value: '设置',
       action: () => {
+        // todo
       }
     },
     {
       value: '关于',
       action: () => {
+        // todo
       }
     },
   ];
@@ -81,10 +95,16 @@ export struct VideoLibraryView {
     this.videoTabStack.pushPath({ name: 'VideoBrowser' });
   }
 
-  private getFolderName(path: string): string {
-    let prevSlashIdx = path.lastIndexOf('/', path.length - 2);
-    let folderName = path.slice(prevSlashIdx + 1, path.length - 1);
-    return folderName;
+  private currFolderName(folder: string): string {
+    if (folder === ROOT_FOLDER) {
+      return '视频';
+    } else if (folder === SECRET_FOLDER) {
+      return '保险柜';
+    } else {
+      let prevSlashIdx = folder.lastIndexOf('/', folder.length - 2);
+      let folderName = folder.slice(prevSlashIdx + 1, folder.length - 1);
+      return folderName;
+    }
   }
 
   @Builder
@@ -363,10 +383,25 @@ export struct VideoLibraryView {
         }
       });
 
-      this.ChoiceOptionBuilder($r('app.media.lock'), '保险柜', () => {
-        console.info('Move all choice videos and folders to secret folder');
-        // todo
-      });
+      if (this.inSecretFolder) {
+        this.ChoiceOptionBuilder($r('app.media.lock_open'), '移出', () => {
+          emitter.emit(MOVE_SECRET_EVENT);
+          try {
+            this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+          } catch (error) {
+            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+          }
+        });
+      } else {
+        this.ChoiceOptionBuilder($r('app.media.lock'), '保险柜', () => {
+          emitter.emit(MOVE_SECRET_EVENT);
+          try {
+            this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+          } catch (error) {
+            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+          }
+        });
+      }
 
       this.ChoiceOptionBuilder($r('app.media.share'), '分享', () => {
         emitter.emit(SHARE_CHOICE_EVENT);
@@ -408,7 +443,7 @@ export struct VideoLibraryView {
               });
             }
 
-            Text(this.currFolder === ROOT_FOLDER ? '视频' : this.getFolderName(this.currFolder))
+            Text(this.currFolderName(this.currFolder))
               .maxLines(1)
               .fontSize(20)
               .layoutWeight(1)
@@ -458,45 +493,47 @@ export struct VideoLibraryView {
                 });
             });
 
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.plus'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            }
-            .width(36)
-            .aspectRatio(1)
-            .backgroundColor('#AADCDCDC')
-            .onClick(() => {
-              this.getUIContext()
-                .getPromptAction()
-                .openCustomDialog({
-                  builder: () => {
-                    this.importDialogBuilder();
-                  },
-                  width: '100%',
-                  alignment: DialogAlignment.Bottom,
-                  transition: TransitionEffect.SLIDE,
-                  offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
-                })
-                .then((dialogId: number) => {
-                  this.importDialogId = dialogId;
-                })
-                .catch((err: BusinessError) => {
-                  console.error(`Failed to open import dialog. Cuase: ${JSON.stringify(err)}`);
-                });
-            });
+            if (!this.inSecretFolder) {
+              Button({ type: ButtonType.Circle, stateEffect: false }) {
+                Image($r('app.media.plus'))
+                  .width(24)
+                  .aspectRatio(1)
+                  .fillColor(Color.Black);
+              }
+              .width(36)
+              .aspectRatio(1)
+              .backgroundColor('#AADCDCDC')
+              .onClick(() => {
+                this.getUIContext()
+                  .getPromptAction()
+                  .openCustomDialog({
+                    builder: () => {
+                      this.importDialogBuilder();
+                    },
+                    width: '100%',
+                    alignment: DialogAlignment.Bottom,
+                    transition: TransitionEffect.SLIDE,
+                    offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
+                  })
+                  .then((dialogId: number) => {
+                    this.importDialogId = dialogId;
+                  })
+                  .catch((err: BusinessError) => {
+                    console.error(`Failed to open import dialog. Cuase: ${JSON.stringify(err)}`);
+                  });
+              });
 
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.dot_grid_2x2'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
+              Button({ type: ButtonType.Circle, stateEffect: false }) {
+                Image($r('app.media.dot_grid_2x2'))
+                  .width(24)
+                  .aspectRatio(1)
+                  .fillColor(Color.Black);
+              }
+              .width(36)
+              .aspectRatio(1)
+              .backgroundColor('#AADCDCDC')
+              .bindMenu(this.moreOptionsMenuList);
             }
-            .width(36)
-            .aspectRatio(1)
-            .backgroundColor('#AADCDCDC')
-            .bindMenu(this.moreOptionsMenuList);
           }
           .layoutWeight(0);
         }

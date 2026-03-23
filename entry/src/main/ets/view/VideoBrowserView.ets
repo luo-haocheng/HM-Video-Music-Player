@@ -10,9 +10,12 @@ import { MovingToDialog } from './MovingToDialog';
 import { VideoInfoModel } from '../model/VideoInfoModel';
 
 const ROOT_FOLDER = '/';
+const SECRET_FOLDER = '/*/';
+const IN_SECRET_FOLDER = 'InSecretFolder';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
 const SHARE_CHOICE_EVENT = 'ShareChoice';
 const MOVE_CHOICE_EVENT = 'MoveChoice';
+const MOVE_SECRET_EVENT = 'MoveSecret';
 const CREATE_FOLDER_EVENT = 'CreateFolder';
 const IMPORT_VIDEO_EVENT = 'ImportVideo';
 const MOVE_FOLDER_EVENT = 'FolderVideo';
@@ -24,6 +27,7 @@ const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 @Component
 export struct VideoBrowserView {
   @Consume(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
+  @Consume(IN_SECRET_FOLDER) inSecretFolder: boolean = false;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @State videoListVM: VideoListViewModel = new VideoListViewModel();
   private moveDialogController?: CustomDialogController;
@@ -117,7 +121,9 @@ export struct VideoBrowserView {
         choiceFolderList.push(item.folderInfo);
       }
     });
-
+    if (choiceVideoList.length <= 0 && choiceFolderList.length <= 0) {
+      return;
+    }
     this.moveDialogController = new CustomDialogController({
       width: '100%',
       height: '60%',
@@ -141,8 +147,35 @@ export struct VideoBrowserView {
         shareVideos.push(item.videoInfo);
       }
     });
+    if (shareVideos.length <= 0) {
+      return;
+    }
     let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
     this.videoListVM.shareVideos(shareVideos, context);
+  };
+  private moveSecretCallback: Callback<emitter.EventData> = async () => {
+    if (this.currFolder !== this.videoListVM.folder) {
+      return;
+    }
+    let choiceVideoList: VideoInfoModel[] = [];
+    this.videoListVM.videoList.forEach((item: VideoItemViewModel) => {
+      if (item.isChoice) {
+        choiceVideoList.push(item.videoInfo);
+      }
+    });
+    let choiceFolderList: FolderInfoModel[] = [];
+    this.videoListVM.folderList.forEach((item: FolderItemViewModel) => {
+      if (item.isChoice) {
+        choiceFolderList.push(item.folderInfo);
+      }
+    });
+    let moveFolder = this.currFolder.includes('*') ? ROOT_FOLDER : SECRET_FOLDER;
+    for (let i = 0; i < choiceVideoList.length; ++i) {
+      await this.videoListVM.moveVideo(choiceVideoList[i], moveFolder);
+    }
+    for (let i = 0; i < choiceFolderList.length; ++i) {
+      await this.videoListVM.moveFolder(choiceFolderList[i], moveFolder);
+    }
   };
 
   aboutToAppear(): void {
@@ -152,6 +185,7 @@ export struct VideoBrowserView {
     emitter.on(MOVE_VIDEO_EVENT, this.moveVideoCallback);
     emitter.on(CHOICE_ALL_EVENT, this.choiceAllCallback);
     emitter.on(MOVE_CHOICE_EVENT, this.moveChoiceCallback);
+    emitter.on(MOVE_SECRET_EVENT, this.moveSecretCallback);
     emitter.on(SHARE_CHOICE_EVENT, this.shareChoiceCallback);
     emitter.on(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
   }
@@ -163,6 +197,7 @@ export struct VideoBrowserView {
     emitter.off(MOVE_VIDEO_EVENT, this.moveVideoCallback);
     emitter.off(CHOICE_ALL_EVENT, this.choiceAllCallback);
     emitter.off(MOVE_CHOICE_EVENT, this.moveChoiceCallback);
+    emitter.off(MOVE_SECRET_EVENT, this.moveSecretCallback);
     emitter.off(SHARE_CHOICE_EVENT, this.shareChoiceCallback);
     emitter.off(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
   }
@@ -194,10 +229,11 @@ export struct VideoBrowserView {
       this.videoListVM.init(this.videoListVM.folder, context);
     })
     .onActive(() => {
+      this.inSecretFolder = this.videoListVM.folder.includes('*');
       this.currFolder = this.videoListVM.folder;
     })
     .onBackPressed(() => {
-      if (this.currFolder === ROOT_FOLDER) {
+      if ([ROOT_FOLDER, SECRET_FOLDER].includes(this.currFolder)) {
         let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
         context.windowStage.getMainWindow()
           .then((windowClass: window.Window) => {

@@ -6,7 +6,6 @@ import { FolderItemViewModelList, VideoItemViewModelList, VideoListViewModel } f
 import { FolderBoxView } from './FolderBoxView';
 import { MovingToDialog } from './MovingToDialog';
 import { VideoBoxView } from './VideoBoxView';
-import { common } from '@kit.AbilityKit';
 
 const CHOICE_ALL = 'ChoiceAll';
 const INVALID_VALUES = '/\\:*?"<>|';
@@ -216,25 +215,6 @@ export struct VideoFolderListView {
   @Builder
   videoSwipeEnd(info: VideoInfoModel) {
     Row({ space: 8 }) {
-      Button({ type: ButtonType.Circle, stateEffect: false }) {
-        Image($r('app.media.share'))
-          .width(24)
-          .aspectRatio(1)
-          .fillColor(Color.White);
-      }
-      .padding(8)
-      .backgroundColor(Color.Green)
-      .onClick(() => {
-        let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-        this.videoListVM.shareVideos([info], context);
-        // Close swipe action
-        try {
-          this.scroller.closeAllSwipeActions();
-        } catch (error) {
-          console.error(`Failed to invoke ListScroller.closeAllSwipeActions. Cause: ${JSON.stringify(error)}`);
-        }
-      });
-
       Button({ type: ButtonType.Circle, stateEffect: false }) {
         Image($r('app.media.arrow_right_folder_fill'))
           .width(24)

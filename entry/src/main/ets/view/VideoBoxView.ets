@@ -46,7 +46,7 @@ export struct VideoBoxView {
                 .width(12)
                 .aspectRatio(1)
                 .draggable(false)
-                .fillColor(Color.Green);
+                .fillColor(Color.Gray);
               Text(this.videoItem.duration)
                 .fontSize(10)
                 .fontColor(Color.Gray);
@@ -57,7 +57,7 @@ export struct VideoBoxView {
                 .width(12)
                 .aspectRatio(1)
                 .draggable(false)
-                .fillColor(Color.Green);
+                .fillColor(Color.Gray);
               Text(this.videoItem.videoSize)
                 .fontSize(10)
                 .fontColor(Color.Gray);

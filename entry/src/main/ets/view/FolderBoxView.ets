@@ -47,7 +47,7 @@ export struct FolderBoxView {
               .width(12)
               .aspectRatio(1)
               .draggable(false)
-              .fillColor(Color.Green);
+              .fillColor(Color.Gray);
 
             Text(this.folderItem.dateAdd)
               .fontSize(10)

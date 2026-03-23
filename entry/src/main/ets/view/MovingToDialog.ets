@@ -6,6 +6,7 @@ import { FolderInfoModel } from '../model/FolderInfoModel';
 import { VideoInfoModel } from '../model/VideoInfoModel';
 
 const ROOT_PATH = '/';
+const SECRET_FOLDER = '/*/';
 
 @Builder
 export function FolderBrowserBuilder() {
@@ -129,12 +130,12 @@ export struct MovingToDialog {
           Image($r('app.media.arrow_left'))
             .width(24)
             .aspectRatio(1)
-            .fillColor(this.moveToFolder === ROOT_PATH ? '#55000000' : Color.Black);
+            .fillColor([ROOT_PATH, SECRET_FOLDER].includes(this.moveToFolder) ? '#55000000' : Color.Black);
         }
         .padding(6)
-        .backgroundColor(this.moveToFolder === ROOT_PATH ? '#55DCDCDC' : '#AADCDCDC')
+        .backgroundColor([ROOT_PATH, SECRET_FOLDER].includes(this.moveToFolder) ? '#55DCDCDC' : '#AADCDCDC')
         .onClick(() => {
-          if (this.moveToFolder === ROOT_PATH) {
+          if ([ROOT_PATH, SECRET_FOLDER].includes(this.moveToFolder)) {
             return;
           }
           if (this.moveNavPath.size() > 1) {
