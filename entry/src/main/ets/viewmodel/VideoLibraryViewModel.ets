@@ -16,6 +16,7 @@ import { Settings } from '../model/Settings';
 const VIDEO_DIR = '/videos';
 const THUMBNAIL_DIR = '/thumbnails';
 const DOWNLOAD_VIDEO_DIR = '/Videos';
+const SORT_ITEMS_EVENT = 'SortItems';
 const IMPORT_VIDEO_EVENT = 'ImportVideo';
 const CREATE_FOLDER_EVENT = 'CreateFolder';
 
@@ -300,6 +301,7 @@ export class VideoLibraryViewModel {
     }
     this.sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
     this.sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    emitter.emit(SORT_ITEMS_EVENT);
   }
 
   async init(): Promise<void> {

@@ -4,6 +4,9 @@ import { VideoLibraryStore } from '../model/VideoLibraryStore';
 import { FolderItemViewModel } from './FolderItemViewModel';
 import { FolderItemViewModelList } from './VideoListViewModel';
 import { emitter } from '@kit.BasicServicesKit';
+import { Settings } from '../model/Settings';
+import { SettingKey, SortModeValue, SortRuleValue } from '../model/SettingsModel';
+import { i18n } from '@kit.LocalizationKit';
 
 const ROOT_PATH = '/';
 const MOVE_VIDEO_EVENT = 'MoveVideo';
@@ -13,9 +16,11 @@ const MOVE_FOLDER_EVENT = 'FolderVideo';
 export class FolderBrowserViewModel {
   public origFolder: string = ROOT_PATH;
   public moveFolderList: FolderInfoModel[] = [];
+  private settings: Settings = new Settings();
   private videoStore: VideoLibraryStore = new VideoLibraryStore();
 
   async initFolderList(folder: string, context: Context): Promise<FolderItemViewModelList> {
+    await this.settings.initPreference(context);
     await this.videoStore.initStore(context);
     let folderInfoList = await this.videoStore.selectFolderByFolder(folder);
     let folderItemList = new FolderItemViewModelList();
@@ -32,6 +37,7 @@ export class FolderBrowserViewModel {
       folderItem.updateFolderItem(folderInfo);
       folderItemList.push(folderItem);
     }
+    this.sortFolderList(folderItemList);
     return folderItemList;
   }
 
@@ -50,7 +56,6 @@ export class FolderBrowserViewModel {
   }
 
   async moveFolder(folderInfo: FolderInfoModel, moveFolder: string): Promise<void> {
-    // todo
     let origFolder = folderInfo.parent;
     let updateVideoList: VideoInfoModel[] = [];
     let updateFolderList: FolderInfoModel[] = [];
@@ -86,5 +91,39 @@ export class FolderBrowserViewModel {
     let prevSlashIdx = path.lastIndexOf('/', path.length - 2);
     let folderName = path.slice(prevSlashIdx + 1, path.length - 1);
     return folderName;
+  }
+
+  private sortByFileName(nameA: string, nameB: string): number {
+    let transliterator: i18n.Transliterator = i18n.Transliterator.getInstance('Any-Latn;Latin-Ascii');
+    let name1 = transliterator.transform(nameA).toLowerCase();
+    let name2 = transliterator.transform(nameB).toLowerCase();
+    if (name1 === name2) {
+      return 0;
+    }
+    return name1 > name2 ? 1 : -1;
+  }
+
+  private async sortFolderList(folderItemList: FolderItemViewModelList): Promise<void> {
+    let sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
+    let sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    if (sortMode === SortModeValue.DATE_ADD) {
+      folderItemList.sort((folderA: FolderItemViewModel, folderB: FolderItemViewModel) => {
+        const diff = folderA.folderInfo.dateAdd - folderB.folderInfo.dateAdd;
+        if (diff === 0) {
+          return this.sortByFileName(folderA.folderName, folderB.folderName);
+        }
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else if (sortMode === SortModeValue.FILE_NAME) {
+      folderItemList.sort((folderA: FolderItemViewModel, folderB: FolderItemViewModel) => {
+        let diff = this.sortByFileName(folderA.folderName, folderB.folderName);
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else {
+      // Otherwise, order by file name, ascending.
+      folderItemList.sort((folderA: FolderItemViewModel, folderB: FolderItemViewModel) => {
+        return this.sortByFileName(folderA.folderName, folderB.folderName);
+      });
+    }
   }
 }

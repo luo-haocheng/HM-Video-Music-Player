@@ -8,6 +8,9 @@ import { fileIo, fileUri } from '@kit.CoreFileKit';
 import { systemShare } from '@kit.ShareKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { emitter } from '@kit.BasicServicesKit';
+import { Settings } from '../model/Settings';
+import { SettingKey, SortModeValue, SortRuleValue } from '../model/SettingsModel';
+import { i18n } from '@kit.LocalizationKit';
 
 const ROOT_FOLDER = '/';
 const MOVE_VIDEO_EVENT = 'MoveVideo';
@@ -27,6 +30,7 @@ export class VideoListViewModel {
   @Track folderList: FolderItemViewModelList = new FolderItemViewModelList();
   public folder: string = ROOT_FOLDER;
   public parent: string = ROOT_FOLDER;
+  private settings: Settings = new Settings();
   private videoStore: VideoLibraryStore = new VideoLibraryStore();
 
   async updateVideoList(rowId: number): Promise<void> {
@@ -34,7 +38,7 @@ export class VideoListViewModel {
       let info = await this.videoStore.selectVideoById(rowId);
       let videoItem = new VideoItemViewModel();
       videoItem.updateVideoItem(info);
-      this.videoList.push(videoItem);
+      this.insertVideoByOrder(videoItem);
     } catch (error) {
       throw new Error(error);
     }
@@ -45,9 +49,84 @@ export class VideoListViewModel {
       let info = await this.videoStore.selectFolderById(rowId);
       let folderItem = new FolderItemViewModel();
       folderItem.updateFolderItem(info);
-      this.folderList.push(folderItem);
+      this.insertFolderByOrder(folderItem);
     } catch (error) {
       throw new Error(error);
+    }
+  }
+
+  private async insertFolderByOrder(newItem: FolderItemViewModel): Promise<void> {
+    let sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
+    let sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    let insertIdx = -1;
+    if (sortMode === SortModeValue.DATE_ADD) {
+      insertIdx = this.folderList.findIndex((oldItem: FolderItemViewModel) => {
+        const diff = newItem.folderInfo.dateAdd - oldItem.folderInfo.dateAdd;
+        if (diff === 0) {
+          return this.sortByFileName(newItem.folderName, oldItem.folderName) < 0;
+        }
+        return sortRule === SortRuleValue.ASCENDING ? diff < 0 : diff > 0;
+      });
+    } else if (sortMode === SortModeValue.FILE_NAME) {
+      insertIdx = this.folderList.findIndex((oldItem: FolderItemViewModel) => {
+        let diff = this.sortByFileName(newItem.folderName, oldItem.folderName);
+        return sortRule === SortRuleValue.ASCENDING ? diff < 0 : diff > 0;
+      });
+    } else {
+      // Otherwise, order by file name, ascending.
+      insertIdx = this.folderList.findIndex((oldItem: FolderItemViewModel) => {
+        return this.sortByFileName(newItem.folderName, oldItem.folderName) < 0;
+      });
+    }
+    if (insertIdx === -1) {
+      this.folderList.splice(this.folderList.length, 0, newItem);
+    } else {
+      this.folderList.splice(insertIdx, 0, newItem);
+    }
+  }
+
+  private async insertVideoByOrder(newItem: VideoItemViewModel): Promise<void> {
+    let sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
+    let sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    let insertIdx = -1;
+    if (sortMode === SortModeValue.DATE_ADD) {
+      insertIdx = this.videoList.findIndex((oldItem: VideoItemViewModel) => {
+        const diff = newItem.videoInfo.dateAdd - oldItem.videoInfo.dateAdd;
+        if (diff === 0) {
+          return this.sortByFileName(newItem.videoName, oldItem.videoName) < 0;
+        }
+        return sortRule === SortRuleValue.ASCENDING ? diff < 0 : diff > 0;
+      });
+    } else if (sortMode === SortModeValue.FILE_NAME) {
+      insertIdx = this.videoList.findIndex((oldItem: VideoItemViewModel) => {
+        let diff = this.sortByFileName(newItem.videoName, oldItem.videoName);
+        return sortRule === SortRuleValue.ASCENDING ? diff < 0 : diff > 0;
+      });
+    } else if (sortMode === SortModeValue.FILE_SIZE) {
+      insertIdx = this.videoList.findIndex((oldItem: VideoItemViewModel) => {
+        try {
+          let sizeA = fileIo.statSync(newItem.videoInfo.videoPath).size;
+          let sizeB = fileIo.statSync(oldItem.videoInfo.videoPath).size;
+          let diff = sizeA - sizeB;
+          if (diff === 0) {
+            return this.sortByFileName(newItem.videoName, oldItem.videoName) < 0;
+          }
+          return sortRule === SortRuleValue.ASCENDING ? diff < 0 : diff > 0;
+        } catch (error) {
+          console.error(`Failed to invoke fileIo.statSync. Cause: ${JSON.stringify(error)}`);
+        }
+        return false;
+      });
+    } else {
+      // Otherwise, order by file name, ascending.
+      insertIdx = this.videoList.findIndex((oldItem: VideoItemViewModel) => {
+        return this.sortByFileName(newItem.videoName, oldItem.videoName) < 0;
+      });
+    }
+    if (insertIdx === -1) {
+      this.videoList.splice(this.videoList.length, 0, newItem);
+    } else {
+      this.videoList.splice(insertIdx, 0, newItem);
     }
   }
 
@@ -276,23 +355,105 @@ export class VideoListViewModel {
     }
   }
 
+  private sortByFileName(nameA: string, nameB: string): number {
+    let transliterator: i18n.Transliterator = i18n.Transliterator.getInstance('Any-Latn;Latin-Ascii');
+    let name1 = transliterator.transform(nameA).toLowerCase();
+    let name2 = transliterator.transform(nameB).toLowerCase();
+    if (name1 === name2) {
+      return 0;
+    }
+    return name1 > name2 ? 1 : -1;
+  }
+
+  async sortFolderList(folderItemList: FolderItemViewModelList): Promise<void> {
+    let sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
+    let sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    if (sortMode === SortModeValue.DATE_ADD) {
+      folderItemList.sort((folderA: FolderItemViewModel, folderB: FolderItemViewModel) => {
+        const diff = folderA.folderInfo.dateAdd - folderB.folderInfo.dateAdd;
+        if (diff === 0) {
+          return this.sortByFileName(folderA.folderName, folderB.folderName);
+        }
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else if (sortMode === SortModeValue.FILE_NAME) {
+      folderItemList.sort((folderA: FolderItemViewModel, folderB: FolderItemViewModel) => {
+        let diff = this.sortByFileName(folderA.folderName, folderB.folderName);
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else {
+      // Otherwise, order by file name, ascending.
+      folderItemList.sort((folderA: FolderItemViewModel, folderB: FolderItemViewModel) => {
+        return this.sortByFileName(folderA.folderName, folderB.folderName);
+      });
+    }
+  }
+
+  async sortVideoList(videoItemList: VideoItemViewModelList): Promise<void> {
+    let sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
+    let sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    if (sortMode === SortModeValue.DATE_ADD) {
+      videoItemList.sort((videoA: VideoItemViewModel, videoB: VideoItemViewModel) => {
+        const diff = videoA.videoInfo.dateAdd - videoB.videoInfo.dateAdd;
+        if (diff === 0) {
+          return this.sortByFileName(videoA.videoName, videoB.videoName);
+        }
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else if (sortMode === SortModeValue.FILE_NAME) {
+      videoItemList.sort((videoA: VideoItemViewModel, videoB: VideoItemViewModel) => {
+        let diff = this.sortByFileName(videoA.videoName, videoB.videoName);
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else if (sortMode === SortModeValue.FILE_SIZE) {
+      videoItemList.sort((videoA: VideoItemViewModel, videoB: VideoItemViewModel) => {
+        try {
+          let sizeA = fileIo.statSync(videoA.videoInfo.videoPath).size;
+          let sizeB = fileIo.statSync(videoB.videoInfo.videoPath).size;
+          let diff = sizeA - sizeB;
+          if (diff === 0) {
+            return this.sortByFileName(videoA.videoName, videoB.videoName);
+          }
+          return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+        } catch (error) {
+          console.error(`Failed to invoke fileIo.statSync. Cause: ${JSON.stringify(error)}`);
+        }
+        return 0;
+      });
+    } else {
+      // Otherwise, order by file name, ascending.
+      videoItemList.sort((videoA: VideoItemViewModel, videoB: VideoItemViewModel) => {
+        return this.sortByFileName(videoA.videoName, videoB.videoName);
+      });
+    }
+  }
+
   async init(folder: string, context: Context): Promise<void> {
+    await this.settings.initPreference(context);
     await this.videoStore.initStore(context);
     await this.loadVideoFolderList(folder);
   }
 
   private async loadVideoFolderList(folder: string): Promise<void> {
+    // Load Folder List
     let folderInfoList = await this.videoStore.selectFolderByFolder(folder);
+    let folderItemList = new FolderItemViewModelList();
     for (const info of folderInfoList) {
       let folderItem = new FolderItemViewModel();
       folderItem.updateFolderItem(info);
-      this.folderList.push(folderItem);
+      folderItemList.push(folderItem);
     }
+    this.sortFolderList(folderItemList);
+    this.folderList = folderItemList;
+    // Load Video List
     let videoInfoList = await this.videoStore.selectVideoByFolder(folder);
+    let videoItemList = new VideoItemViewModelList();
     for (const info of videoInfoList) {
       let videoItem = new VideoItemViewModel();
       videoItem.updateVideoItem(info);
-      this.videoList.push(videoItem);
+      videoItemList.push(videoItem);
     }
+    this.sortVideoList(videoItemList);
+    this.videoList = videoItemList;
   }
 }
