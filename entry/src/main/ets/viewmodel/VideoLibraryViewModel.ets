@@ -9,6 +9,9 @@ import { VideoLibraryStore } from '../model/VideoLibraryStore';
 import { VideoInfoModel } from '../model/VideoInfoModel';
 import { FolderInfoModel } from '../model/FolderInfoModel';
 import { emitter } from '@kit.BasicServicesKit';
+import { SettingKey, SortModeValue, SortRuleValue } from '../model/SettingsModel';
+import { preferences } from '@kit.ArkData';
+import { Settings } from '../model/Settings';
 
 const VIDEO_DIR = '/videos';
 const THUMBNAIL_DIR = '/thumbnails';
@@ -18,7 +21,10 @@ const CREATE_FOLDER_EVENT = 'CreateFolder';
 
 @Observed
 export class VideoLibraryViewModel {
+  @Track sortMode: preferences.ValueType = SortModeValue.DATE_ADD;
+  @Track sortRule: preferences.ValueType = SortRuleValue.ASCENDING;
   private videoStore: VideoLibraryStore = new VideoLibraryStore();
+  private settings: Settings = new Settings();
   private downloadPath: string = '';
   private context: Context;
 
@@ -285,8 +291,23 @@ export class VideoLibraryViewModel {
     emitter.emit(CREATE_FOLDER_EVENT, eventData);
   }
 
+  async selectSortMethod(selectSortMode: SortModeValue): Promise<void> {
+    if (this.sortMode !== selectSortMode) {
+      await this.settings.putSetting(SettingKey.SORT_MODE, selectSortMode);
+    } else {
+      const rule = (this.sortRule === SortRuleValue.ASCENDING ? SortRuleValue.DESCENDING : SortRuleValue.ASCENDING);
+      await this.settings.putSetting(SettingKey.SORT_RULE, rule);
+    }
+    this.sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
+    this.sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+  }
+
   async init(): Promise<void> {
     await this.videoStore.initStore(this.context);
     await this.createVideoDownloadDir();
+
+    await this.settings.initPreference(this.context);
+    this.sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
+    this.sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
   }
 }

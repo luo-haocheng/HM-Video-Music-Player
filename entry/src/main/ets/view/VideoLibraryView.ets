@@ -4,6 +4,7 @@ import { emitter } from '@kit.BasicServicesKit';
 import { FolderInfoModel } from '../model/FolderInfoModel';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { userAuth } from '@kit.UserAuthenticationKit';
+import { SortModeValue, SortRuleValue } from '../model/SettingsModel';
 
 const ROOT_FOLDER = '/';
 const SECRET_FOLDER = '/*/';
@@ -98,6 +99,7 @@ export struct VideoLibraryView {
         .backgroundColor(Color.Transparent);
     }
     .width('100%')
+    .padding({ top: 16, bottom: 16 })
     .justifyContent(FlexAlign.SpaceBetween)
     .onClick(() => {
       this.isSortExpand = !this.isSortExpand;
@@ -136,10 +138,13 @@ export struct VideoLibraryView {
                 .fontSize(14)
                 .fontColor(Color.Black);
 
-              Image($r('app.media.text_and_arrow_down'))
-                .width(20)
-                .aspectRatio(1)
-                .backgroundColor(Color.Transparent);
+              if (this.videoLibVM.sortMode === SortModeValue.DATE_ADD) {
+                Image(this.videoLibVM.sortRule === SortRuleValue.ASCENDING ? $r('app.media.text_and_arrow_down') :
+                  $r('app.media.text_and_arrow_up'))
+                  .width(20)
+                  .aspectRatio(1)
+                  .backgroundColor(Color.Transparent);
+              }
             }
             .width('100%')
             .justifyContent(FlexAlign.Start);
@@ -148,9 +153,9 @@ export struct VideoLibraryView {
           .margin({ left: 16 })
           .borderColor('#DCDCDC')
           .borderWidth({ bottom: 0.5 })
-          .padding({ top: 16, bottom: 16 })
+          .padding({ bottom: 16 })
           .onClick(() => {
-            console.info(`Sort By CreateTime`);
+            this.videoLibVM.selectSortMethod(SortModeValue.DATE_ADD);
           });
 
           ListItem() {
@@ -159,10 +164,13 @@ export struct VideoLibraryView {
                 .fontSize(14)
                 .fontColor(Color.Black);
 
-              Image($r('app.media.text_and_arrow_down'))
-                .width(20)
-                .aspectRatio(1)
-                .backgroundColor(Color.Transparent);
+              if (this.videoLibVM.sortMode === SortModeValue.FILE_NAME) {
+                Image(this.videoLibVM.sortRule === SortRuleValue.ASCENDING ? $r('app.media.text_and_arrow_down') :
+                  $r('app.media.text_and_arrow_up'))
+                  .width(20)
+                  .aspectRatio(1)
+                  .backgroundColor(Color.Transparent);
+              }
             }
             .width('100%')
             .justifyContent(FlexAlign.Start);
@@ -173,7 +181,7 @@ export struct VideoLibraryView {
           .borderWidth({ bottom: 0.5 })
           .padding({ top: 16, bottom: 16 })
           .onClick(() => {
-            console.info(`Sort By FoldrName`);
+            this.videoLibVM.selectSortMethod(SortModeValue.FILE_NAME);
           });
 
           ListItem() {
@@ -182,28 +190,26 @@ export struct VideoLibraryView {
                 .fontSize(14)
                 .fontColor(Color.Black);
 
-              Image($r('app.media.text_and_arrow_down'))
-                .width(20)
-                .aspectRatio(1)
-                .backgroundColor(Color.Transparent);
+              if (this.videoLibVM.sortMode === SortModeValue.FILE_SIZE) {
+                Image(this.videoLibVM.sortRule === SortRuleValue.ASCENDING ? $r('app.media.text_and_arrow_down') :
+                  $r('app.media.text_and_arrow_up'))
+                  .width(20)
+                  .aspectRatio(1)
+                  .backgroundColor(Color.Transparent);
+              }
             }
             .width('100%')
             .justifyContent(FlexAlign.Start);
           }
           .width('100%')
           .margin({ left: 16 })
-          .padding({ top: 16 })
+          .padding({ top: 16, bottom: 16 })
           .onClick(() => {
-            console.info(`Sort By FileSize`);
+            this.videoLibVM.selectSortMethod(SortModeValue.FILE_SIZE);
           });
         }
       }
-      .width('100%')
-      .padding({ top: 16, bottom: 16 });
-
-      // .onTouch((event) => {
-      //   event.stopPropagation();
-      // });
+      .width('100%');
 
       ListItem() {
         Row() {
