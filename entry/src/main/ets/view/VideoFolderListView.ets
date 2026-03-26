@@ -1,28 +1,29 @@
 import { FolderInfoModel } from '../model/FolderInfoModel';
+import { ViewOptionValue } from '../model/SettingsModel';
 import { VideoInfoModel } from '../model/VideoInfoModel';
 import { FolderItemViewModel } from '../viewmodel/FolderItemViewModel';
 import { VideoItemViewModel } from '../viewmodel/VideoItemViewModel';
 import { FolderItemViewModelList, VideoItemViewModelList, VideoListViewModel } from '../viewmodel/VideoListViewModel';
 import { FolderBoxView } from './FolderBoxView';
 import { MovingToDialog } from './MovingToDialog';
+import { RenameDialog } from './RenameDialog';
 import { VideoBoxView } from './VideoBoxView';
 
 const CHOICE_ALL = 'ChoiceAll';
-const INVALID_VALUES = '/\\:*?"<>|';
+const VIEW_OPTION = 'ViewOption';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
 export struct VideoFolderListView {
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Consume(CHOICE_ALL) choiceAll: boolean = false;
+  @Consume(VIEW_OPTION) viewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
   @State invalidName: boolean = false;
   @Link videoListVM: VideoListViewModel;
   private moveDialogController?: CustomDialogController;
   private scroller: ListScroller = new ListScroller();
-  private renameDialogId: number = 0;
-  private newName?: string = '';
   private isAllChoice: Callback<void> = () => {
     const folderAllChoice = this.folderList.find((item: FolderItemViewModel) => {
       return !item.isChoice;
@@ -34,107 +35,32 @@ export struct VideoFolderListView {
   };
 
   @Builder
-  renameDialogBuilder(info: VideoInfoModel | FolderInfoModel, type: 'folder' | 'video') {
-    Column() {
-      Row() {
-        Text('重命名')
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold);
-      }
-      .width('100%')
-      .margin({ bottom: 12 })
-      .justifyContent(FlexAlign.Center);
-
-      TextInput({ placeholder: '重命名' })
-        .id('renameTextInput')
-        .fontSize(14)
-        .maxLength(100)
-        .showUnderline(true)
-        .underlineColor(Color.Gray)
-        .placeholderFont({ size: 14 })
-        .backgroundColor(Color.Transparent)
-        .bindPopup(this.invalidName, {
-          message: `文件名不能包含以下任何字符: ${INVALID_VALUES}`,
-          placement: Placement.BottomRight,
-        })
-        .onAppear(() => {
-          try {
-            this.getUIContext().getFocusController().requestFocus('renameTextInput');
-          } catch (error) {
-            console.error(`Failed to request focus for renameTextInput. Cause: ${JSON.stringify(error)}`);
-          }
-        })
-        .onWillInsert((value: InsertValue) => {
-          if (INVALID_VALUES.includes(value.insertValue)) {
-            this.invalidName = true;
-            setTimeout(() => {
-              this.invalidName = false;
-            }, 3000);
-          } else {
-            this.invalidName = false;
-          }
-          return !this.invalidName;
-        })
-        .onChange((value: string) => {
-          this.newName = value;
-        });
-
-      Row() {
-        Button({ type: ButtonType.Capsule, stateEffect: false }) {
-          Text('取消')
-            .fontSize(14)
-            .fontColor('#FF4876FF');
-        }
-        .padding(8)
-        .width('45%')
-        .backgroundColor(Color.Transparent)
-        .onClick(() => {
-          try {
-            this.getUIContext().getPromptAction().closeCustomDialog(this.renameDialogId);
-          } catch (error) {
-            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
-          }
-        });
-
-        Divider()
-          .height(24)
-          .vertical(true)
-          .strokeWidth(1)
-          .color('#DCDCDC');
-
-        Button({ type: ButtonType.Capsule, stateEffect: false }) {
-          Text('确认')
-            .fontSize(14)
-            .fontColor('#FF4876FF');
-        }
-        .padding(8)
-        .width('45%')
-        .backgroundColor(Color.Transparent)
-        .onClick(() => {
-          try {
-            this.getUIContext().getPromptAction().closeCustomDialog(this.renameDialogId);
-          } catch (error) {
-            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
-          }
-          if (this.newName !== undefined) {
-            if (type === 'video') {
-              this.videoListVM.renameVideo(this.newName, info as VideoInfoModel);
-            } else {
-              this.videoListVM.renameFolder(this.newName, info as FolderInfoModel);
-            }
-          }
-        });
-      }
-      .width('100%')
-      .margin({ top: 12 })
-      .justifyContent(FlexAlign.SpaceBetween);
-    }
-    .padding(16);
-  }
-
-  @Builder
   folderSwipeEnd(info: FolderInfoModel) {
     Row({ space: 8 }) {
+      Button({ type: ButtonType.Circle, stateEffect: false }) {
+        Image($r('app.media.rename'))
+          .width(24)
+          .aspectRatio(1)
+          .fillColor(Color.White);
+      }
+      .padding(8)
+      .backgroundColor(Color.Orange)
+      .onClick(() => {
+        this.moveDialogController = new CustomDialogController({
+          width: '90%',
+          alignment: DialogAlignment.Bottom,
+          builder: RenameDialog({ videoListVM: this.videoListVM, info: info }),
+          offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
+        });
+        this.moveDialogController.open();
+        // Close swipe action
+        try {
+          this.scroller.closeAllSwipeActions();
+        } catch (error) {
+          console.error(`Failed to invoke ListScroller.closeAllSwipeActions. Cause: ${JSON.stringify(error)}`);
+        }
+      });
+
       Button({ type: ButtonType.Circle, stateEffect: false }) {
         Image($r('app.media.arrow_right_folder_fill'))
           .width(24)
@@ -152,44 +78,7 @@ export struct VideoFolderListView {
           offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
         });
         this.moveDialogController.open();
-
-        try {
-          this.scroller.closeAllSwipeActions();
-        } catch (error) {
-          console.error(`Failed to invoke ListScroller.closeAllSwipeActions. Cause: ${JSON.stringify(error)}`);
-        }
-      });
-
-      Button({ type: ButtonType.Circle, stateEffect: false }) {
-        Image($r('app.media.rename'))
-          .width(24)
-          .aspectRatio(1)
-          .fillColor(Color.White);
-      }
-      .padding(8)
-      .backgroundColor(Color.Orange)
-      .onClick(() => {
-        this.getUIContext()
-          .getPromptAction()
-          .openCustomDialog({
-            builder: () => {
-              this.renameDialogBuilder(info, 'folder');
-            },
-            width: '90%',
-            autoCancel: false,
-            alignment: DialogAlignment.Center,
-            transition: TransitionEffect.SLIDE,
-            onWillAppear: () => {
-              this.newName = undefined;
-            }
-          })
-          .then((dialogId: number) => {
-            this.renameDialogId = dialogId;
-          })
-          .catch((err: BusinessError) => {
-            console.error(`Failed to open create folder dialog. Cuase: ${JSON.stringify(err)}`);
-          });
-
+        // Close swipe action
         try {
           this.scroller.closeAllSwipeActions();
         } catch (error) {
@@ -216,6 +105,30 @@ export struct VideoFolderListView {
   videoSwipeEnd(info: VideoInfoModel) {
     Row({ space: 8 }) {
       Button({ type: ButtonType.Circle, stateEffect: false }) {
+        Image($r('app.media.rename'))
+          .width(24)
+          .aspectRatio(1)
+          .fillColor(Color.White);
+      }
+      .padding(8)
+      .backgroundColor(Color.Orange)
+      .onClick(() => {
+        this.moveDialogController = new CustomDialogController({
+          width: '90%',
+          alignment: DialogAlignment.Bottom,
+          builder: RenameDialog({ videoListVM: this.videoListVM, info: info }),
+          offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
+        });
+        this.moveDialogController.open();
+        // Close swipe action
+        try {
+          this.scroller.closeAllSwipeActions();
+        } catch (error) {
+          console.error(`Failed to invoke ListScroller.closeAllSwipeActions. Cause: ${JSON.stringify(error)}`);
+        }
+      });
+
+      Button({ type: ButtonType.Circle, stateEffect: false }) {
         Image($r('app.media.arrow_right_folder_fill'))
           .width(24)
           .aspectRatio(1)
@@ -232,43 +145,6 @@ export struct VideoFolderListView {
           offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
         });
         this.moveDialogController.open();
-        // Close swipe action
-        try {
-          this.scroller.closeAllSwipeActions();
-        } catch (error) {
-          console.error(`Failed to invoke ListScroller.closeAllSwipeActions. Cause: ${JSON.stringify(error)}`);
-        }
-      });
-
-      Button({ type: ButtonType.Circle, stateEffect: false }) {
-        Image($r('app.media.rename'))
-          .width(24)
-          .aspectRatio(1)
-          .fillColor(Color.White);
-      }
-      .padding(8)
-      .backgroundColor(Color.Orange)
-      .onClick(() => {
-        this.getUIContext()
-          .getPromptAction()
-          .openCustomDialog({
-            builder: () => {
-              this.renameDialogBuilder(info, 'video');
-            },
-            width: '90%',
-            autoCancel: false,
-            alignment: DialogAlignment.Center,
-            transition: TransitionEffect.SLIDE,
-            onWillAppear: () => {
-              this.newName = undefined;
-            }
-          })
-          .then((dialogId: number) => {
-            this.renameDialogId = dialogId;
-          })
-          .catch((err: BusinessError) => {
-            console.error(`Failed to open create folder dialog. Cuase: ${JSON.stringify(err)}`);
-          });
         // Close swipe action
         try {
           this.scroller.closeAllSwipeActions();
@@ -299,22 +175,19 @@ export struct VideoFolderListView {
         (item: FolderItemViewModel) => {
           ListItem() {
             FolderBoxView({
-              folderItem: item, isAllChoice: () => {
+              folderItem: item,
+              videoListVM: this.videoListVM,
+              isAllChoice: () => {
                 this.isAllChoice();
               }
             });
           }
-          .padding({ left: 8, right: 8 })
-          .gesture(
-            LongPressGesture({ repeat: false })
-              .onAction(() => {
-                console.info(`Folder Item Long Press`);
-              })
-          )
           .swipeAction({
             end: {
               builder: () => {
-                this.folderSwipeEnd(item.folderInfo);
+                if (this.viewOptions === ViewOptionValue.LIST_VIEW) {
+                  this.folderSwipeEnd(item.folderInfo);
+                }
               }
             }
           });
@@ -330,29 +203,19 @@ export struct VideoFolderListView {
         (item: VideoItemViewModel) => {
           ListItem() {
             VideoBoxView({
-              videoItem: item, isAllChoice: () => {
+              videoItem: item,
+              videoListVM: this.videoListVM,
+              isAllChoice: () => {
                 this.isAllChoice();
               }
             });
           }
-          .padding({ left: 8, right: 8 })
-          .gesture(
-            LongPressGesture({ repeat: false })
-              .onAction(() => {
-                this.getUIContext().getPromptAction().openCustomDialog({
-                  builder: () => {
-                    console.info(`Video Item Long Press`);
-                  }
-                })
-                  .catch((err: BusinessError) => {
-                    console.error(`Failed to open video long press dialog. Cause: ${JSON.stringify(err)}`);
-                  });
-              })
-          )
           .swipeAction({
             end: {
               builder: () => {
-                this.videoSwipeEnd(item.videoInfo);
+                if (this.viewOptions === ViewOptionValue.LIST_VIEW) {
+                  this.videoSwipeEnd(item.videoInfo);
+                }
               }
             }
           });
@@ -365,10 +228,12 @@ export struct VideoFolderListView {
     }
     .width('100%')
     .height('100%')
-    .scrollBar(BarState.Off)
-    .contentStartOffset(8)
     .contentEndOffset(8)
+    .contentStartOffset(8)
+    .scrollBar(BarState.Off)
+    .padding({ left: 8, right: 8 })
+    .backgroundColor(`rgb(243, 243, 243)`)
     .divider({ strokeWidth: 8, color: 'rgb(243, 243, 243)' })
-    .backgroundColor(`rgb(243, 243, 243)`);
+    .lanes(this.viewOptions === ViewOptionValue.LIST_VIEW ? 1 : 2, 8);
   }
 }

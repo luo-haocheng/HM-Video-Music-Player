@@ -9,7 +9,7 @@ import { VideoLibraryStore } from '../model/VideoLibraryStore';
 import { VideoInfoModel } from '../model/VideoInfoModel';
 import { FolderInfoModel } from '../model/FolderInfoModel';
 import { emitter } from '@kit.BasicServicesKit';
-import { SettingKey, SortModeValue, SortRuleValue } from '../model/SettingsModel';
+import { SettingKey, SortModeValue, SortRuleValue, ViewOptionValue } from '../model/SettingsModel';
 import { preferences } from '@kit.ArkData';
 import { Settings } from '../model/Settings';
 
@@ -302,6 +302,14 @@ export class VideoLibraryViewModel {
     this.sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
     this.sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
     emitter.emit(SORT_ITEMS_EVENT);
+  }
+
+  async selectViewOption(viewOption: ViewOptionValue) {
+    await this.settings.putSetting(SettingKey.VIEW_OPTION, viewOption);
+  }
+
+  async getViewOptions(): Promise<ViewOptionValue> {
+    return await this.settings.getSetting(SettingKey.VIEW_OPTION) as ViewOptionValue;
   }
 
   async init(): Promise<void> {

@@ -4,7 +4,7 @@ import { emitter } from '@kit.BasicServicesKit';
 import { FolderInfoModel } from '../model/FolderInfoModel';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { userAuth } from '@kit.UserAuthenticationKit';
-import { SortModeValue, SortRuleValue } from '../model/SettingsModel';
+import { SortModeValue, SortRuleValue, ViewOptionValue } from '../model/SettingsModel';
 
 const ROOT_FOLDER = '/';
 const SECRET_FOLDER = '/*/';
@@ -18,6 +18,7 @@ const SHARE_CHOICE_EVENT = 'ShareChoice';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
 const MULTI_CHOICE = 'MultiChoice';
 const CURRENT_FOLDER = 'CurrentFolder';
+const VIEW_OPTION = 'ViewOption';
 const IN_SECRET_FOLDER = 'InSecretFolder';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
@@ -47,6 +48,7 @@ export struct VideoLibraryView {
   @Provide(MULTI_CHOICE) multiChoice: boolean = false;
   @Provide(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
   @Provide(IN_SECRET_FOLDER) inSecretFolder: boolean = false;
+  @Provide(VIEW_OPTION) viewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
   @Provide('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
   @State videoLibVM: VideoLibraryViewModel = new VideoLibraryViewModel(this.getUIContext().getHostContext() as Context);
   @State invalidName: boolean = false;
@@ -61,6 +63,7 @@ export struct VideoLibraryView {
   async aboutToAppear(): Promise<void> {
     await this.videoLibVM.init();
     this.videoTabStack.pushPath({ name: 'VideoBrowser' });
+    this.viewOptions = await this.videoLibVM.getViewOptions();
   }
 
   private async getRandom(len: number): Promise<Uint8Array | undefined> {
@@ -114,7 +117,7 @@ export struct VideoLibraryView {
     List() {
       ListItem() {
         Row() {
-          Text('宫格视图')
+          Text(this.viewOptions === ViewOptionValue.LIST_VIEW ? '宫格视图' : '列表视图')
             .fontSize(14)
             .fontColor(Color.Black);
         }
@@ -123,8 +126,14 @@ export struct VideoLibraryView {
       }
       .width('100%')
       .padding({ top: 16, bottom: 16 })
-      .onClick(() => {
-        // todo
+      .onClick(async () => {
+        if (this.viewOptions === ViewOptionValue.LIST_VIEW) {
+          await this.videoLibVM.selectViewOption(ViewOptionValue.GRID_VIEW);
+          this.viewOptions = ViewOptionValue.GRID_VIEW;
+        } else {
+          await this.videoLibVM.selectViewOption(ViewOptionValue.LIST_VIEW);
+          this.viewOptions = ViewOptionValue.LIST_VIEW;
+        }
       });
 
       ListItemGroup({
