@@ -1,3 +1,4 @@
+import { AudioLibraryView } from '../view/AudioLibraryView';
 import { VideoLibraryView } from '../view/VideoLibraryView';
 
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
@@ -40,8 +41,7 @@ struct Index {
           .tabBar(this.tabBarBuilder($r('app.media.video'), '视频库', 0));
 
           TabContent() {
-            Text('音频')
-              .fontSize(30);
+            AudioLibraryView();
           }
           .tabBar(this.tabBarBuilder($r('app.media.music'), '音频库', 1));
 
