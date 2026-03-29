@@ -79,30 +79,30 @@ export struct VideoBoxView {
           Column() {
             Text(this.videoItem.videoName)
               .maxLines(2)
-              .fontSize(12)
+              .fontSize(14)
               .fontColor(Color.Black)
               .textOverflow({ overflow: TextOverflow.Ellipsis });
 
             Row({ space: 12 }) {
               Row({ space: 3 }) {
                 Image($r('app.media.clock'))
-                  .width(12)
+                  .width(14)
                   .aspectRatio(1)
                   .draggable(false)
                   .fillColor(Color.Gray);
                 Text(this.videoItem.duration)
-                  .fontSize(10)
+                  .fontSize(12)
                   .fontColor(Color.Gray);
               };
 
               Row({ space: 3 }) {
                 Image($r('app.media.save'))
-                  .width(12)
+                  .width(14)
                   .aspectRatio(1)
                   .draggable(false)
                   .fillColor(Color.Gray);
                 Text(this.videoItem.videoSize)
-                  .fontSize(10)
+                  .fontSize(12)
                   .fontColor(Color.Gray);
               };
             }

@@ -85,19 +85,19 @@ export struct FolderBoxView {
           Column() {
             Text(this.folderItem.folderName)
               .maxLines(2)
-              .fontSize(12)
+              .fontSize(14)
               .fontColor(Color.Black)
               .textOverflow({ overflow: TextOverflow.Ellipsis });
 
             Row({ space: 3 }) {
               Image($r('app.media.calendar'))
-                .width(12)
+                .width(14)
                 .aspectRatio(1)
                 .draggable(false)
                 .fillColor(Color.Gray);
 
               Text(this.folderItem.dateAdd)
-                .fontSize(10)
+                .fontSize(12)
                 .fontColor(Color.Gray);
             };
           }

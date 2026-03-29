@@ -1,19 +1,17 @@
-import { VideoInfoModel } from '../model/VideoInfoModel';
 import image from '@ohos.multimedia.image';
+import { AudioInfoModel } from '../model/AudioInfoModel';
 import { fileIo } from '@kit.CoreFileKit';
 import { media } from '@kit.MediaKit';
 
 @Observed
-export class VideoItemViewModel {
-  @Track public isChoice: boolean = false;
-  @Track public videoName: string = '';
-  @Track public videoSize: string = '';
+export class AudioItemViewModel {
+  @Track public audioName: string = '';
+  @Track public audioSize: string = '';
   @Track public duration: string = '';
-  @Track public dateAdd: string = '';
-  @Track public previewImg?: image.PixelMap;
-  public videoInfo: VideoInfoModel = new VideoInfoModel();
+  @Track public albumCover?: image.PixelMap;
+  public audioInfo: AudioInfoModel = new AudioInfoModel();
 
-  videoSizeStr(bytesCount: number): string {
+  audioSizeStr(bytesCount: number): string {
     let kbBytes = 1024;
     let mbBytes = 1024 * 1024;
     let gbBytes = 1024 * 1024 * 1024;
@@ -46,27 +44,26 @@ export class VideoItemViewModel {
     }
   }
 
-  async updateVideoItem(videoInfo: VideoInfoModel) {
-    this.videoInfo = videoInfo;
-    this.videoName = videoInfo.name;
-    this.dateAdd = new Date(videoInfo.dateAdd).toISOString().slice(0, 10);
+  async updateAudioItem(audioInfo: AudioInfoModel) {
+    this.audioInfo = audioInfo;
+    this.audioName = audioInfo.name;
 
     try {
-      let videoStat = await fileIo.stat(videoInfo.videoPath);
-      this.videoSize = this.videoSizeStr(videoStat.size);
+      const audioStat = await fileIo.stat(audioInfo.audioPath);
+      this.audioSize = this.audioSizeStr(audioStat.size);
     } catch (error) {
       console.error(`Failed to invoke fileIo.stat. Cause: ${JSON.stringify(error)}`);
     }
 
-    let metadata = JSON.parse(videoInfo.metadata) as media.AVMetadata;
+    let metadata = JSON.parse(audioInfo.metadata) as media.AVMetadata;
     this.duration = this.durationStr(metadata.duration ? parseInt(metadata.duration) : 0);
 
     let imageSource: image.ImageSource | undefined;
     try {
-      imageSource = image.createImageSource(videoInfo.thumbnailPath);
-      this.previewImg = await imageSource.createPixelMap();
+      imageSource = image.createImageSource(audioInfo.albumCoverPath);
+      this.albumCover = await imageSource.createPixelMap();
     } catch (error) {
-      console.error(`Failed to create preview image. Cause: ${JSON.stringify(error)}`);
+      console.error(`Failed to create album cover. Cause: ${JSON.stringify(error)}`);
     } finally {
       if (imageSource) {
         await imageSource.release();
