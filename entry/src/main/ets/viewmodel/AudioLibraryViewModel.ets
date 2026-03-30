@@ -1,6 +1,6 @@
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
 import picker from '@ohos.file.picker';
-import { fileIo } from '@kit.CoreFileKit';
+import { fileIo, fileUri } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 import { media } from '@kit.MediaKit';
 import image from '@ohos.multimedia.image';
@@ -9,13 +9,17 @@ import { AudioItemViewModel } from './AudioItemViewModel';
 
 const AUDIO_DIR = '/audios';
 const COVER_DIR = '/covers';
+const DOWNLOAD_AUDIO_DIR = '/Audios';
+
 
 @Observed
 export class AudioLibraryViewModel {
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
+  private downloadPath: string = '';
 
   async init(context: Context): Promise<void> {
     await this.audioStore.initStore(context);
+    await this.createAudioDownloadDir(context);
   }
 
   async loadAllAudio(): Promise<AudioItemViewModel[]> {
@@ -58,7 +62,24 @@ export class AudioLibraryViewModel {
   }
 
   async importAudioFromDownloadDir(context: Context): Promise<void> {
-
+    try {
+      const downloadVideoPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
+      let traverseDir = async (dir: string) => {
+        let files = await fileIo.listFile(dir);
+        for (let i = 0; i < files.length; ++i) {
+          let path = dir + `/${files[i]}`;
+          let stat = await fileIo.stat(path);
+          if (stat.isDirectory()) {
+            await traverseDir(path);
+          } else {
+            await this.importAudio(path, context);
+          }
+        }
+      };
+      await traverseDir(downloadVideoPath);
+    } catch (error) {
+      console.error(`Failed to import video from download directory`);
+    }
   }
 
   private async importAudio(uri: string, context: Context): Promise<void> {
@@ -217,5 +238,31 @@ export class AudioLibraryViewModel {
     } catch (error) {
       throw new Error(error);
     }
+  }
+
+  private async createAudioDownloadDir(context: Context): Promise<void> {
+    const documentSaveOptions = new picker.DocumentSaveOptions();
+    documentSaveOptions.pickerMode = picker.DocumentPickerMode.DOWNLOAD;
+    const documentViewPicker = new picker.DocumentViewPicker(context);
+    documentViewPicker.save(documentSaveOptions)
+      .then(async (result: string[]) => {
+        if (!result || result.length <= 0) {
+          console.error(`Failed to invoke DocumentViewPicker.save, result is empty`);
+          return;
+        }
+        console.info(`Download Save Result: ${result}`);
+        this.downloadPath = new fileUri.FileUri(result[0]).path;
+        const downloadVideoPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
+        try {
+          if (!fileIo.accessSync(downloadVideoPath, fileIo.AccessModeType.EXIST)) {
+            await fileIo.mkdir(downloadVideoPath);
+          }
+        } catch (error) {
+          console.error(`Failed to make video directory ${downloadVideoPath}. Cause: ${JSON.stringify(error)}`);
+        }
+      })
+      .catch((err: BusinessError) => {
+        console.error(`Failed to invoke DocumentViewPicker.save. Cause: ${JSON.stringify(err)}`);
+      });
   }
 }
