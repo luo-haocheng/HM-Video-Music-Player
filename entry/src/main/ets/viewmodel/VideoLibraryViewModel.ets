@@ -176,7 +176,7 @@ export class VideoLibraryViewModel {
     // Insert video record to database
     let rowId: number = -1;
     let lastSlashIdx = uri.lastIndexOf('/');
-    let videoName = uri.slice(lastSlashIdx + 1);
+    let videoName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
     try {
       rowId = await this.insert2DB(folder, videoName, videoPath, thumbnailPath);
     } catch (error) {

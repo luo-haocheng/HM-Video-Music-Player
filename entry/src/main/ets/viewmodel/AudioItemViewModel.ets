@@ -1,13 +1,12 @@
 import image from '@ohos.multimedia.image';
 import { AudioInfoModel } from '../model/AudioInfoModel';
-import { fileIo } from '@kit.CoreFileKit';
 import { media } from '@kit.MediaKit';
 
 @Observed
 export class AudioItemViewModel {
-  @Track public audioName: string = '';
-  @Track public audioSize: string = '';
-  @Track public duration: string = '';
+  @Track public title: string = '';
+  @Track public album: string = '未知专辑';
+  @Track public artist: string = '未知歌手';
   @Track public albumCover?: image.PixelMap;
   public audioInfo: AudioInfoModel = new AudioInfoModel();
 
@@ -46,27 +45,26 @@ export class AudioItemViewModel {
 
   async updateAudioItem(audioInfo: AudioInfoModel) {
     this.audioInfo = audioInfo;
-    this.audioName = audioInfo.name;
+    this.title = audioInfo.name;
 
-    try {
-      const audioStat = await fileIo.stat(audioInfo.audioPath);
-      this.audioSize = this.audioSizeStr(audioStat.size);
-    } catch (error) {
-      console.error(`Failed to invoke fileIo.stat. Cause: ${JSON.stringify(error)}`);
+    if (audioInfo.metadata) {
+      let metadata = JSON.parse(audioInfo.metadata) as media.AVMetadata;
+      this.title = metadata.title ? metadata.title : audioInfo.name;
+      this.artist = metadata.artist ? metadata.artist : this.artist;
+      this.album = metadata.album ? metadata.album : this.album;
     }
 
-    let metadata = JSON.parse(audioInfo.metadata) as media.AVMetadata;
-    this.duration = this.durationStr(metadata.duration ? parseInt(metadata.duration) : 0);
-
-    let imageSource: image.ImageSource | undefined;
-    try {
-      imageSource = image.createImageSource(audioInfo.albumCoverPath);
-      this.albumCover = await imageSource.createPixelMap();
-    } catch (error) {
-      console.error(`Failed to create album cover. Cause: ${JSON.stringify(error)}`);
-    } finally {
-      if (imageSource) {
-        await imageSource.release();
+    if (audioInfo.coverPath) {
+      let imageSource: image.ImageSource | undefined;
+      try {
+        imageSource = image.createImageSource(audioInfo.coverPath);
+        this.albumCover = await imageSource.createPixelMap();
+      } catch (error) {
+        console.error(`Failed to create album cover. Cause: ${JSON.stringify(error)}`);
+      } finally {
+        if (imageSource) {
+          await imageSource.release();
+        }
       }
     }
   }

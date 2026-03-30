@@ -13,12 +13,21 @@ export struct AudioBoxView {
       space: { main: LengthMetrics.vp(12) }
     }) {
       Row() {
-        Image($r('app.media.music_fill'))
-          .width('50%')
-          .aspectRatio(1)
-          .draggable(false)
-          .fillColor(Color.Pink)
-          .objectFit(ImageFit.Contain);
+        if (this.audioItem.albumCover) {
+          Image(this.audioItem.albumCover)
+            .width('100%')
+            .height('100%')
+            .draggable(false)
+            .fillColor(Color.Pink)
+            .objectFit(ImageFit.Cover);
+        } else {
+          Image($r('app.media.music_fill'))
+            .width('50%')
+            .aspectRatio(1)
+            .draggable(false)
+            .fillColor(Color.Pink)
+            .objectFit(ImageFit.Contain);
+        }
       }
       .height('90%')
       .aspectRatio(1)
@@ -33,14 +42,20 @@ export struct AudioBoxView {
         justifyContent: FlexAlign.SpaceBetween,
       }) {
         Column() {
-          Text(this.audioItem.audioName)
+          Text(this.audioItem.title)
             .maxLines(1)
             .fontSize(14)
             .fontColor(Color.Black)
             .textOverflow({ overflow: TextOverflow.Ellipsis });
 
-          Row({ space: 12 }) {
-            Text('未知歌手')
+          Row() {
+            Text(this.audioItem.artist)
+              .fontSize(12)
+              .fontColor(Color.Gray);
+            Text(' · ')
+              .fontSize(12)
+              .fontColor(Color.Black);
+            Text(this.audioItem.album)
               .fontSize(12)
               .fontColor(Color.Gray);
           };

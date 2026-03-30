@@ -2,7 +2,7 @@ import { relationalStore } from '@kit.ArkData';
 import { FolderInfoModel } from './FolderInfoModel';
 import { VideoInfoModel } from './VideoInfoModel';
 
-const STORE_NAME = 'VideoStore.db';
+const VIDEO_STORE_NAME = 'VideoStore.db';
 const VIDEO_TABLE_NAME = 'VIDEO_IMPORTED';
 const FOLDER_TABLE_NAME = 'FOLDER_CREATED';
 const SQL_CREATE_VIDEO_TABLE =
@@ -15,7 +15,7 @@ export class VideoLibraryStore {
 
   async initStore(context: Context): Promise<void> {
     const storeConfig: relationalStore.StoreConfig = {
-      name: STORE_NAME,
+      name: VIDEO_STORE_NAME,
       securityLevel: relationalStore.SecurityLevel.S3,
     };
     try {
