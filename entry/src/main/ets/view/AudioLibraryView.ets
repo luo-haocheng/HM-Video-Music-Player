@@ -1,5 +1,7 @@
 import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { AudioLibraryViewModel } from '../viewmodel/AudioLibraryViewModel';
+import { AudioAlbumListView } from './AudioAlbumListView';
+import { AudioArtistListView } from './AudioArtistListView';
 import { AudioPlayListView } from './AudioPlayListView';
 
 const TOP_RECT_HEIGHT = 'TopRectHeight';
@@ -234,16 +236,12 @@ export struct AudioLibraryView {
         .tabBar('歌单');
 
         TabContent() {
-          Text('专辑')
-            .fontSize(30)
-            .fontColor(Color.Black);
+          AudioAlbumListView();
         }
         .tabBar('专辑');
 
         TabContent() {
-          Text('艺术家')
-            .fontSize(30)
-            .fontColor(Color.Black);
+          AudioArtistListView();
         }
         .tabBar('艺术家');
       };
