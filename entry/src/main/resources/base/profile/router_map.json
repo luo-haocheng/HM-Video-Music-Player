@@ -14,6 +14,11 @@
       "name": "FolderBrowser",
       "pageSourceFile": "src/main/ets/view/MovingToDialog.ets",
       "buildFunction": "FolderBrowserBuilder"
+    },
+    {
+      "name": "AudioList",
+      "pageSourceFile": "src/main/ets/view/AudioListView.ets",
+      "buildFunction": "AudioListBuilder"
     }
   ]
 }

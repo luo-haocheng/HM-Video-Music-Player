@@ -66,7 +66,6 @@ export struct AudioBoxView {
         .justifyContent(FlexAlign.SpaceAround);
       }
       .layoutWeight(1);
-
     }
     .padding(8)
     .height(80)

@@ -1,10 +1,10 @@
 import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { AudioLibraryViewModel } from '../viewmodel/AudioLibraryViewModel';
-import { AudioBoxView } from './AudioBoxView';
-
+import { AudioPlayListView } from './AudioPlayListView';
 
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
+const PLAYLIST_PATH_STACK = 'PlayListPathStack';
 const IMPORT_OPTS: ImportOption[] = [
   { icon: $r('app.media.music'), text: '音频文件导入', color: Color.Blue },
   { icon: $r('app.media.folder'), text: '文件管理导入', color: Color.Orange },
@@ -22,6 +22,7 @@ interface ImportOption {
 export struct AudioLibraryView {
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
+  @Provide(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
   @State audioList: AudioItemViewModel[] = [];
   @State audioLibVM: AudioLibraryViewModel = new AudioLibraryViewModel();
   private importDialogId: number = -1;
@@ -152,16 +153,6 @@ export struct AudioLibraryView {
     }) {
       Row() {
         Row({ space: 12 }) {
-          Button({ type: ButtonType.Capsule, stateEffect: false }) {
-            Image($r('app.media.open_sidebar'))
-              .width(24)
-              .aspectRatio(1)
-              .fillColor(Color.Black);
-          }
-          .width(36)
-          .aspectRatio(1)
-          .backgroundColor('#AADCDCDC');
-
           Text('音频')
             .maxLines(1)
             .fontSize(20)
@@ -222,35 +213,41 @@ export struct AudioLibraryView {
           .backgroundColor('#AADCDCDC');
         };
       }
-      .padding(16)
       .width('100%')
       .alignItems(VerticalAlign.Center)
-      .justifyContent(FlexAlign.SpaceBetween);
+      .justifyContent(FlexAlign.SpaceBetween)
+      .padding({
+        left: 16,
+        right: 16,
+        bottom: 8,
+        top: 8
+      });
 
-      List() {
-        ForEach(
-          this.audioList,
-          (item: AudioItemViewModel) => {
-            ListItem() {
-              AudioBoxView({
-                audioItem: item
-              });
-            };
-          },
-          (item: AudioItemViewModel, index: number) => {
-            index;
-            return item.audioInfo.id.toString();
+      Tabs() {
+        TabContent() {
+          Navigation(this.playListStack) {
+            AudioPlayListView();
           }
-        );
-      }
-      .width('100%')
-      .height('100%')
-      .contentEndOffset(8)
-      .contentStartOffset(8)
-      .scrollBar(BarState.Off)
-      .padding({ left: 8, right: 8 })
-      .backgroundColor(`rgb(243, 243, 243)`)
-      .divider({ strokeWidth: 8, color: 'rgb(243, 243, 243)' });
+          .hideToolBar(true)
+          .mode(NavigationMode.Stack);
+        }
+        .tabBar('歌单');
+
+        TabContent() {
+          Text('专辑')
+            .fontSize(30)
+            .fontColor(Color.Black);
+        }
+        .tabBar('专辑');
+
+        TabContent() {
+          Text('艺术家')
+            .fontSize(30)
+            .fontColor(Color.Black);
+        }
+        .tabBar('艺术家');
+      };
+
     }
     .width('100%')
     .height('100%')
