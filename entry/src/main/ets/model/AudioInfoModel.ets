@@ -3,6 +3,8 @@ export class AudioInfoModel {
   public name: string = '';
   public dateAdd: number = 0;
   public audioPath: string = '';
-  public metadata: string | null = '';
-  public coverPath: string | null = '';
+  public album: string | null = null;
+  public artist: string | null = null;
+  public metadata: string | null = null;
+  public coverPath: string | null = null;
 }

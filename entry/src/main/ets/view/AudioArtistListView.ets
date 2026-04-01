@@ -1,12 +1,15 @@
-import { media } from '@kit.MediaKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
+import { AudioListInfo, AudioListType } from './AudioListView';
 import { PlayListBoxView } from './PlayListBoxView';
+
+const ARTISTLIST_PATH_STACK = 'ArtistListPathStack';
 
 @Component
 export struct AudioArtistListView {
-  @State artistList: string[] = [];
-  private artistMap: Map<string, AudioInfoModel[]> = new Map();
+  @State artistList: (string | null)[] = [];
+  @Consume(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
+  private artistMap: Map<string | null, AudioInfoModel[]> = new Map();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 
   async aboutToAppear(): Promise<void> {
@@ -15,21 +18,14 @@ export struct AudioArtistListView {
 
     let audioInfoList = await this.audioStore.selectAllAudio();
     for (let i = 0; i < audioInfoList.length; ++i) {
-      let artist: string = '';
-      let metadataStr = audioInfoList[i].metadata;
-      if (metadataStr) {
-        let metadata = JSON.parse(metadataStr) as media.AVMetadata;
-        artist = metadata.artist ? metadata.artist : '未知艺术家';
-      }
+      let artist: string | null = audioInfoList[i].artist;
       if (this.artistMap.has(artist)) {
         this.artistMap.get(artist)?.push(audioInfoList[i]);
       } else {
         this.artistMap.set(artist, [audioInfoList[i]]);
       }
     }
-    for (let artist of this.artistMap.keys()) {
-      this.artistList.push(artist);
-    }
+    this.artistList = Array.from(this.artistMap.keys());
   }
 
   build() {
@@ -37,7 +33,14 @@ export struct AudioArtistListView {
       ForEach(
         this.artistList,
         (item: string) => {
-          PlayListBoxView({ playListName: item });
+          PlayListBoxView({ playListName: item })
+            .onClick(() => {
+              const audioListInfo: AudioListInfo = {
+                type: AudioListType.ARTIST_LIST,
+                name: item
+              };
+              this.artistListStack.pushPath({ name: 'AudioList', param: audioListInfo });
+            });
         },
         (item: string, index: number) => {
           index;

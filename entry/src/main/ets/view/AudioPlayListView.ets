@@ -1,3 +1,4 @@
+import { AudioListInfo, AudioListType } from './AudioListView';
 import { PlayListBoxView } from './PlayListBoxView';
 
 const ALL_AUDIO = '*';
@@ -14,14 +15,22 @@ export struct AudioPlayListView {
         PlayListBoxView({ playListName: '所有音乐' });
       }
       .onClick(() => {
-        this.playListStack.pushPath({ name: 'AudioList', param: ALL_AUDIO });
+        const audioListInfo: AudioListInfo = {
+          type: AudioListType.PLAY_LIST,
+          name: ALL_AUDIO
+        };
+        this.playListStack.pushPath({ name: 'AudioList', param: audioListInfo });
       });
 
       ListItem() {
         PlayListBoxView({ playListName: '我的收藏' });
       }
       .onClick(() => {
-        this.playListStack.pushPath({ name: 'AudioList', param: FAVORITE_AUDIO });
+        const audioListInfo: AudioListInfo = {
+          type: AudioListType.PLAY_LIST,
+          name: FAVORITE_AUDIO
+        };
+        this.playListStack.pushPath({ name: 'AudioList', param: audioListInfo });
       });
     }
     .width('100%')

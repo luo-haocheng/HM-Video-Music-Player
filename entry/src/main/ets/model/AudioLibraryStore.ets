@@ -6,7 +6,7 @@ const AUDIO_TABLE_NAME = 'VIDEO_IMPORTED';
 const PLAYLIST_TABLE_NAME = 'PLAYLIST_CREATED';
 const PLAYLIST_AUDIO_TABLE_NAME = 'PLAYLIST_AUDIO';
 const SQL_CREATE_AUDIO_TABLE =
-  `CREATE TABLE IF NOT EXISTS ${AUDIO_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL, DATE_ADD INTEGER NOT NULL, METADATA TEXT, AUDIO_PATH TEXT NOT NULL, COVER_PATH TEXT)`;
+  `CREATE TABLE IF NOT EXISTS ${AUDIO_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL, DATE_ADD INTEGER NOT NULL, METADATA TEXT, ALBUM TEXT, ARTIST TEXT, AUDIO_PATH TEXT NOT NULL, COVER_PATH TEXT)`;
 const SQL_CREATE_PLAYLIST_TABLE =
   `CREATE TABLE IF NOT EXISTS ${PLAYLIST_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL UNIQUE, DATE_ADD INTEGER NOT NULL)`;
 const SQL_CREATE_PLAYLIST_AUDIO_TABLE =
@@ -33,7 +33,6 @@ export class AudioLibraryStore {
       await transaction.execute(SQL_CREATE_PLAYLIST_TABLE);
       await transaction.execute(SQL_CREATE_PLAYLIST_AUDIO_TABLE);
       await transaction.commit();
-      console.info(`Create audio table succeed.`);
     } catch (error) {
       console.error(`Failed to execute create table sql. Cause: ${JSON.stringify(error)}`);
       await transaction?.rollback();
@@ -49,6 +48,8 @@ export class AudioLibraryStore {
         transaction = await this.store.createTransaction();
         const valueBucket1: relationalStore.ValuesBucket = {
           NAME: audioInfo.name,
+          ALBUM: audioInfo.album,
+          ARTIST: audioInfo.artist,
           METADATA: audioInfo.metadata,
           AUDIO_PATH: audioInfo.audioPath,
           COVER_PATH: audioInfo.coverPath,
@@ -72,16 +73,27 @@ export class AudioLibraryStore {
   }
 
   async selectAllAudio(): Promise<AudioInfoModel[]> {
+    let resultSet: relationalStore.ResultSet | undefined;
     let audioInfoList: AudioInfoModel[] = [];
     if (this.store !== undefined) {
       try {
         let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
-        let resultSet = await this.store.query(predicate);
+        resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
           let audioInfo = new AudioInfoModel();
           audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
           audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
           audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
+            audioInfo.album = null;
+          } else {
+            audioInfo.album = resultSet.getString(resultSet.getColumnIndex('ALBUM'));
+          }
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('ARTIST'))) {
+            audioInfo.artist = null;
+          } else {
+            audioInfo.artist = resultSet.getString(resultSet.getColumnIndex('ARTIST'));
+          }
           if (resultSet.isColumnNull(resultSet.getColumnIndex('METADATA'))) {
             audioInfo.metadata = null;
           } else {
@@ -97,47 +109,64 @@ export class AudioLibraryStore {
       } catch (error) {
         console.error(`Failed to execute query all audio. Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
+      } finally {
+        resultSet?.close();
       }
     }
     return audioInfoList;
   }
 
-  async selectAudioByPlayList(playlistName: string): Promise<AudioInfoModel[]> {
+  async selectAudioByPlayList(playlistName: string | null): Promise<AudioInfoModel[]> {
     let audioIdList: number[] = [];
     let audioInfoList: AudioInfoModel[] = [];
+    let resultSetID: relationalStore.ResultSet | undefined;
     if (this.store !== undefined) {
       try {
         let predicate = new relationalStore.RdbPredicates(PLAYLIST_AUDIO_TABLE_NAME);
         predicate.equalTo('PLAYLIST_NAME', playlistName);
-        let resultSet = await this.store.query(predicate);
-        while (resultSet.goToNextRow()) {
-          let audioId = resultSet.getLong(resultSet.getColumnIndex('AUDIO_ID'));
+        resultSetID = await this.store.query(predicate);
+        while (resultSetID.goToNextRow()) {
+          let audioId = resultSetID.getLong(resultSetID.getColumnIndex('AUDIO_ID'));
           audioIdList.push(audioId);
         }
+        console.info(`Audio Id List: ${JSON.stringify(audioIdList)}`);
       } catch (error) {
         console.error(`Failed to execute query audio id of playlist: ${playlistName} . Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
+      } finally {
+        resultSetID?.close();
       }
 
+      let resultSetAudio: relationalStore.ResultSet | undefined;
       try {
         for (let i = 0; i < audioIdList.length; ++i) {
           let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
           predicate.equalTo('ID', audioIdList[i]);
-          let resultSet = await this.store.query(predicate);
-          while (resultSet.goToNextRow()) {
+          resultSetAudio = await this.store.query(predicate);
+          while (resultSetAudio.goToNextRow()) {
             let audioInfo = new AudioInfoModel();
-            audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
-            audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
-            audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
-            if (resultSet.isColumnNull(resultSet.getColumnIndex('METADATA'))) {
+            audioInfo.id = resultSetAudio.getLong(resultSetAudio.getColumnIndex('ID'));
+            audioInfo.name = resultSetAudio.getString(resultSetAudio.getColumnIndex('NAME'));
+            audioInfo.audioPath = resultSetAudio.getString(resultSetAudio.getColumnIndex('AUDIO_PATH'));
+            if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('ALBUM'))) {
+              audioInfo.album = null;
+            } else {
+              audioInfo.album = resultSetAudio.getString(resultSetAudio.getColumnIndex('ALBUM'));
+            }
+            if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('ARTIST'))) {
+              audioInfo.artist = null;
+            } else {
+              audioInfo.artist = resultSetAudio.getString(resultSetAudio.getColumnIndex('ARTIST'));
+            }
+            if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('METADATA'))) {
               audioInfo.metadata = null;
             } else {
-              audioInfo.metadata = resultSet.getString(resultSet.getColumnIndex('METADATA'));
+              audioInfo.metadata = resultSetAudio.getString(resultSetAudio.getColumnIndex('METADATA'));
             }
-            if (resultSet.isColumnNull(resultSet.getColumnIndex('COVER_PATH'))) {
+            if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('COVER_PATH'))) {
               audioInfo.coverPath = null;
             } else {
-              audioInfo.coverPath = resultSet.getString(resultSet.getColumnIndex('COVER_PATH'));
+              audioInfo.coverPath = resultSetAudio.getString(resultSetAudio.getColumnIndex('COVER_PATH'));
             }
             audioInfoList.push(audioInfo);
           }
@@ -145,6 +174,98 @@ export class AudioLibraryStore {
       } catch (error) {
         console.error(`Failed to execute query audio id of playlist: ${playlistName} . Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
+      } finally {
+        resultSetAudio?.close();
+      }
+    }
+    return audioInfoList;
+  }
+
+  async selectAudioByAlbum(album: string | null): Promise<AudioInfoModel[]> {
+    let audioInfoList: AudioInfoModel[] = [];
+    let resultSet: relationalStore.ResultSet | undefined;
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('ALBUM', album);
+        resultSet = await this.store.query(predicate);
+        while (resultSet.goToNextRow()) {
+          let audioInfo = new AudioInfoModel();
+          audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
+          audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
+          audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
+            audioInfo.album = null;
+          } else {
+            audioInfo.album = resultSet.getString(resultSet.getColumnIndex('ALBUM'));
+          }
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('ARTIST'))) {
+            audioInfo.artist = null;
+          } else {
+            audioInfo.artist = resultSet.getString(resultSet.getColumnIndex('ARTIST'));
+          }
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('METADATA'))) {
+            audioInfo.metadata = null;
+          } else {
+            audioInfo.metadata = resultSet.getString(resultSet.getColumnIndex('METADATA'));
+          }
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('COVER_PATH'))) {
+            audioInfo.coverPath = null;
+          } else {
+            audioInfo.coverPath = resultSet.getString(resultSet.getColumnIndex('COVER_PATH'));
+          }
+          audioInfoList.push(audioInfo);
+        }
+      } catch (error) {
+        console.error(`Failed to execute query audio of album: ${album} . Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
+      } finally {
+        resultSet?.close();
+      }
+    }
+    return audioInfoList;
+  }
+
+  async selectAudioByArtist(artist: string | null): Promise<AudioInfoModel[]> {
+    let audioInfoList: AudioInfoModel[] = [];
+    let resultSet: relationalStore.ResultSet | undefined;
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('ARTIST', artist);
+        resultSet = await this.store.query(predicate);
+        while (resultSet.goToNextRow()) {
+          let audioInfo = new AudioInfoModel();
+          audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
+          audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
+          audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
+            audioInfo.album = null;
+          } else {
+            audioInfo.album = resultSet.getString(resultSet.getColumnIndex('ALBUM'));
+          }
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('ARTIST'))) {
+            audioInfo.artist = null;
+          } else {
+            audioInfo.artist = resultSet.getString(resultSet.getColumnIndex('ARTIST'));
+          }
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('METADATA'))) {
+            audioInfo.metadata = null;
+          } else {
+            audioInfo.metadata = resultSet.getString(resultSet.getColumnIndex('METADATA'));
+          }
+          if (resultSet.isColumnNull(resultSet.getColumnIndex('COVER_PATH'))) {
+            audioInfo.coverPath = null;
+          } else {
+            audioInfo.coverPath = resultSet.getString(resultSet.getColumnIndex('COVER_PATH'));
+          }
+          audioInfoList.push(audioInfo);
+        }
+      } catch (error) {
+        console.error(`Failed to execute query audio of artist: ${artist} . Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
+      } finally {
+        resultSet?.close();
       }
     }
     return audioInfoList;

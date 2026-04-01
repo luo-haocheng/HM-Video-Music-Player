@@ -233,6 +233,8 @@ export class AudioLibraryViewModel {
     audioInfo.audioPath = audioPath;
     audioInfo.coverPath = coverPath ? coverPath : null;
     audioInfo.metadata = metadata ? JSON.stringify(metadata) : null;
+    audioInfo.album = (metadata && metadata.album) ? metadata.album : null;
+    audioInfo.artist = (metadata && metadata.artist) ? metadata.artist : null;
     try {
       await this.audioStore.insertAudioInfo(audioInfo);
     } catch (error) {

@@ -1,12 +1,15 @@
-import { media } from '@kit.MediaKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
+import { AudioListInfo, AudioListType } from './AudioListView';
 import { PlayListBoxView } from './PlayListBoxView';
+
+const ALBUMLIST_PATH_STACK = 'AlbumListPathStack';
 
 @Component
 export struct AudioAlbumListView {
-  @State albumList: string[] = [];
-  private albumMap: Map<string, AudioInfoModel[]> = new Map();
+  @State albumList: (string | null)[] = [];
+  @Consume(ALBUMLIST_PATH_STACK) albumListStack: NavPathStack = new NavPathStack();
+  private albumMap: Map<string | null, AudioInfoModel[]> = new Map();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 
   async aboutToAppear(): Promise<void> {
@@ -15,29 +18,29 @@ export struct AudioAlbumListView {
 
     let audioInfoList = await this.audioStore.selectAllAudio();
     for (let i = 0; i < audioInfoList.length; ++i) {
-      let album: string = '';
-      let metadataStr = audioInfoList[i].metadata;
-      if (metadataStr) {
-        let metadata = JSON.parse(metadataStr) as media.AVMetadata;
-        album = metadata.album ? metadata.album : '未知专辑';
-      }
+      let album: string | null = audioInfoList[i].album;
       if (this.albumMap.has(album)) {
         this.albumMap.get(album)?.push(audioInfoList[i]);
       } else {
         this.albumMap.set(album, [audioInfoList[i]]);
       }
     }
-    for (let album of this.albumMap.keys()) {
-      this.albumList.push(album);
-    }
+    this.albumList = Array.from(this.albumMap.keys());
   }
 
   build() {
     List() {
       ForEach(
         this.albumList,
-        (item: string) => {
-          PlayListBoxView({ playListName: item });
+        (item: string | null) => {
+          PlayListBoxView({ playListName: item === null ? '未知专辑' : item })
+            .onClick(() => {
+              const audioListInfo: AudioListInfo = {
+                type: AudioListType.ALNUM_LIST,
+                name: item
+              };
+              this.albumListStack.pushPath({ name: 'AudioList', param: audioListInfo });
+            });
         },
         (item: string, index: number) => {
           index;

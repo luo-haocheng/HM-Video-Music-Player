@@ -7,6 +7,8 @@ import { AudioPlayListView } from './AudioPlayListView';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const PLAYLIST_PATH_STACK = 'PlayListPathStack';
+const ALBUMLIST_PATH_STACK = 'AlbumListPathStack';
+const ARTISTLIST_PATH_STACK = 'ArtistListPathStack';
 const IMPORT_OPTS: ImportOption[] = [
   { icon: $r('app.media.music'), text: '音频文件导入', color: Color.Blue },
   { icon: $r('app.media.folder'), text: '文件管理导入', color: Color.Orange },
@@ -25,6 +27,8 @@ export struct AudioLibraryView {
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Provide(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
+  @Provide(ALBUMLIST_PATH_STACK) albumListStack: NavPathStack = new NavPathStack();
+  @Provide(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
   @State audioList: AudioItemViewModel[] = [];
   @State audioLibVM: AudioLibraryViewModel = new AudioLibraryViewModel();
   private importDialogId: number = -1;
@@ -236,12 +240,20 @@ export struct AudioLibraryView {
         .tabBar('歌单');
 
         TabContent() {
-          AudioAlbumListView();
+          Navigation(this.albumListStack) {
+            AudioAlbumListView();
+          }
+          .hideToolBar(true)
+          .mode(NavigationMode.Stack);
         }
         .tabBar('专辑');
 
         TabContent() {
-          AudioArtistListView();
+          Navigation(this.artistListStack) {
+            AudioArtistListView();
+          }
+          .hideToolBar(true)
+          .mode(NavigationMode.Stack);
         }
         .tabBar('艺术家');
       };

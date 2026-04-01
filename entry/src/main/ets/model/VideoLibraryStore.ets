@@ -214,11 +214,12 @@ export class VideoLibraryStore {
 
   async selectVideoById(rowId: number): Promise<VideoInfoModel> {
     let videoInfo = new VideoInfoModel();
+    let resultSet: relationalStore.ResultSet | undefined;
     if (this.store !== undefined) {
       try {
         let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
         predicate.equalTo('ID', rowId);
-        let resultSet = await this.store.query(predicate);
+        resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
           videoInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
           videoInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
@@ -231,6 +232,8 @@ export class VideoLibraryStore {
       } catch (error) {
         console.error(`Failed to query video by id=${rowId}. Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
+      } finally {
+        resultSet?.close();
       }
     }
     return videoInfo;
@@ -238,11 +241,12 @@ export class VideoLibraryStore {
 
   async selectFolderById(rowId: number): Promise<FolderInfoModel> {
     let folderInfo = new FolderInfoModel();
+    let resultSet: relationalStore.ResultSet | undefined;
     if (this.store !== undefined) {
       try {
         let predicate = new relationalStore.RdbPredicates(FOLDER_TABLE_NAME);
         predicate.equalTo('ID', rowId);
-        let resultSet = await this.store.query(predicate);
+        resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
           folderInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
           folderInfo.path = resultSet.getString(resultSet.getColumnIndex('PATH'));
@@ -252,6 +256,8 @@ export class VideoLibraryStore {
       } catch (error) {
         console.error(`Failed to query folder by id=${rowId}. Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
+      } finally {
+        resultSet?.close();
       }
     }
     return folderInfo;
@@ -259,11 +265,12 @@ export class VideoLibraryStore {
 
   async selectVideoByFolder(folder: string): Promise<VideoInfoModel[]> {
     let videoInfoList: VideoInfoModel[] = [];
+    let resultSet: relationalStore.ResultSet | undefined;
     if (this.store !== undefined) {
       try {
         let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
         predicate.equalTo('FOLDER', folder);
-        let resultSet = await this.store.query(predicate);
+        resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
           let videoInfo = new VideoInfoModel();
           videoInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
@@ -278,6 +285,8 @@ export class VideoLibraryStore {
       } catch (error) {
         console.error(`Failed to execute query video by folder=${folder}. Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
+      } finally {
+        resultSet?.close();
       }
     }
     return videoInfoList;
@@ -285,11 +294,12 @@ export class VideoLibraryStore {
 
   async selectFolderByFolder(folder: string): Promise<FolderInfoModel[]> {
     let folderInfoList: FolderInfoModel[] = [];
+    let resultSet: relationalStore.ResultSet | undefined;
     if (this.store !== undefined) {
       try {
         let predicate = new relationalStore.RdbPredicates(FOLDER_TABLE_NAME);
         predicate.equalTo('PARENT', folder);
-        let resultSet = await this.store.query(predicate);
+        resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
           let folderInfo = new FolderInfoModel();
           folderInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
@@ -301,9 +311,10 @@ export class VideoLibraryStore {
       } catch (error) {
         console.error(`Failed to execute query folder by folder=${folder}. Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
+      } finally {
+        resultSet?.close();
       }
     }
     return folderInfoList;
   }
 }
-;
