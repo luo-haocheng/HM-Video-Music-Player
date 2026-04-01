@@ -62,7 +62,6 @@ export class AudioLibraryStore {
         };
         await transaction.insert(PLAYLIST_AUDIO_TABLE_NAME, valueBucket2);
         await transaction.commit();
-        console.info(`Insert ${audioInfo.name} to DB successfully`);
       } catch (error) {
         console.error(`Failed to insert ${JSON.stringify(audioInfo)}. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
@@ -129,7 +128,6 @@ export class AudioLibraryStore {
           let audioId = resultSetID.getLong(resultSetID.getColumnIndex('AUDIO_ID'));
           audioIdList.push(audioId);
         }
-        console.info(`Audio Id List: ${JSON.stringify(audioIdList)}`);
       } catch (error) {
         console.error(`Failed to execute query audio id of playlist: ${playlistName} . Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
@@ -187,7 +185,7 @@ export class AudioLibraryStore {
     if (this.store !== undefined) {
       try {
         let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
-        predicate.equalTo('ALBUM', album);
+        album ? predicate.equalTo('ALBUM', album) : predicate.isNull('ALBUM');
         resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
           let audioInfo = new AudioInfoModel();
@@ -232,7 +230,7 @@ export class AudioLibraryStore {
     if (this.store !== undefined) {
       try {
         let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
-        predicate.equalTo('ARTIST', artist);
+        artist ? predicate.equalTo('ARTIST', artist) : predicate.isNull('ARTIST');
         resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
           let audioInfo = new AudioInfoModel();
@@ -269,5 +267,26 @@ export class AudioLibraryStore {
       }
     }
     return audioInfoList;
+  }
+
+  async playlistAudioCount(playlistName: string | null): Promise<number> {
+    let count: number = 0;
+    let resultSet: relationalStore.ResultSet | undefined;
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(PLAYLIST_AUDIO_TABLE_NAME);
+        predicate.equalTo('PLAYLIST_NAME', playlistName);
+        resultSet = await this.store.query(predicate);
+        while (resultSet.goToNextRow()) {
+          count++;
+        }
+      } catch (error) {
+        console.error(`Failed to execute query audio id of playlist: ${playlistName} . Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
+      } finally {
+        resultSet?.close();
+      }
+    }
+    return count;
   }
 }

@@ -1,3 +1,4 @@
+import { AudioPlayListViewModel } from '../viewmodel/AudioPlayListViewModel';
 import { AudioListInfo, AudioListType } from './AudioListView';
 import { PlayListBoxView } from './PlayListBoxView';
 
@@ -7,12 +8,18 @@ const PLAYLIST_PATH_STACK = 'PlayListPathStack';
 
 @Component
 export struct AudioPlayListView {
+  @State audioPlaylistVM: AudioPlayListViewModel = new AudioPlayListViewModel();
   @Consume(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
+
+  aboutToAppear(): void {
+    let context = this.getUIContext().getHostContext() as Context;
+    this.audioPlaylistVM.init(context);
+  }
 
   build() {
     List() {
       ListItem() {
-        PlayListBoxView({ playListName: '所有音乐' });
+        PlayListBoxView({ playlistVM: this.audioPlaylistVM.allPlaylist });
       }
       .onClick(() => {
         const audioListInfo: AudioListInfo = {
@@ -23,7 +30,7 @@ export struct AudioPlayListView {
       });
 
       ListItem() {
-        PlayListBoxView({ playListName: '我的收藏' });
+        PlayListBoxView({ playlistVM: this.audioPlaylistVM.favoritePlaylist });
       }
       .onClick(() => {
         const audioListInfo: AudioListInfo = {

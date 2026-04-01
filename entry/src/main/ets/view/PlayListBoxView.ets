@@ -1,8 +1,9 @@
 import { LengthMetrics } from '@kit.ArkUI';
+import { PlayListItemViewModel } from './PlayListItemViewModel';
 
 @Component
 export struct PlayListBoxView {
-  @State playListName: string = '';
+  @ObjectLink playlistVM: PlayListItemViewModel;
 
   build() {
     Flex({
@@ -32,14 +33,14 @@ export struct PlayListBoxView {
         justifyContent: FlexAlign.SpaceBetween,
       }) {
         Column() {
-          Text(this.playListName)
+          Text(this.playlistVM.playListName)
             .maxLines(1)
             .fontSize(16)
             .fontColor(Color.Black)
             .fontWeight(FontWeight.Bold)
             .textOverflow({ overflow: TextOverflow.Ellipsis });
 
-          Text('共3首歌')
+          Text(`共${this.playlistVM.playListCount}首歌`)
             .fontSize(12)
             .fontColor(Color.Gray);
         }
