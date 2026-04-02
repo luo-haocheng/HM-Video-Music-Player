@@ -1,6 +1,10 @@
 import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { AudioItemViewModelList, AudioListViewModel } from '../viewmodel/AudioListViewModel';
 import { AudioBoxView } from './AudioBoxView';
+import { emitter } from '@kit.BasicServicesKit';
+import { AudioInfoModel } from '../model/AudioInfoModel';
+
+const IMPORT_AUDIO_EVENT = 'ImportAudio';
 
 export enum AudioListType {
   PLAY_LIST = 'PlayList',
@@ -21,7 +25,20 @@ export function AudioListBuilder() {
 @Component
 export struct AudioListView {
   @State audioListVM: AudioListViewModel = new AudioListViewModel();
-  private audioListInfo: AudioListInfo = new AudioListInfo();
+  private importAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data) {
+      const audioInfo = eventData.data['info'] as AudioInfoModel;
+      this.audioListVM.updateAudio(audioInfo);
+    }
+  };
+
+  aboutToAppear(): void {
+    emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+  }
+
+  aboutToDisappear(): void {
+    emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+  }
 
   build() {
     NavDestination() {
@@ -32,8 +49,8 @@ export struct AudioListView {
       let context = this.getUIContext().getHostContext() as Context;
       await this.audioListVM.init(context);
       if (navDesContext.pathInfo.param) {
-        this.audioListInfo = navDesContext.pathInfo.param as AudioListInfo;
-        this.audioListVM.loadAudioList(this.audioListInfo);
+        this.audioListVM.audioListInfo = navDesContext.pathInfo.param as AudioListInfo;
+        this.audioListVM.loadAudioList();
       }
     });
   }
