@@ -4,7 +4,7 @@ import { PlayListItemViewModel, PlayListItemViewModelArray } from '../view/PlayL
 
 @Observed
 export class AudioAlbumListViewModel {
-  @Track unknownAlbum?: PlayListItemViewModel = new PlayListItemViewModel();
+  @Track unknownAlbum?: PlayListItemViewModel = undefined;
   @Track albumList: PlayListItemViewModelArray = new PlayListItemViewModelArray();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 

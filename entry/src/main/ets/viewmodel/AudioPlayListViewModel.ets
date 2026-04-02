@@ -1,4 +1,5 @@
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
+import { PlayListInfoModel } from '../model/PlayListInfoModel';
 import { PlayListItemViewModel, PlayListItemViewModelArray } from '../view/PlayListItemViewModel';
 
 const ALL_AUDIO = '*';
@@ -8,7 +9,7 @@ const FAVORITE_AUDIO = '**';
 export class AudioPlayListViewModel {
   @Track allPlaylist: PlayListItemViewModel = new PlayListItemViewModel();
   @Track favoritePlaylist: PlayListItemViewModel = new PlayListItemViewModel();
-  @Track userPlaylist: PlayListItemViewModelArray = new PlayListItemViewModelArray();
+  @Track userPlaylistArray: PlayListItemViewModelArray = new PlayListItemViewModelArray();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 
   async init(context: Context): Promise<void> {
@@ -19,5 +20,20 @@ export class AudioPlayListViewModel {
     // update favorite playlist
     this.favoritePlaylist.playListName = '我的收藏';
     this.favoritePlaylist.playListCount = await this.audioStore.playlistAudioCount(FAVORITE_AUDIO);
+    // update user playlist
+    const playlistArray = await this.audioStore.selectAllPlaylist();
+    for (let i = 0; i < playlistArray.length; ++i) {
+      const playlistItem = new PlayListItemViewModel();
+      playlistItem.playListName = playlistArray[i].name;
+      playlistItem.playListCount = 0;
+      this.userPlaylistArray.push(playlistItem);
+    }
+  }
+
+  async updatePlayList(playlistInfo: PlayListInfoModel): Promise<void> {
+    const playlistItem = new PlayListItemViewModel();
+    playlistItem.playListName = playlistInfo.name;
+    playlistItem.playListCount = 0;
+    this.userPlaylistArray.push(playlistItem);
   }
 }

@@ -4,12 +4,14 @@ import { AudioAlbumListView } from './AudioAlbumListView';
 import { AudioArtistListView } from './AudioArtistListView';
 import { AudioPlayListView } from './AudioPlayListView';
 
+const INVALID_VALUES = '/\\:*?"<>|';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const PLAYLIST_PATH_STACK = 'PlayListPathStack';
 const ALBUMLIST_PATH_STACK = 'AlbumListPathStack';
 const ARTISTLIST_PATH_STACK = 'ArtistListPathStack';
 const IMPORT_OPTS: ImportOption[] = [
+  { icon: $r('app.media.plus'), text: '新建歌单', color: Color.Green },
   { icon: $r('app.media.music'), text: '音频文件导入', color: Color.Blue },
   { icon: $r('app.media.folder'), text: '文件管理导入', color: Color.Orange },
   { icon: $r('app.media.download_folder'), text: '下载目录导入', color: Color.Red },
@@ -29,9 +31,12 @@ export struct AudioLibraryView {
   @Provide(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
   @Provide(ALBUMLIST_PATH_STACK) albumListStack: NavPathStack = new NavPathStack();
   @Provide(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
+  @State invalidName: boolean = false;
   @State audioList: AudioItemViewModel[] = [];
   @State audioLibVM: AudioLibraryViewModel = new AudioLibraryViewModel();
+  private newPlaylistName?: string;
   private importDialogId: number = -1;
+  private createPlaylistDialogId: number = 0;
 
   async aboutToAppear(): Promise<void> {
     let context = this.getUIContext().getHostContext() as Context;
@@ -101,8 +106,26 @@ export struct AudioLibraryView {
           } catch (error) {
             console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
           }
-          let context = this.getUIContext().getHostContext() as Context;
-          this.audioLibVM.importAudioFromAudioLib(context);
+          this.getUIContext()
+            .getPromptAction()
+            .openCustomDialog({
+              builder: () => {
+                this.createFolderDialogBuilder();
+              },
+              width: '90%',
+              autoCancel: false,
+              alignment: DialogAlignment.Center,
+              transition: TransitionEffect.SLIDE,
+              onWillAppear: () => {
+                this.newPlaylistName = undefined;
+              }
+            })
+            .then((dialogId: number) => {
+              this.createPlaylistDialogId = dialogId;
+            })
+            .catch((err: BusinessError) => {
+              console.error(`Failed to open create playlist dialog. Cuase: ${JSON.stringify(err)}`);
+            });
         });
 
         ListItem() {
@@ -115,11 +138,24 @@ export struct AudioLibraryView {
             console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
           }
           let context = this.getUIContext().getHostContext() as Context;
-          this.audioLibVM.importAudioFromFileMgr(context);
+          this.audioLibVM.importAudioFromAudioLib(context);
         });
 
         ListItem() {
           this.importOptionBuilder(IMPORT_OPTS[2]);
+        }
+        .onClick(() => {
+          try {
+            this.getUIContext().getPromptAction().closeCustomDialog(this.importDialogId);
+          } catch (error) {
+            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+          }
+          let context = this.getUIContext().getHostContext() as Context;
+          this.audioLibVM.importAudioFromFileMgr(context);
+        });
+
+        ListItem() {
+          this.importOptionBuilder(IMPORT_OPTS[3]);
         }
         .onClick(() => {
           try {
@@ -133,7 +169,7 @@ export struct AudioLibraryView {
 
 
         ListItem() {
-          this.importOptionBuilder(IMPORT_OPTS[3]);
+          this.importOptionBuilder(IMPORT_OPTS[4]);
         }
         .onClick(() => {
           try {
@@ -147,6 +183,101 @@ export struct AudioLibraryView {
       .width('100%')
       .scrollBar(BarState.Off)
       .divider({ strokeWidth: 1, startMargin: 46, color: 'rgb(240, 240, 240)' });
+    }
+    .padding(16);
+  }
+
+  @Builder
+  createFolderDialogBuilder() {
+    Column() {
+      Row() {
+        Text('新建歌单')
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold);
+      }
+      .width('100%')
+      .margin({ bottom: 12 })
+      .justifyContent(FlexAlign.Center);
+
+      TextInput({ placeholder: '新建歌单' })
+        .id('createFolderTextInput')
+        .fontSize(14)
+        .maxLength(100)
+        .showUnderline(true)
+        .underlineColor(Color.Gray)
+        .placeholderFont({ size: 14 })
+        .backgroundColor(Color.Transparent)
+        .bindPopup(this.invalidName, {
+          message: `文件名不能包含以下任何字符: ${INVALID_VALUES}`,
+          placement: Placement.BottomRight,
+        })
+        .onAppear(() => {
+          try {
+            this.getUIContext().getFocusController().requestFocus('createFolderTextInput');
+          } catch (error) {
+            console.error(`Failed to request focus for createFolder TextInput. Cause: ${JSON.stringify(error)}`);
+          }
+        })
+        .onWillInsert((value: InsertValue) => {
+          if (INVALID_VALUES.includes(value.insertValue)) {
+            this.invalidName = true;
+            setTimeout(() => {
+              this.invalidName = false;
+            }, 3000);
+          } else {
+            this.invalidName = false;
+          }
+          return !this.invalidName;
+        })
+        .onChange((value: string) => {
+          this.newPlaylistName = value;
+        });
+
+      Row() {
+        Button({ type: ButtonType.Capsule, stateEffect: false }) {
+          Text('取消')
+            .fontSize(14)
+            .fontColor('#FF4876FF');
+        }
+        .padding(8)
+        .width('50%')
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          try {
+            this.getUIContext().getPromptAction().closeCustomDialog(this.createPlaylistDialogId);
+          } catch (error) {
+            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+          }
+        });
+
+        Divider()
+          .height(24)
+          .vertical(true)
+          .strokeWidth(1)
+          .color('#DCDCDC');
+
+        Button({ type: ButtonType.Capsule, stateEffect: false }) {
+          Text('创建')
+            .fontSize(14)
+            .fontColor('#FF4876FF');
+        }
+        .padding(8)
+        .width('50%')
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          try {
+            this.getUIContext().getPromptAction().closeCustomDialog(this.createPlaylistDialogId);
+          } catch (error) {
+            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+          }
+          if (this.newPlaylistName !== undefined) {
+            this.audioLibVM.createAudioPlaylist(this.newPlaylistName);
+          }
+        });
+      }
+      .width('100%')
+      .margin({ top: 12 })
+      .justifyContent(FlexAlign.SpaceBetween);
     }
     .padding(16);
   }
@@ -256,8 +387,8 @@ export struct AudioLibraryView {
           .mode(NavigationMode.Stack);
         }
         .tabBar('艺术家');
-      };
-
+      }
+      .scrollable(false);
     }
     .width('100%')
     .height('100%')

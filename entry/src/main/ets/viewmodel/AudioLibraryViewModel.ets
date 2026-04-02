@@ -6,11 +6,13 @@ import { media } from '@kit.MediaKit';
 import image from '@ohos.multimedia.image';
 import { AudioInfoModel } from '../model/AudioInfoModel';
 import { AudioItemViewModel } from './AudioItemViewModel';
+import { PlayListInfoModel } from '../model/PlayListInfoModel';
+import { emitter } from '@kit.BasicServicesKit';
 
 const AUDIO_DIR = '/audios';
 const COVER_DIR = '/covers';
 const DOWNLOAD_AUDIO_DIR = '/Audios';
-
+const CREATE_PLAYLIST_EVENT = 'CreatePlaylist';
 
 @Observed
 export class AudioLibraryViewModel {
@@ -31,6 +33,19 @@ export class AudioLibraryViewModel {
       audioItemList.push(audioItem);
     }
     return audioItemList;
+  }
+
+  async createAudioPlaylist(playlistName: string): Promise<void> {
+    const playlistInfo = new PlayListInfoModel();
+    playlistInfo.name = playlistName;
+    await this.audioStore.insertPlaylistInfo(playlistInfo);
+    // Notify
+    const eventData: emitter.EventData = {
+      data: {
+        'info': playlistInfo
+      }
+    };
+    emitter.emit(CREATE_PLAYLIST_EVENT, eventData);
   }
 
   async importAudioFromAudioLib(context: Context): Promise<void> {

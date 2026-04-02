@@ -1,5 +1,6 @@
 import { relationalStore } from '@kit.ArkData';
 import { AudioInfoModel } from './AudioInfoModel';
+import { PlayListInfoModel } from './PlayListInfoModel';
 
 const AUDIO_STORE_NAME = 'AudioStore.db';
 const AUDIO_TABLE_NAME = 'VIDEO_IMPORTED';
@@ -69,6 +70,48 @@ export class AudioLibraryStore {
       }
     }
     return rowId;
+  }
+
+  async insertPlaylistInfo(playlistInfo: PlayListInfoModel): Promise<number> {
+    let rowId = -1;
+    if (this.store !== undefined) {
+      try {
+        const valueBucket: relationalStore.ValuesBucket = {
+          NAME: playlistInfo.name,
+          DATE_ADD: new Date().getTime(),
+        };
+        rowId = await this.store.insert(PLAYLIST_TABLE_NAME, valueBucket);
+        console.info(`Create Playlist Success`);
+      } catch (error) {
+        console.error(`Failed to insert ${JSON.stringify(playlistInfo)}. Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
+      }
+    }
+    return rowId;
+  }
+
+  async selectAllPlaylist(): Promise<PlayListInfoModel[]> {
+    let resultSet: relationalStore.ResultSet | undefined;
+    let playlistInfoList: PlayListInfoModel[] = [];
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(PLAYLIST_TABLE_NAME);
+        resultSet = await this.store.query(predicate);
+        while (resultSet.goToNextRow()) {
+          const playlistInfo = new PlayListInfoModel();
+          playlistInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
+          playlistInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
+          playlistInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
+          playlistInfoList.push(playlistInfo);
+        }
+      } catch (error) {
+        console.error(`Failed to select all playlist. Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
+      } finally {
+        resultSet?.close();
+      }
+    }
+    return playlistInfoList;
   }
 
   async selectAllAudio(): Promise<AudioInfoModel[]> {

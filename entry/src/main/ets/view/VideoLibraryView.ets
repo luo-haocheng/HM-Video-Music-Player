@@ -389,7 +389,7 @@ export struct VideoLibraryView {
           } catch (error) {
             console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
           }
-          if (this.newFolderName != undefined) {
+          if (this.newFolderName !== undefined) {
             let newFolder = this.currFolder + this.newFolderName + '/';
             this.videoLibVM.createVideoFolder(newFolder, this.currFolder);
           }
