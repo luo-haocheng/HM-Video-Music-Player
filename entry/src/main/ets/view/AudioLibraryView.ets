@@ -354,10 +354,10 @@ export struct AudioLibraryView {
       .alignItems(VerticalAlign.Center)
       .justifyContent(FlexAlign.SpaceBetween)
       .padding({
+        top: 8,
         left: 16,
         right: 16,
         bottom: 8,
-        top: 8
       });
 
       Tabs() {
@@ -368,7 +368,15 @@ export struct AudioLibraryView {
           .hideToolBar(true)
           .mode(NavigationMode.Stack);
         }
-        .tabBar('歌单');
+        .tabBar(
+          SubTabBarStyle
+            .of('歌单')
+            .labelStyle({
+              maxLines: 1,
+              font: { size: 14 },
+              overflow: TextOverflow.Ellipsis
+            })
+        );
 
         TabContent() {
           Navigation(this.albumListStack) {
@@ -377,7 +385,15 @@ export struct AudioLibraryView {
           .hideToolBar(true)
           .mode(NavigationMode.Stack);
         }
-        .tabBar('专辑');
+        .tabBar(
+          SubTabBarStyle
+            .of('专辑')
+            .labelStyle({
+              maxLines: 1,
+              font: { size: 14 },
+              overflow: TextOverflow.Ellipsis
+            })
+        );
 
         TabContent() {
           Navigation(this.artistListStack) {
@@ -386,7 +402,15 @@ export struct AudioLibraryView {
           .hideToolBar(true)
           .mode(NavigationMode.Stack);
         }
-        .tabBar('艺术家');
+        .tabBar(
+          SubTabBarStyle
+            .of('艺术家')
+            .labelStyle({
+              maxLines: 1,
+              font: { size: 14 },
+              overflow: TextOverflow.Ellipsis
+            })
+        );
       }
       .scrollable(false);
     }

@@ -2,21 +2,36 @@ import { AudioArtistListViewModel } from '../viewmodel/AudioArtistListViewModel'
 import { AudioListInfo, AudioListType } from './AudioListView';
 import { PlayListBoxView } from './PlayListBoxView';
 import { PlayListItemViewModel, PlayListItemViewModelArray } from './PlayListItemViewModel';
+import { emitter } from '@kit.BasicServicesKit';
+import { AudioInfoModel } from '../model/AudioInfoModel';
 
+
+const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const ARTISTLIST_PATH_STACK = 'ArtistListPathStack';
 
 @Component
 export struct AudioArtistListView {
-  @State audioArtistVM: AudioArtistListViewModel = new AudioArtistListViewModel();
+  @State audioArtistListVM: AudioArtistListViewModel = new AudioArtistListViewModel();
   @Consume(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
+  private importAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data) {
+      const audioInfo = eventData.data['info'] as AudioInfoModel;
+      this.audioArtistListVM.updateAudio(audioInfo);
+    }
+  };
 
   async aboutToAppear(): Promise<void> {
     let context = this.getUIContext().getHostContext() as Context;
-    await this.audioArtistVM.init(context);
+    await this.audioArtistListVM.init(context);
+    emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+  }
+
+  async aboutToDisappear(): Promise<void> {
+    emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
   }
 
   build() {
-    ListView({ unknownArtist: this.audioArtistVM.unknownArtist, artistList: this.audioArtistVM.artistList });
+    ListView({ unknownArtist: this.audioArtistListVM.unknownArtist, artistList: this.audioArtistListVM.artistList });
   }
 }
 

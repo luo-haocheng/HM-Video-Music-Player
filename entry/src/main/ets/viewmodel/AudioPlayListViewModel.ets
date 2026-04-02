@@ -1,3 +1,4 @@
+import { AudioInfoModel } from '../model/AudioInfoModel';
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
 import { PlayListInfoModel } from '../model/PlayListInfoModel';
 import { PlayListItemViewModel, PlayListItemViewModelArray } from '../view/PlayListItemViewModel';
@@ -35,5 +36,10 @@ export class AudioPlayListViewModel {
     playlistItem.playListName = playlistInfo.name;
     playlistItem.playListCount = 0;
     this.userPlaylistArray.push(playlistItem);
+  }
+
+  async updateAudio(audioInfo: AudioInfoModel): Promise<void> {
+    audioInfo;
+    this.allPlaylist.playListCount += 1;
   }
 }

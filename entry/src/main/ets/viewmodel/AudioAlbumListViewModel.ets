@@ -33,4 +33,29 @@ export class AudioAlbumListViewModel {
       }
     }
   }
+
+  async updateAudio(audioInfo: AudioInfoModel): Promise<void> {
+    if (audioInfo.album) {
+      const idx = this.albumList.findIndex((item: PlayListItemViewModel) => {
+        return item.playListName === audioInfo.album;
+      });
+      if (idx === -1) {
+        const playlistItem = new PlayListItemViewModel();
+        playlistItem.playListName = audioInfo.album;
+        playlistItem.playListCount = 1;
+        this.albumList.push(playlistItem);
+      } else {
+        this.albumList[idx].playListCount += 1;
+      }
+    } else {
+      if (this.unknownAlbum) {
+        this.unknownAlbum.playListCount += 1;
+      } else {
+        const playlistItem = new PlayListItemViewModel();
+        playlistItem.playListName = '未知专辑';
+        playlistItem.playListCount = 1;
+        this.unknownAlbum = playlistItem;
+      }
+    }
+  }
 }

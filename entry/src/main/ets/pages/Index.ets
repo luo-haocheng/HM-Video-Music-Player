@@ -16,10 +16,12 @@ struct Index {
       Image(icon)
         .width(24)
         .aspectRatio(1)
-        .fillColor(this.selectIdx === index ? Color.Green : Color.Black);
+        .fillColor(this.selectIdx === index ? '#FF007DFF' : '#99182431');
+
       Text(name)
         .fontSize(12)
-        .fontColor(this.selectIdx === index ? Color.Green : Color.Black);
+        .fontWeight(this.selectIdx === index ? 600 : 400)
+        .fontColor(this.selectIdx === index ? '#FF007DFF' : '#99182431');
     }
     .width('100%')
     .height('100%')

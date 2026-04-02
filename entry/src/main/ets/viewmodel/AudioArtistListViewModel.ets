@@ -33,4 +33,29 @@ export class AudioArtistListViewModel {
       }
     }
   }
+
+  async updateAudio(audioInfo: AudioInfoModel): Promise<void> {
+    if (audioInfo.artist) {
+      const idx = this.artistList.findIndex((item: PlayListItemViewModel) => {
+        return item.playListName === audioInfo.artist;
+      });
+      if (idx === -1) {
+        const playlistItem = new PlayListItemViewModel();
+        playlistItem.playListName = audioInfo.artist;
+        playlistItem.playListCount = 1;
+        this.artistList.push(playlistItem);
+      } else {
+        this.artistList[idx].playListCount += 1;
+      }
+    } else {
+      if (this.unknownArtist) {
+        this.unknownArtist.playListCount += 1;
+      } else {
+        const playlistItem = new PlayListItemViewModel();
+        playlistItem.playListName = '未知艺术家';
+        playlistItem.playListCount = 1;
+        this.artistList.push(playlistItem);
+      }
+    }
+  }
 }

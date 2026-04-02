@@ -12,6 +12,7 @@ import { emitter } from '@kit.BasicServicesKit';
 const AUDIO_DIR = '/audios';
 const COVER_DIR = '/covers';
 const DOWNLOAD_AUDIO_DIR = '/Audios';
+const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const CREATE_PLAYLIST_EVENT = 'CreatePlaylist';
 
 @Observed
@@ -121,12 +122,22 @@ export class AudioLibraryViewModel {
       throw new Error(error);
     }
     // Insert audio record to database
+    let audioInfo: AudioInfoModel | undefined;
     const lastSlashIdx = uri.lastIndexOf('/');
     const audioName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
     try {
-      await this.insertAudio2DB(audioName, audioPath, coverPath);
+      audioInfo = await this.insertAudio2DB(audioName, audioPath, coverPath);
     } catch (error) {
       throw new Error(error);
+    }
+    // Notify
+    if (audioInfo) {
+      const eventData: emitter.EventData = {
+        data: {
+          'info': audioInfo
+        }
+      };
+      emitter.emit(IMPORT_AUDIO_EVENT, eventData);
     }
   }
 
@@ -220,7 +231,7 @@ export class AudioLibraryViewModel {
     return coverPath;
   }
 
-  private async insertAudio2DB(name: string, audioPath: string, coverPath: string | null): Promise<void> {
+  private async insertAudio2DB(name: string, audioPath: string, coverPath: string | null): Promise<AudioInfoModel> {
     let audioFile: fileIo.File | undefined;
     let metadata: media.AVMetadata | undefined;
     let avMetadataExtractor: media.AVMetadataExtractor | undefined;
@@ -251,10 +262,12 @@ export class AudioLibraryViewModel {
     audioInfo.album = (metadata && metadata.album) ? metadata.album : null;
     audioInfo.artist = (metadata && metadata.artist) ? metadata.artist : null;
     try {
-      await this.audioStore.insertAudioInfo(audioInfo);
+      audioInfo.id = await this.audioStore.insertAudioInfo(audioInfo);
     } catch (error) {
       throw new Error(error);
     }
+
+    return audioInfo;
   }
 
   private async createAudioDownloadDir(context: Context): Promise<void> {
