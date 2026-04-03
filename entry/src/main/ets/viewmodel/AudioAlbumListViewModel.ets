@@ -1,6 +1,6 @@
 import { AudioInfoModel } from '../model/AudioInfoModel';
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
-import { PlayListItemViewModel, PlayListItemViewModelArray } from '../view/PlayListItemViewModel';
+import { PlayListItemViewModel, PlayListItemViewModelArray } from './PlayListItemViewModel';
 
 @Observed
 export class AudioAlbumListViewModel {
@@ -23,8 +23,8 @@ export class AudioAlbumListViewModel {
     for (const key of albumMap.keys()) {
       const albumItem = new PlayListItemViewModel();
       albumItem.playListName = key;
-      let playlistCount = albumMap.get(key)?.length;
-      albumItem.playListCount = playlistCount ? playlistCount : 0;
+      albumItem.playListCount = albumMap.get(key)?.length ?? 0;
+      this.updateAlbumCover(albumItem, albumMap.get(key));
       if (albumItem.playListName) {
         this.albumList.push(albumItem);
       } else {
@@ -55,6 +55,18 @@ export class AudioAlbumListViewModel {
         playlistItem.playListName = '未知专辑';
         playlistItem.playListCount = 1;
         this.unknownAlbum = playlistItem;
+      }
+    }
+  }
+
+  private async updateAlbumCover(item: PlayListItemViewModel, audioInfoList?: AudioInfoModel[]): Promise<void> {
+    if (audioInfoList && !item.albumCover) {
+      for (let i = 0; i < audioInfoList.length; ++i) {
+        const coverPath = audioInfoList[i].coverPath;
+        if (coverPath) {
+          item.updateAlbumCover(coverPath);
+          break;
+        }
       }
     }
   }

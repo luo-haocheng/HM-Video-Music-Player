@@ -1,7 +1,7 @@
 import { AudioInfoModel } from '../model/AudioInfoModel';
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
 import { PlayListInfoModel } from '../model/PlayListInfoModel';
-import { PlayListItemViewModel, PlayListItemViewModelArray } from '../view/PlayListItemViewModel';
+import { PlayListItemViewModel, PlayListItemViewModelArray } from './PlayListItemViewModel';
 
 const ALL_AUDIO = '*';
 const FAVORITE_AUDIO = '**';

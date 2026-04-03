@@ -1,5 +1,5 @@
 import { LengthMetrics } from '@kit.ArkUI';
-import { PlayListItemViewModel } from './PlayListItemViewModel';
+import { PlayListItemViewModel } from '../viewmodel/PlayListItemViewModel';
 
 @Component
 export struct PlayListBoxView {
@@ -13,12 +13,21 @@ export struct PlayListBoxView {
       space: { main: LengthMetrics.vp(12) }
     }) {
       Row() {
-        Image($r('app.media.music_fill'))
-          .width('50%')
-          .aspectRatio(1)
-          .draggable(false)
-          .fillColor(Color.Pink)
-          .objectFit(ImageFit.Contain);
+        if (this.playlistVM.albumCover) {
+          Image(this.playlistVM.albumCover)
+            .width('100%')
+            .height('100%')
+            .draggable(false)
+            .fillColor(Color.Pink)
+            .objectFit(ImageFit.Cover);
+        } else {
+          Image($r('app.media.music_fill'))
+            .width('50%')
+            .aspectRatio(1)
+            .draggable(false)
+            .fillColor(Color.Pink)
+            .objectFit(ImageFit.Contain);
+        }
       }
       .height('90%')
       .aspectRatio(1)

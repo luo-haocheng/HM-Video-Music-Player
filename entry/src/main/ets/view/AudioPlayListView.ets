@@ -1,7 +1,7 @@
 import { AudioPlayListViewModel } from '../viewmodel/AudioPlayListViewModel';
 import { AudioListInfo, AudioListType } from './AudioListView';
 import { PlayListBoxView } from './PlayListBoxView';
-import { PlayListItemViewModel, PlayListItemViewModelArray } from './PlayListItemViewModel';
+import { PlayListItemViewModel, PlayListItemViewModelArray } from '../viewmodel/PlayListItemViewModel';
 import { emitter } from '@kit.BasicServicesKit';
 import { PlayListInfoModel } from '../model/PlayListInfoModel';
 import { AudioInfoModel } from '../model/AudioInfoModel';
