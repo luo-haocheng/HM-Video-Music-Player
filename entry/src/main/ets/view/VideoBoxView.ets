@@ -27,7 +27,7 @@ export struct VideoBoxView {
       action: () => {
         this.moveDialogController = new CustomDialogController({
           width: '90%',
-          alignment: DialogAlignment.Bottom,
+          alignment: DialogAlignment.Center,
           offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) },
           builder: RenameDialog({ videoListVM: this.videoListVM, info: this.videoItem.videoInfo }),
         });

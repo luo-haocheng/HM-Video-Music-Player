@@ -48,7 +48,7 @@ export struct VideoFolderListView {
       .onClick(() => {
         this.moveDialogController = new CustomDialogController({
           width: '90%',
-          alignment: DialogAlignment.Bottom,
+          alignment: DialogAlignment.Center,
           builder: RenameDialog({ videoListVM: this.videoListVM, info: info }),
           offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
         });
@@ -115,7 +115,7 @@ export struct VideoFolderListView {
       .onClick(() => {
         this.moveDialogController = new CustomDialogController({
           width: '90%',
-          alignment: DialogAlignment.Bottom,
+          alignment: DialogAlignment.Center,
           builder: RenameDialog({ videoListVM: this.videoListVM, info: info }),
           offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
         });

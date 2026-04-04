@@ -61,7 +61,7 @@ export struct RenameDialog {
         Button({ type: ButtonType.Capsule, stateEffect: false }) {
           Text('取消')
             .fontSize(14)
-            .fontColor('#FF4876FF');
+            .fontColor('#FF007DFF');
         }
         .padding(8)
         .width('45%')
@@ -79,7 +79,7 @@ export struct RenameDialog {
         Button({ type: ButtonType.Capsule, stateEffect: false }) {
           Text('确认')
             .fontSize(14)
-            .fontColor('#FF4876FF');
+            .fontColor('#FF007DFF');
         }
         .padding(8)
         .width('45%')

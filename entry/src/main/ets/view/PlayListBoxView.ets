@@ -18,14 +18,13 @@ export struct PlayListBoxView {
             .width('100%')
             .height('100%')
             .draggable(false)
-            .fillColor(Color.Pink)
             .objectFit(ImageFit.Cover);
         } else {
           Image($r('app.media.music_fill'))
             .width('50%')
             .aspectRatio(1)
             .draggable(false)
-            .fillColor(Color.Pink)
+            .fillColor('#FF007DFF')
             .objectFit(ImageFit.Contain);
         }
       }

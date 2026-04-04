@@ -237,7 +237,7 @@ export struct AudioLibraryView {
         Button({ type: ButtonType.Capsule, stateEffect: false }) {
           Text('取消')
             .fontSize(14)
-            .fontColor('#FF4876FF');
+            .fontColor('#FF007DFF');
         }
         .padding(8)
         .width('50%')
@@ -259,7 +259,7 @@ export struct AudioLibraryView {
         Button({ type: ButtonType.Capsule, stateEffect: false }) {
           Text('创建')
             .fontSize(14)
-            .fontColor('#FF4876FF');
+            .fontColor('#FF007DFF');
         }
         .padding(8)
         .width('50%')
