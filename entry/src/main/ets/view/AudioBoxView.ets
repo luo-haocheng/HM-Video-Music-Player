@@ -1,9 +1,63 @@
 import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { LengthMetrics } from '@kit.ArkUI';
+import { AudioListType } from './AudioListView';
+import { AudioListViewModel } from '../viewmodel/AudioListViewModel';
+
+const ALL_AUDIO = '*';
 
 @Component
 export struct AudioBoxView {
+  @Link audioListVM: AudioListViewModel;
   @ObjectLink audioItem: AudioItemViewModel;
+
+  @Builder
+  longPressMenuBuilder() {
+    Flex({
+      direction: FlexDirection.Column,
+      justifyContent: FlexAlign.Start,
+      alignItems: ItemAlign.Center,
+    }) {
+      Row() {
+        Text('添加到歌单')
+          .fontSize(16)
+          .fontColor(Color.Black);
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 16 });
+
+      Divider()
+        .vertical(false)
+        .strokeWidth(0.5);
+
+      if (this.audioListVM.audioListInfo.type === AudioListType.PLAY_LIST &&
+        this.audioListVM.audioListInfo.name !== ALL_AUDIO) {
+        Row() {
+          Text('从歌单中移除')
+            .fontSize(16)
+            .fontColor(Color.Black);
+        }
+        .width('100%')
+        .padding({ top: 16, bottom: 16 });
+
+        Divider()
+          .vertical(false)
+          .strokeWidth(0.5);
+      }
+
+      Row() {
+        Text('删除')
+          .fontSize(16)
+          .fontColor(Color.Red);
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(() => {
+        this.audioListVM.deleteAudio(this.audioItem.audioInfo);
+      });
+    }
+    .width(160)
+    .padding({ left: 16, right: 16 });
+  }
 
   build() {
     Flex({
@@ -70,6 +124,13 @@ export struct AudioBoxView {
     .height(80)
     .width('100%')
     .borderRadius(12)
-    .backgroundColor(Color.White);
+    .backgroundColor(Color.White)
+    .bindContextMenu(
+      this.longPressMenuBuilder,
+      ResponseType.LongPress,
+      {
+        placement: Placement.Bottom,
+        preview: MenuPreviewMode.IMAGE
+      });
   }
 }

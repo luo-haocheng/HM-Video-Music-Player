@@ -6,6 +6,7 @@ import { emitter } from '@kit.BasicServicesKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
 
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
+const DELETE_AUDIO_EVENT = 'DeleteAudio';
 const ALBUMLIST_PATH_STACK = 'AlbumListPathStack';
 
 @Component
@@ -17,15 +18,23 @@ export struct AudioAlbumListView {
       this.audioAlbumListVM.updateAudio(audioInfo);
     }
   };
+  private deleteAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data) {
+      const audioInfo = eventData.data['info'] as AudioInfoModel;
+      this.audioAlbumListVM.removeAudio(audioInfo);
+    }
+  };
 
   async aboutToAppear(): Promise<void> {
     let context = this.getUIContext().getHostContext() as Context;
     await this.audioAlbumListVM.init(context);
     emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+    emitter.on(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
   }
 
   async aboutToDisappear(): Promise<void> {
     emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+    emitter.off(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
   }
 
   build() {

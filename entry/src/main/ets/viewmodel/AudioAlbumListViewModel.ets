@@ -59,6 +59,19 @@ export class AudioAlbumListViewModel {
     }
   }
 
+  async removeAudio(audioInfo: AudioInfoModel): Promise<void> {
+    const albumIdx = this.albumList.findIndex((item: PlayListItemViewModel) => {
+      return item.playListName === audioInfo.album;
+    });
+    if (albumIdx !== -1) {
+      this.albumList[albumIdx].playListCount -= 1;
+      if (this.albumList[albumIdx].playListCount <= 0) {
+        await this.albumList[albumIdx].albumCover?.release();
+        this.albumList.splice(albumIdx, 1);
+      }
+    }
+  }
+
   private async updateAlbumCover(item: PlayListItemViewModel, audioInfoList?: AudioInfoModel[]): Promise<void> {
     if (audioInfoList && !item.albumCover) {
       for (let i = 0; i < audioInfoList.length; ++i) {

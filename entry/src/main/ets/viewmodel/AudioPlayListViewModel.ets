@@ -42,4 +42,9 @@ export class AudioPlayListViewModel {
     audioInfo;
     this.allPlaylist.playListCount += 1;
   }
+
+  async removeAudio(audioInfo: AudioInfoModel): Promise<void> {
+    audioInfo;
+    this.allPlaylist.playListCount -= 1;
+  }
 }

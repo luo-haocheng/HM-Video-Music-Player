@@ -5,6 +5,7 @@ import { emitter } from '@kit.BasicServicesKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
 
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
+const DELETE_AUDIO_EVENT = 'DeleteAudio';
 
 export enum AudioListType {
   PLAY_LIST = 'PlayList',
@@ -31,18 +32,26 @@ export struct AudioListView {
       this.audioListVM.updateAudio(audioInfo);
     }
   };
+  private deleteAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data) {
+      const audioInfo = eventData.data['info'] as AudioInfoModel;
+      this.audioListVM.removeAudio(audioInfo);
+    }
+  };
 
   aboutToAppear(): void {
     emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+    emitter.on(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
   }
 
   aboutToDisappear(): void {
     emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+    emitter.off(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
   }
 
   build() {
     NavDestination() {
-      ListView({ audioList: this.audioListVM.audioList });
+      ListView({ audioListVM: this.audioListVM, audioList: this.audioListVM.audioList });
     }
     .hideBackButton(true)
     .onReady(async (navDesContext: NavDestinationContext) => {
@@ -58,6 +67,7 @@ export struct AudioListView {
 
 @Component
 struct ListView {
+  @Link audioListVM: AudioListViewModel;
   @ObjectLink audioList: AudioItemViewModelList;
 
   build() {
@@ -72,7 +82,8 @@ struct ListView {
           (item: AudioItemViewModel) => {
             ListItem() {
               AudioBoxView({
-                audioItem: item
+                audioItem: item,
+                audioListVM: this.audioListVM,
               });
             };
           },

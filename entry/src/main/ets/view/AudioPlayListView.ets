@@ -10,6 +10,7 @@ const ALL_AUDIO = '*';
 const FAVORITE_AUDIO = '**';
 const PLAYLIST_PATH_STACK = 'PlayListPathStack';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
+const DELETE_AUDIO_EVENT = 'DeleteAudio';
 const CREATE_PLAYLIST_EVENT = 'CreatePlaylist';
 
 @Component
@@ -27,17 +28,25 @@ export struct AudioPlayListView {
       this.audioPlaylistVM.updateAudio(audioInfo);
     }
   };
+  private deleteAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data) {
+      const audioInfo = eventData.data['info'] as AudioInfoModel;
+      this.audioPlaylistVM.removeAudio(audioInfo);
+    }
+  };
 
   aboutToAppear(): void {
     let context = this.getUIContext().getHostContext() as Context;
     this.audioPlaylistVM.init(context);
     emitter.on(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
     emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+    emitter.on(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
   }
 
   aboutToDisappear(): void {
     emitter.off(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
     emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+    emitter.off(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
   }
 
   build() {
