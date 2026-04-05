@@ -2,6 +2,7 @@ import { relationalStore } from '@kit.ArkData';
 import { AudioInfoModel } from './AudioInfoModel';
 import { PlayListInfoModel } from './PlayListInfoModel';
 
+const ALL_AUDIO = '*';
 const AUDIO_STORE_NAME = 'AudioStore.db';
 const AUDIO_TABLE_NAME = 'VIDEO_IMPORTED';
 const PLAYLIST_TABLE_NAME = 'PLAYLIST_CREATED';
@@ -11,7 +12,7 @@ const SQL_CREATE_AUDIO_TABLE =
 const SQL_CREATE_PLAYLIST_TABLE =
   `CREATE TABLE IF NOT EXISTS ${PLAYLIST_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL UNIQUE, DATE_ADD INTEGER NOT NULL)`;
 const SQL_CREATE_PLAYLIST_AUDIO_TABLE =
-  `CREATE TABLE IF NOT EXISTS ${PLAYLIST_AUDIO_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, PLAYLIST_NAME TEXT NOT NULL, AUDIO_ID INTEGER)`;
+  `CREATE TABLE IF NOT EXISTS ${PLAYLIST_AUDIO_TABLE_NAME} (PLAYLIST_NAME TEXT NOT NULL, AUDIO_ID INTEGER NOT NULL, PRIMARY KEY(PLAYLIST_NAME, AUDIO_ID))`;
 
 export class AudioLibraryStore {
   private store?: relationalStore.RdbStore;
@@ -62,6 +63,23 @@ export class AudioLibraryStore {
     }
   }
 
+  async deleteAudioFromPlaylist(audioInfo: AudioInfoModel, playlistName: string | null): Promise<number> {
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(PLAYLIST_AUDIO_TABLE_NAME);
+        predicate
+          .equalTo('AUDIO_ID', audioInfo.id)
+          .and()
+          .equalTo('PLAYLIST_NAME', playlistName);
+        const delNum = await this.store.delete(predicate);
+        return delNum;
+      } catch (error) {
+        console.error(`Failed to delete ${audioInfo.id}, ${playlistName}. Cause: ${JSON.stringify(error)}`);
+      }
+    }
+    return 0;
+  }
+
   async insertAudioInfo(audioInfo: AudioInfoModel): Promise<number> {
     let rowId = -1;
     if (this.store !== undefined) {
@@ -79,7 +97,7 @@ export class AudioLibraryStore {
         };
         rowId = await transaction.insert(AUDIO_TABLE_NAME, valueBucket1);
         const valueBucket2: relationalStore.ValuesBucket = {
-          PLAYLIST_NAME: '*',
+          PLAYLIST_NAME: ALL_AUDIO,
           AUDIO_ID: rowId,
         };
         await transaction.insert(PLAYLIST_AUDIO_TABLE_NAME, valueBucket2);
@@ -102,13 +120,26 @@ export class AudioLibraryStore {
           DATE_ADD: new Date().getTime(),
         };
         rowId = await this.store.insert(PLAYLIST_TABLE_NAME, valueBucket);
-        console.info(`Create Playlist Success`);
       } catch (error) {
         console.error(`Failed to insert ${JSON.stringify(playlistInfo)}. Cause: ${JSON.stringify(error)}`);
         throw new Error(error);
       }
     }
     return rowId;
+  }
+
+  async insertAudio2Playlist(audioInfo: AudioInfoModel, playlistInfo: PlayListInfoModel): Promise<void> {
+    if (this.store !== undefined) {
+      try {
+        const valueBucket: relationalStore.ValuesBucket = {
+          PLAYLIST_NAME: playlistInfo.name,
+          AUDIO_ID: audioInfo.id,
+        };
+        await this.store.insert(PLAYLIST_AUDIO_TABLE_NAME, valueBucket);
+      } catch (error) {
+        console.error(`Failed to insert ${audioInfo.id} to ${playlistInfo.name}. Cause: ${JSON.stringify(error)}`);
+      }
+    }
   }
 
   async selectAllPlaylist(): Promise<PlayListInfoModel[]> {

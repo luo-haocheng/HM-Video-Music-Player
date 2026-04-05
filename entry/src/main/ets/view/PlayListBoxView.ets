@@ -48,7 +48,7 @@ export struct PlayListBoxView {
             .fontWeight(FontWeight.Bold)
             .textOverflow({ overflow: TextOverflow.Ellipsis });
 
-          Text(`共${this.playlistVM.playListCount}首歌`)
+          Text(`${this.playlistVM.playListCount}个内容`)
             .fontSize(12)
             .fontColor(Color.Gray);
         }

@@ -1,4 +1,5 @@
 import image from '@ohos.multimedia.image';
+import { PlayListInfoModel } from '../model/PlayListInfoModel';
 
 @Observed
 export class PlayListItemViewModelArray extends Array<PlayListItemViewModel> {
@@ -9,6 +10,13 @@ export class PlayListItemViewModel {
   @Track playListName: string | null = null;
   @Track albumCover?: image.PixelMap;
   @Track playListCount: number = 0;
+  @Track isChoice: boolean = false;
+  playlistInfo: PlayListInfoModel = new PlayListInfoModel();
+
+  async updatePlaylistItem(playlistInfo: PlayListInfoModel) {
+    this.playListName = playlistInfo.name;
+    this.playlistInfo = playlistInfo;
+  }
 
   async updateAlbumCover(coverPath: string): Promise<void> {
     let imageSource: image.ImageSource | undefined;

@@ -81,6 +81,19 @@ export class AudioListViewModel {
     emitter.emit(DELETE_AUDIO_EVENT, eventData);
   }
 
+  async deleteFromPlaylist(audioInfo: AudioInfoModel): Promise<void> {
+    const delNum = await this.audioStore.deleteAudioFromPlaylist(audioInfo, this.audioListInfo.name);
+    if (delNum === 0) {
+      return;
+    }
+    const delIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
+      return item.audioInfo.id === audioInfo.id;
+    });
+    if (delIdx !== -1) {
+      this.audioList.splice(delIdx, 1);
+    }
+  }
+
   private async loadFromPlayList(name: string | null) {
     const audioInfoList = await this.audioStore.selectAudioByPlayList(name);
     for (let i = 0; i < audioInfoList.length; ++i) {

@@ -82,7 +82,7 @@ export struct AudioLibraryView {
             .aspectRatio(1)
             .fillColor(Color.Black);
         }
-        .padding(6)
+        .padding(8)
         .backgroundColor('#AADCDCDC')
         .onClick(() => {
           try {

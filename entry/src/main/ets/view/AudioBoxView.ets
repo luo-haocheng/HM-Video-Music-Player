@@ -2,13 +2,16 @@ import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { LengthMetrics } from '@kit.ArkUI';
 import { AudioListType } from './AudioListView';
 import { AudioListViewModel } from '../viewmodel/AudioListViewModel';
+import { AddToPlaylistDialog } from './AddToPlaylistDialog';
 
 const ALL_AUDIO = '*';
+const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
 export struct AudioBoxView {
   @Link audioListVM: AudioListViewModel;
   @ObjectLink audioItem: AudioItemViewModel;
+  private addPlaylistDialogController?: CustomDialogController;
 
   @Builder
   longPressMenuBuilder() {
@@ -23,7 +26,19 @@ export struct AudioBoxView {
           .fontColor(Color.Black);
       }
       .width('100%')
-      .padding({ top: 16, bottom: 16 });
+      .padding({ top: 16, bottom: 16 })
+      .onClick(() => {
+        setTimeout(() => {
+          this.addPlaylistDialogController = new CustomDialogController({
+            width: '100%',
+            height: '60%',
+            alignment: DialogAlignment.Bottom,
+            builder: AddToPlaylistDialog({ audioInfoList: [this.audioItem.audioInfo] }),
+            offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+          });
+          this.addPlaylistDialogController.open();
+        }, 500);
+      });
 
       Divider()
         .vertical(false)
@@ -37,7 +52,10 @@ export struct AudioBoxView {
             .fontColor(Color.Black);
         }
         .width('100%')
-        .padding({ top: 16, bottom: 16 });
+        .padding({ top: 16, bottom: 16 })
+        .onClick(() => {
+          this.audioListVM.deleteFromPlaylist(this.audioItem.audioInfo);
+        });
 
         Divider()
           .vertical(false)

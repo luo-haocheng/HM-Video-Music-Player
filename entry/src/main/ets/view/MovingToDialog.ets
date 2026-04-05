@@ -132,7 +132,7 @@ export struct MovingToDialog {
             .aspectRatio(1)
             .fillColor([ROOT_PATH, SECRET_FOLDER].includes(this.moveToFolder) ? '#55000000' : Color.Black);
         }
-        .padding(6)
+        .padding(8)
         .backgroundColor([ROOT_PATH, SECRET_FOLDER].includes(this.moveToFolder) ? '#55DCDCDC' : '#AADCDCDC')
         .onClick(() => {
           if ([ROOT_PATH, SECRET_FOLDER].includes(this.moveToFolder)) {
@@ -155,7 +155,7 @@ export struct MovingToDialog {
             .aspectRatio(1)
             .fillColor(this.moveToFolder === this.origFolder ? '#55000000' : Color.Black);
         }
-        .padding(6)
+        .padding(8)
         .backgroundColor(this.moveToFolder === this.origFolder ? '#55DCDCDC' : '#AADCDCDC')
         .onClick(async () => {
           if (this.moveToFolder === this.origFolder) {
@@ -171,11 +171,13 @@ export struct MovingToDialog {
         });
       }
       .width('100%')
+      .layoutWeight(0)
       .justifyContent(FlexAlign.SpaceBetween);
 
       Navigation(this.moveNavPath) {
         // Nothing, waiting for push
       }
+      .layoutWeight(1)
       .hideTitleBar(true)
       .margin({ top: 16 });
     }

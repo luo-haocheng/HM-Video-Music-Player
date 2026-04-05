@@ -16,7 +16,7 @@ export class AudioPlayListViewModel {
   async init(context: Context): Promise<void> {
     await this.audioStore.initStore(context);
     // update all playlist
-    this.allPlaylist.playListName = '全部音乐';
+    this.allPlaylist.playListName = '全部音频';
     this.allPlaylist.playListCount = await this.audioStore.playlistAudioCount(ALL_AUDIO);
     // update favorite playlist
     this.favoritePlaylist.playListName = '我的收藏';
@@ -26,7 +26,7 @@ export class AudioPlayListViewModel {
     for (let i = 0; i < playlistArray.length; ++i) {
       const playlistItem = new PlayListItemViewModel();
       playlistItem.playListName = playlistArray[i].name;
-      playlistItem.playListCount = 0;
+      playlistItem.playListCount = await this.audioStore.playlistAudioCount(playlistArray[i].name);
       this.userPlaylistArray.push(playlistItem);
     }
   }
