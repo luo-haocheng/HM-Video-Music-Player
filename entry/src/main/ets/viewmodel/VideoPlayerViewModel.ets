@@ -5,7 +5,6 @@ import { ColorMetrics, display, window } from '@kit.ArkUI';
 import { settings } from '@kit.BasicServicesKit';
 import { audio } from '@kit.AudioKit';
 import { MediaSessionManager } from '../model/ModelSession';
-import { avSession as AVSessionManager } from '@kit.AVSessionKit';
 import { VideoInfoModel } from '../model/VideoInfoModel';
 
 const SEEK_TIME = 10000;
@@ -74,7 +73,7 @@ export class VideoPlayerViewModel {
         this.seek(timeMs);
       }
     });
-    await this.mediaSession.initSession(this.videoInfo, 'video', this.context);
+    await this.mediaSession.initVideoSession(this.videoInfo, this.context);
 
     this.videoPlayer.registerCallback('durationUpdate', (duration: number) => {
       this.duration = duration;
@@ -87,38 +86,7 @@ export class VideoPlayerViewModel {
     });
     this.videoPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
       this.isPlaying = (state === 'playing');
-      switch (state) {
-        case 'initialized':
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_INITIAL);
-          break;
-        case 'prepared':
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_PREPARE);
-          break;
-        case 'playing':
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_PLAY);
-          break;
-        case 'paused':
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_PAUSE);
-          break;
-        case 'stopped':
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_STOP);
-          break;
-        case 'completed':
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_COMPLETED);
-          break;
-        case 'released':
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_RELEASED);
-          break;
-        case 'idle':
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_IDLE);
-          break;
-        case 'error':
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_ERROR);
-          break;
-        default:
-          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_ERROR);
-          break;
-      }
+      this.mediaSession.updatePlayState(this.currTime, state);
     });
     await this.videoPlayer.initPlayer(surfaceId);
     await this.videoPlayer.setMediaAsset(this.videoInfo.videoPath);

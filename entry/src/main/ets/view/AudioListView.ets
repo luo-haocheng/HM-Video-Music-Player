@@ -81,9 +81,10 @@ struct ListView {
               });
             }
             .onClick(() => {
+              const context = this.getUIContext().getHostContext() as Context;
+              this.audioPlayerVM.init(item.audioInfo, context);
               this.audioPlayerVM.audioList = this.audioList;
               this.audioPlayerVM.currIndex = index;
-              this.audioPlayerVM.init(item.audioInfo);
             });
           },
           (item: AudioItemViewModel, index: number) => {

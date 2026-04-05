@@ -3,15 +3,66 @@ import { media } from '@kit.MediaKit';
 import image from '@ohos.multimedia.image';
 import { util } from '@kit.ArkTS';
 import { VideoInfoModel } from './VideoInfoModel';
+import { AudioInfoModel } from './AudioInfoModel';
 
 export class MediaSessionManager {
   private session?: AVSessionMananger.AVSession;
   private callbacks: Map<string, Function> = new Map();
 
-  async initSession(info: VideoInfoModel, type: AVSessionMananger.AVSessionType, context: Context): Promise<void> {
+  async initAudioSession(info: AudioInfoModel, context: Context): Promise<void> {
+    if (!this.session) {
+      try {
+        let sessionName = util.generateRandomUUID();
+        this.session = await AVSessionMananger.createAVSession(context, sessionName, 'video');
+      } catch (error) {
+        console.error(`Failed to create avsession. Cause: ${JSON.stringify(error)}`);
+        return;
+      }
+    }
+    let duration = -1;
+    let mediaImg: image.PixelMap | undefined;
+    try {
+      if (info.coverPath) {
+        mediaImg = await this.getMediaImage(info.coverPath);
+      }
+      if (info.metadata) {
+        duration = await this.getMediaDuration(info.metadata);
+      }
+      let metadata: AVSessionMananger.AVMetadata = {
+        assetId: util.generateRandomUUID(),
+        title: info.name,
+        duration: duration,
+        mediaImage: mediaImg,
+      };
+      await this.session.setAVMetadata(metadata);
+    } catch (error) {
+      console.error(`Failed to invoke avsession.setAVMetadata. Cause: ${JSON.stringify(error)}`);
+      return;
+    } finally {
+      if (mediaImg) {
+        await mediaImg.release();
+      }
+    }
+
+    try {
+      this.registerCtrlCmd();
+    } catch (error) {
+      console.error(`Failed to register avsession control command. Cuase: ${JSON.stringify(error)}`);
+      return;
+    }
+
+    try {
+      await this.session.activate();
+    } catch (error) {
+      console.error(`Failed to invoke avsession.activate. Cause: ${JSON.stringify(error)}`);
+      return;
+    }
+  }
+
+  async initVideoSession(info: VideoInfoModel, context: Context): Promise<void> {
     try {
       let sessionName = util.generateRandomUUID();
-      this.session = await AVSessionMananger.createAVSession(context, sessionName, type);
+      this.session = await AVSessionMananger.createAVSession(context, sessionName, 'video');
     } catch (error) {
       console.error(`Failed to create avsession. Cause: ${JSON.stringify(error)}`);
       return;
@@ -51,10 +102,42 @@ export class MediaSessionManager {
       console.error(`Failed to invoke avsession.activate. Cause: ${JSON.stringify(error)}`);
       return;
     }
-
   }
 
-  async updatePlayState(timeMs: number, playState: AVSessionMananger.PlaybackState): Promise<void> {
+  async updatePlayState(timeMs: number, state: media.AVPlayerState): Promise<void> {
+    let playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_ERROR;
+    switch (state) {
+      case 'initialized':
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_INITIAL;
+        break;
+      case 'prepared':
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_PREPARE;
+        break;
+      case 'playing':
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_PLAY;
+        break;
+      case 'paused':
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_PAUSE;
+        break;
+      case 'stopped':
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_STOP;
+        break;
+      case 'completed':
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_COMPLETED;
+        break;
+      case 'released':
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_RELEASED;
+        break;
+      case 'idle':
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_IDLE;
+        break;
+      case 'error':
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_ERROR;
+        break;
+      default:
+        playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_ERROR;
+        break;
+    }
     try {
       let playbackState: AVSessionMananger.AVPlaybackState = {
         state: playState,
