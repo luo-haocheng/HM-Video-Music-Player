@@ -50,7 +50,7 @@ export struct AudioBottomBar {
             .textOverflow({ overflow: TextOverflow.Ellipsis });
 
           Text(this.audioPlayerVM.audioList[this.audioPlayerVM.currIndex].artist)
-            .fontSize(14)
+            .fontSize(10)
             .fontColor(Color.Black);
         } else {
           Text('未在播放')

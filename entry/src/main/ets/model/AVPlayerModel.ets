@@ -106,7 +106,6 @@ export class AVPlayerModel {
         let callback = this.callbacks.get('timeUpdate') as (param: number) => void;
         callback(timeMs);
       }
-      console.info(`AVPlayer time update: ${timeMs}`);
     });
     this.avPlayer.on('stateChange', async (state: media.AVPlayerState, reason: media.StateChangeReason) => {
       if (this.callbacks.has('stateChange')) {

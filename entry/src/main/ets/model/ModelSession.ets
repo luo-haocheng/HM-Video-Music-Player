@@ -13,26 +13,31 @@ export class MediaSessionManager {
     if (!this.session) {
       try {
         let sessionName = util.generateRandomUUID();
-        this.session = await AVSessionMananger.createAVSession(context, sessionName, 'video');
+        this.session = await AVSessionMananger.createAVSession(context, sessionName, 'audio');
       } catch (error) {
         console.error(`Failed to create avsession. Cause: ${JSON.stringify(error)}`);
         return;
       }
     }
     let duration = -1;
+    let title: string | undefined;
     let mediaImg: image.PixelMap | undefined;
     try {
       if (info.coverPath) {
         mediaImg = await this.getMediaImage(info.coverPath);
+      } else {
+        mediaImg = await this.getDefaultImage(context);
       }
       if (info.metadata) {
         duration = await this.getMediaDuration(info.metadata);
+        title = await this.getAudioTitle(info.metadata);
       }
       let metadata: AVSessionMananger.AVMetadata = {
         assetId: util.generateRandomUUID(),
-        title: info.name,
-        duration: duration,
+        title: title ? title : info.name,
+        artist: info.artist ? info.artist : '',
         mediaImage: mediaImg,
+        duration: duration,
       };
       await this.session.setAVMetadata(metadata);
     } catch (error) {
@@ -249,9 +254,31 @@ export class MediaSessionManager {
     return mediaImg;
   }
 
+  private async getDefaultImage(context: Context): Promise<image.PixelMap | undefined> {
+    let imageSource: image.ImageSource | undefined;
+    let mediaImg: image.PixelMap | undefined;
+    try {
+      const rawFd = await context.resourceManager.getRawFd('audio_default.jpg');
+      imageSource = image.createImageSource(rawFd);
+      mediaImg = await imageSource.createPixelMap();
+    } catch (error) {
+      console.error(`Failed to create default music cover. Cause: ${JSON.stringify(error)}`);
+    } finally {
+      if (imageSource) {
+        imageSource.release();
+      }
+    }
+    return mediaImg;
+  }
+
   private async getMediaDuration(metadataStr: string): Promise<number> {
     let metadata = JSON.parse(metadataStr) as media.AVMetadata;
     let duration = metadata.duration ? parseInt(metadata.duration) : 0;
     return duration;
+  }
+
+  private async getAudioTitle(metadataStr: string): Promise<string | undefined> {
+    const metadata = JSON.parse(metadataStr) as media.AVMetadata;
+    return metadata.title;
   }
 }
