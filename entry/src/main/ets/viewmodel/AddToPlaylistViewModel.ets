@@ -17,13 +17,13 @@ export class AddToPlaylistViewModel {
     // update favorite playlist
     this.favoritePlaylist.playListName = '我的收藏';
     this.favoritePlaylist.playlistInfo.name = FAVORITE_AUDIO;
-    this.favoritePlaylist.playListCount = await this.audioStore.playlistAudioCount(FAVORITE_AUDIO);
+    this.favoritePlaylist.playListCount = (await this.audioStore.selectPlaylistAudioList(FAVORITE_AUDIO)).length;
     // update user playlist
     const playlistArr = await this.audioStore.selectAllPlaylist();
     for (let i = 0; i < playlistArr.length; ++i) {
       const playlistItem = new PlayListItemViewModel();
       playlistItem.updatePlaylistItem(playlistArr[i]);
-      playlistItem.playListCount = await this.audioStore.playlistAudioCount(playlistArr[i].name);
+      playlistItem.playListCount = (await this.audioStore.selectPlaylistAudioList(playlistArr[i].name)).length;
       this.userPlaylistArray.push(playlistItem);
     }
   }
@@ -33,23 +33,24 @@ export class AddToPlaylistViewModel {
     if (this.favoritePlaylist.isChoice) {
       success = await this.audioStore.insertAudio2Playlist(audioInfo, this.favoritePlaylist.playlistInfo);
       if (success) {
-        this.notifyAddToPlaylist(FAVORITE_AUDIO);
+        this.notifyAddToPlaylist(audioInfo, FAVORITE_AUDIO);
       }
     }
     for (let i = 0; i < this.userPlaylistArray.length; i++) {
       if (this.userPlaylistArray[i].isChoice) {
         success = await this.audioStore.insertAudio2Playlist(audioInfo, this.userPlaylistArray[i].playlistInfo);
         if (success) {
-          this.notifyAddToPlaylist(this.userPlaylistArray[i].playListName);
+          this.notifyAddToPlaylist(audioInfo, this.userPlaylistArray[i].playListName);
         }
       }
     }
   }
 
-  private async notifyAddToPlaylist(playlistName: string | null) {
+  private async notifyAddToPlaylist(audioInfo: AudioInfoModel, playlistName: string | null) {
     const eventData: emitter.EventData = {
       data: {
-        'name': playlistName
+        'info': audioInfo,
+        'name': playlistName,
       }
     };
     emitter.emit(ADD_TO_PLAYLIST_EVENT, eventData);

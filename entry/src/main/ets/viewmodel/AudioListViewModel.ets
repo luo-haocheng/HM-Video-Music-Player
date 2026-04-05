@@ -93,7 +93,8 @@ export class AudioListViewModel {
     // Notify
     let eventData: emitter.EventData = {
       data: {
-        'name': this.audioListInfo.name
+        'info': audioInfo,
+        'name': this.audioListInfo.name,
       }
     };
     emitter.emit(DELETE_FROM_PLAYLIST_EVENT, eventData);

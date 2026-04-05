@@ -38,14 +38,16 @@ export struct AudioPlayListView {
   };
   private addToPlaylistCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
     if (eventData.data) {
+      const audioInfo = eventData.data['info'] as AudioInfoModel;
       const playlistName = eventData.data['name'] as (string | null);
-      this.audioPlaylistVM.addToPlaylist(playlistName);
+      this.audioPlaylistVM.addToPlaylist(audioInfo, playlistName);
     }
   };
   private deleteFromPlaylistCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
     if (eventData.data) {
+      const audioInfo = eventData.data['info'] as AudioInfoModel;
       const playlistName = eventData.data['name'] as (string | null);
-      this.audioPlaylistVM.deleteFromPlaylist(playlistName);
+      this.audioPlaylistVM.deleteFromPlaylist(audioInfo, playlistName);
     }
   };
 

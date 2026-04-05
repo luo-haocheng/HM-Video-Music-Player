@@ -368,8 +368,8 @@ export class AudioLibraryStore {
     return audioInfoList;
   }
 
-  async playlistAudioCount(playlistName: string | null): Promise<number> {
-    let count: number = 0;
+  async selectPlaylistAudioList(playlistName: string | null): Promise<number[]> {
+    const audioIDList: number[] = [];
     let resultSet: relationalStore.ResultSet | undefined;
     if (this.store !== undefined) {
       try {
@@ -377,7 +377,8 @@ export class AudioLibraryStore {
         predicate.equalTo('PLAYLIST_NAME', playlistName);
         resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
-          count++;
+          const audioID = resultSet.getLong(resultSet.getColumnIndex('AUDIO_ID'));
+          audioIDList.push(audioID);
         }
       } catch (error) {
         console.error(`Failed to execute query audio id of playlist: ${playlistName} . Cause: ${JSON.stringify(error)}`);
@@ -386,6 +387,6 @@ export class AudioLibraryStore {
         resultSet?.close();
       }
     }
-    return count;
+    return audioIDList;
   }
 }
