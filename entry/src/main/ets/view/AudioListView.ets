@@ -3,7 +3,9 @@ import { AudioItemViewModelList, AudioListViewModel } from '../viewmodel/AudioLi
 import { AudioBoxView } from './AudioBoxView';
 import { emitter } from '@kit.BasicServicesKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
+import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 
+const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
 
 export enum AudioListType {
@@ -60,6 +62,7 @@ export struct AudioListView {
 struct ListView {
   @Link audioListVM: AudioListViewModel;
   @ObjectLink audioList: AudioItemViewModelList;
+  @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
 
   build() {
     Flex({
@@ -70,13 +73,18 @@ struct ListView {
       List() {
         ForEach(
           this.audioList,
-          (item: AudioItemViewModel) => {
+          (item: AudioItemViewModel, index: number) => {
             ListItem() {
               AudioBoxView({
                 audioItem: item,
                 audioListVM: this.audioListVM,
               });
-            };
+            }
+            .onClick(() => {
+              this.audioPlayerVM.audioList = this.audioList;
+              this.audioPlayerVM.currIndex = index;
+              this.audioPlayerVM.init(item.audioInfo);
+            });
           },
           (item: AudioItemViewModel, index: number) => {
             index;
@@ -86,8 +94,8 @@ struct ListView {
       }
       .width('100%')
       .height('100%')
-      .contentEndOffset(8)
       .contentStartOffset(8)
+      .contentEndOffset(60 + 8)
       .scrollBar(BarState.Off)
       .padding({ left: 8, right: 8 })
       .backgroundColor(`rgb(243, 243, 243)`)

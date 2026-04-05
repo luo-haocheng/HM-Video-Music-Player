@@ -33,8 +33,8 @@ export class VideoPlayerViewModel {
   @Track isControlBrightness: boolean = false;
   public videoInfo: VideoInfoModel = new VideoInfoModel();
   private context: common.UIAbilityContext;
-  private videoPlayer?: AVPlayerModel;
-  private mediaSession?: MediaSessionManager;
+  private videoPlayer: AVPlayerModel = new AVPlayerModel();
+  private mediaSession: MediaSessionManager = new MediaSessionManager();
   private startSeekTime: number = 0;
   private startBrightness: number = 0;
   private startVolumeLevel: number = 0;
@@ -42,8 +42,6 @@ export class VideoPlayerViewModel {
 
   constructor(context: common.UIAbilityContext) {
     this.context = context;
-    this.videoPlayer = new AVPlayerModel(context);
-    this.mediaSession = new MediaSessionManager(context);
 
     let audioMgr = audio.getAudioManager();
     let audioVolumeMgr = audioMgr.getVolumeManager();
@@ -55,129 +53,129 @@ export class VideoPlayerViewModel {
   }
 
   async init(surfaceId: string): Promise<void> {
-    this.mediaSession?.registerCallback('play', () => {
-      this.videoPlayer?.play();
+    this.mediaSession.registerCallback('play', () => {
+      this.videoPlayer.play();
     });
-    this.mediaSession?.registerCallback('pause', () => {
-      this.videoPlayer?.pause();
+    this.mediaSession.registerCallback('pause', () => {
+      this.videoPlayer.pause();
     });
-    this.mediaSession?.registerCallback('seek', (timeMs: number) => {
+    this.mediaSession.registerCallback('seek', (timeMs: number) => {
       this.seek(timeMs);
     });
-    this.mediaSession?.registerCallback('rewind', (timeS?: number) => {
+    this.mediaSession.registerCallback('rewind', (timeS?: number) => {
       if (timeS) {
         let timeMs = this.currTime - timeS * 1000;
         this.seek(timeMs);
       }
     });
-    this.mediaSession?.registerCallback('fastForward', (timeS?: number) => {
+    this.mediaSession.registerCallback('fastForward', (timeS?: number) => {
       if (timeS) {
         let timeMs = this.currTime + timeS * 1000;
         this.seek(timeMs);
       }
     });
-    await this.mediaSession?.initSession(this.videoInfo, 'video');
+    await this.mediaSession.initSession(this.videoInfo, 'video', this.context);
 
-    this.videoPlayer?.registerCallback('durationUpdate', (duration: number) => {
+    this.videoPlayer.registerCallback('durationUpdate', (duration: number) => {
       this.duration = duration;
     });
-    this.videoPlayer?.registerCallback('timeUpdate', (timeMs: number) => {
+    this.videoPlayer.registerCallback('timeUpdate', (timeMs: number) => {
       this.currTime = timeMs;
     });
-    this.videoPlayer?.registerCallback('seekDone', (timeMs: number) => {
-      this.mediaSession?.updatePlayPosition(timeMs);
+    this.videoPlayer.registerCallback('seekDone', (timeMs: number) => {
+      this.mediaSession.updatePlayPosition(timeMs);
     });
-    this.videoPlayer?.registerCallback('stateChange', (state: media.AVPlayerState) => {
+    this.videoPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
       this.isPlaying = (state === 'playing');
       switch (state) {
         case 'initialized':
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_INITIAL);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_INITIAL);
           break;
         case 'prepared':
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_PREPARE);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_PREPARE);
           break;
         case 'playing':
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_PLAY);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_PLAY);
           break;
         case 'paused':
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_PAUSE);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_PAUSE);
           break;
         case 'stopped':
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_STOP);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_STOP);
           break;
         case 'completed':
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_COMPLETED);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_COMPLETED);
           break;
         case 'released':
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_RELEASED);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_RELEASED);
           break;
         case 'idle':
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_IDLE);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_IDLE);
           break;
         case 'error':
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_ERROR);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_ERROR);
           break;
         default:
-          this.mediaSession?.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_ERROR);
+          this.mediaSession.updatePlayState(this.currTime, AVSessionManager.PlaybackState.PLAYBACK_STATE_ERROR);
           break;
       }
     });
-    await this.videoPlayer?.initPlayer(surfaceId);
-    await this.videoPlayer?.setMediaAsset(this.videoInfo.videoPath);
+    await this.videoPlayer.initPlayer(surfaceId);
+    await this.videoPlayer.setMediaAsset(this.videoInfo.videoPath);
   }
 
   async play(): Promise<void> {
-    await this.videoPlayer?.play();
+    await this.videoPlayer.play();
   }
 
   async pause(): Promise<void> {
-    await this.videoPlayer?.pause();
+    await this.videoPlayer.pause();
   }
 
   async seek(timeMs: number): Promise<void> {
     timeMs = Math.min(this.duration, Math.max(0, timeMs));
-    await this.videoPlayer?.seek(timeMs);
+    await this.videoPlayer.seek(timeMs);
   }
 
   setSpeed(speed: media.PlaybackSpeed): void {
-    this.videoPlayer?.setSpeed(speed);
+    this.videoPlayer.setSpeed(speed);
     switch (speed) {
       case media.PlaybackSpeed.SPEED_FORWARD_0_75_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 0.75);
+        this.mediaSession.updatePlaySpeed(this.currTime, 0.75);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_1_00_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 1.00);
+        this.mediaSession.updatePlaySpeed(this.currTime, 1.00);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_1_25_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 1.25);
+        this.mediaSession.updatePlaySpeed(this.currTime, 1.25);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_1_75_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 1.75);
+        this.mediaSession.updatePlaySpeed(this.currTime, 1.75);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_2_00_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 2.00);
+        this.mediaSession.updatePlaySpeed(this.currTime, 2.00);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_0_50_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 0.50);
+        this.mediaSession.updatePlaySpeed(this.currTime, 0.50);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_1_50_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 1.50);
+        this.mediaSession.updatePlaySpeed(this.currTime, 1.50);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_3_00_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 3.00);
+        this.mediaSession.updatePlaySpeed(this.currTime, 3.00);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_0_25_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 0.25);
+        this.mediaSession.updatePlaySpeed(this.currTime, 0.25);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_0_125_X:
-        this.mediaSession?.updatePlaySpeed(this.currTime, 0.125);
+        this.mediaSession.updatePlaySpeed(this.currTime, 0.125);
         break;
     }
   }
 
   async release(): Promise<void> {
-    await this.videoPlayer?.release();
-    await this.mediaSession?.destroySession();
+    await this.videoPlayer.release();
+    await this.mediaSession.destroySession();
   }
 
   async startHorizontalSlide(): Promise<void> {

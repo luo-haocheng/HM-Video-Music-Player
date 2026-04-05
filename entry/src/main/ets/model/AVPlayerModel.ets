@@ -3,23 +3,20 @@ import { fileIo } from '@kit.CoreFileKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 
 export class AVPlayerModel {
-  context: Context;
-  surfaceId: string = '';
+  surfaceId?: string;
   videoFile?: fileIo.File;
   avPlayer?: media.AVPlayer;
   callbacks: Map<string, Function> = new Map();
 
-  constructor(context: Context) {
-    this.context = context;
-  }
-
-  async initPlayer(surfaceId: string): Promise<void> {
+  async initPlayer(surfaceId?: string): Promise<void> {
     this.surfaceId = surfaceId;
-    try {
-      this.avPlayer = await media.createAVPlayer();
-      this.addEventListen();
-    } catch (err) {
-      console.error(`Failed to invoke createAVPlayer, error: ${JSON.stringify(err)}`);
+    if (!this.avPlayer) {
+      try {
+        this.avPlayer = await media.createAVPlayer();
+        this.addEventListen();
+      } catch (err) {
+        console.error(`Failed to invoke createAVPlayer, error: ${JSON.stringify(err)}`);
+      }
     }
   }
 
@@ -32,6 +29,9 @@ export class AVPlayerModel {
       return;
     }
     try {
+      if (this.avPlayer.state !== 'idle') {
+        await this.avPlayer.reset();
+      }
       this.videoFile = await fileIo.open(videoPath, fileIo.OpenMode.READ_WRITE);
       let url = `fd://${this.videoFile.fd}`;
       this.avPlayer.url = url;
@@ -119,7 +119,9 @@ export class AVPlayerModel {
           if (this.avPlayer === undefined) {
             return;
           }
-          this.avPlayer.surfaceId = this.surfaceId;
+          if (this.surfaceId) {
+            this.avPlayer.surfaceId = this.surfaceId;
+          }
           try {
             await this.avPlayer.prepare();
           } catch (err) {

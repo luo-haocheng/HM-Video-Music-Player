@@ -92,8 +92,8 @@ struct ListView {
       }
       .width('100%')
       .height('100%')
-      .contentEndOffset(8)
       .contentStartOffset(8)
+      .contentEndOffset(60 + 8)
       .scrollBar(BarState.Off)
       .padding({ left: 8, right: 8 })
       .backgroundColor(`rgb(243, 243, 243)`)

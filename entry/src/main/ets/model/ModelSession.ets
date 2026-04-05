@@ -5,18 +5,13 @@ import { util } from '@kit.ArkTS';
 import { VideoInfoModel } from './VideoInfoModel';
 
 export class MediaSessionManager {
-  private context: Context;
   private session?: AVSessionMananger.AVSession;
   private callbacks: Map<string, Function> = new Map();
 
-  constructor(context: Context) {
-    this.context = context;
-  }
-
-  async initSession(info: VideoInfoModel, sessionType: AVSessionMananger.AVSessionType): Promise<void> {
+  async initSession(info: VideoInfoModel, type: AVSessionMananger.AVSessionType, context: Context): Promise<void> {
     try {
       let sessionName = util.generateRandomUUID();
-      this.session = await AVSessionMananger.createAVSession(this.context, sessionName, sessionType);
+      this.session = await AVSessionMananger.createAVSession(context, sessionName, type);
     } catch (error) {
       console.error(`Failed to create avsession. Cause: ${JSON.stringify(error)}`);
       return;

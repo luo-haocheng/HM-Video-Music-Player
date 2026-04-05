@@ -1,10 +1,13 @@
 import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { AudioLibraryViewModel } from '../viewmodel/AudioLibraryViewModel';
+import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 import { AudioAlbumListView } from './AudioAlbumListView';
 import { AudioArtistListView } from './AudioArtistListView';
+import { AudioBottomBar } from './AudioBottomBar';
 import { AudioPlayListView } from './AudioPlayListView';
 
 const INVALID_VALUES = '/\\:*?"<>|';
+const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const PLAYLIST_PATH_STACK = 'PlayListPathStack';
@@ -31,6 +34,7 @@ export struct AudioLibraryView {
   @Provide(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
   @Provide(ALBUMLIST_PATH_STACK) albumListStack: NavPathStack = new NavPathStack();
   @Provide(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
+  @Provide(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
   @State invalidName: boolean = false;
   @State audioList: AudioItemViewModel[] = [];
   @State audioLibVM: AudioLibraryViewModel = new AudioLibraryViewModel();
@@ -360,70 +364,79 @@ export struct AudioLibraryView {
         bottom: 8,
       });
 
-      Tabs() {
-        TabContent() {
-          Navigation(this.playListStack) {
-            AudioPlayListView();
+      Stack({ alignContent: Alignment.Bottom }) {
+        Tabs() {
+          TabContent() {
+            Navigation(this.playListStack) {
+              AudioPlayListView();
+            }
+            .hideToolBar(true)
+            .mode(NavigationMode.Stack);
           }
-          .hideToolBar(true)
-          .mode(NavigationMode.Stack);
-        }
-        .tabBar(
-          SubTabBarStyle
-            .of('歌单')
-            .labelStyle({
-              maxLines: 1,
-              font: { size: 14 },
-              overflow: TextOverflow.Ellipsis
-            })
-        );
+          .tabBar(
+            SubTabBarStyle
+              .of('歌单')
+              .labelStyle({
+                maxLines: 1,
+                font: { size: 14 },
+                overflow: TextOverflow.Ellipsis
+              })
+          );
 
-        TabContent() {
-          Navigation(this.albumListStack) {
-            AudioAlbumListView();
+          TabContent() {
+            Navigation(this.albumListStack) {
+              AudioAlbumListView();
+            }
+            .hideToolBar(true)
+            .mode(NavigationMode.Stack);
           }
-          .hideToolBar(true)
-          .mode(NavigationMode.Stack);
-        }
-        .tabBar(
-          SubTabBarStyle
-            .of('专辑')
-            .labelStyle({
-              maxLines: 1,
-              font: { size: 14 },
-              overflow: TextOverflow.Ellipsis
-            })
-        );
+          .tabBar(
+            SubTabBarStyle
+              .of('专辑')
+              .labelStyle({
+                maxLines: 1,
+                font: { size: 14 },
+                overflow: TextOverflow.Ellipsis
+              })
+          );
 
-        TabContent() {
-          Navigation(this.artistListStack) {
-            AudioArtistListView();
+          TabContent() {
+            Navigation(this.artistListStack) {
+              AudioArtistListView();
+            }
+            .hideToolBar(true)
+            .mode(NavigationMode.Stack);
           }
-          .hideToolBar(true)
-          .mode(NavigationMode.Stack);
+          .tabBar(
+            SubTabBarStyle
+              .of('艺术家')
+              .labelStyle({
+                maxLines: 1,
+                font: { size: 14 },
+                overflow: TextOverflow.Ellipsis
+              })
+          );
         }
-        .tabBar(
-          SubTabBarStyle
-            .of('艺术家')
-            .labelStyle({
-              maxLines: 1,
-              font: { size: 14 },
-              overflow: TextOverflow.Ellipsis
-            })
-        );
-      }
-      .scrollable(false)
-      .onUnselected((index: number) => {
-        setTimeout(() => {
-          if (index === 0) {
-            this.playListStack.clear();
-          } else if (index === 1) {
-            this.albumListStack.clear();
-          } else {
-            this.artistListStack.clear();
-          }
-        }, 200);
-      });
+        .scrollable(false)
+        .onUnselected((index: number) => {
+          setTimeout(() => {
+            if (index === 0) {
+              this.playListStack.clear();
+            } else if (index === 1) {
+              this.albumListStack.clear();
+            } else {
+              this.artistListStack.clear();
+            }
+          }, 200);
+        });
+
+        Row() {
+          AudioBottomBar()
+            .margin({ left: 8, right: 8 });
+        }
+        .height(60)
+        .width('100%');
+      };
     }
     .width('100%')
     .height('100%')
