@@ -11,7 +11,9 @@ const FAVORITE_AUDIO = '**';
 const PLAYLIST_PATH_STACK = 'PlayListPathStack';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const DELETE_AUDIO_EVENT = 'DeleteAudio';
+const ADD_TO_PLAYLIST_EVENT = 'AddToPlaylist';
 const CREATE_PLAYLIST_EVENT = 'CreatePlaylist';
+const DELETE_FROM_PLAYLIST_EVENT = 'DeleteFromPlaylist';
 
 @Component
 export struct AudioPlayListView {
@@ -34,19 +36,35 @@ export struct AudioPlayListView {
       this.audioPlaylistVM.removeAudio(audioInfo);
     }
   };
+  private addToPlaylistCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data) {
+      const playlistName = eventData.data['name'] as (string | null);
+      this.audioPlaylistVM.addToPlaylist(playlistName);
+    }
+  };
+  private deleteFromPlaylistCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data) {
+      const playlistName = eventData.data['name'] as (string | null);
+      this.audioPlaylistVM.deleteFromPlaylist(playlistName);
+    }
+  };
 
   aboutToAppear(): void {
     let context = this.getUIContext().getHostContext() as Context;
     this.audioPlaylistVM.init(context);
-    emitter.on(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
     emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
     emitter.on(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
+    emitter.on(ADD_TO_PLAYLIST_EVENT, this.addToPlaylistCallback);
+    emitter.on(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
+    emitter.on(DELETE_FROM_PLAYLIST_EVENT, this.deleteFromPlaylistCallback);
   }
 
   aboutToDisappear(): void {
-    emitter.off(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
     emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
     emitter.off(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
+    emitter.off(ADD_TO_PLAYLIST_EVENT, this.addToPlaylistCallback);
+    emitter.off(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
+    emitter.off(DELETE_FROM_PLAYLIST_EVENT, this.deleteFromPlaylistCallback);
   }
 
   build() {

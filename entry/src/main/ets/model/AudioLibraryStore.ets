@@ -59,6 +59,7 @@ export class AudioLibraryStore {
       } catch (error) {
         console.error(`Failed to delete audio ${JSON.stringify(audioInfo)}. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
+        throw new Error(error);
       }
     }
   }
@@ -128,7 +129,7 @@ export class AudioLibraryStore {
     return rowId;
   }
 
-  async insertAudio2Playlist(audioInfo: AudioInfoModel, playlistInfo: PlayListInfoModel): Promise<void> {
+  async insertAudio2Playlist(audioInfo: AudioInfoModel, playlistInfo: PlayListInfoModel): Promise<boolean> {
     if (this.store !== undefined) {
       try {
         const valueBucket: relationalStore.ValuesBucket = {
@@ -136,10 +137,13 @@ export class AudioLibraryStore {
           AUDIO_ID: audioInfo.id,
         };
         await this.store.insert(PLAYLIST_AUDIO_TABLE_NAME, valueBucket);
+        return true;
       } catch (error) {
         console.error(`Failed to insert ${audioInfo.id} to ${playlistInfo.name}. Cause: ${JSON.stringify(error)}`);
+        return false;
       }
     }
+    return false;
   }
 
   async selectAllPlaylist(): Promise<PlayListInfoModel[]> {

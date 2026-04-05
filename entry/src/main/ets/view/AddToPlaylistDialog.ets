@@ -53,7 +53,10 @@ export struct AddToPlaylistDialog {
         .margin({ bottom: 8 })
         .justifyContent(FlexAlign.SpaceBetween);
 
-        ListView({ userPlaylistArray: this.addToPlaylistVM.userPlaylistArray })
+        ListView({
+          favoritePlaylist: this.addToPlaylistVM.favoritePlaylist,
+          userPlaylistArray: this.addToPlaylistVM.userPlaylistArray
+        })
           .layoutWeight(1);
       }
       .padding(16)
@@ -79,6 +82,7 @@ struct playlistBox {
           .maxLines(1)
           .fontSize(14)
           .fontColor(Color.Black)
+          .fontWeight(FontWeight.Bold)
           .textOverflow({ overflow: TextOverflow.Ellipsis });
 
         Text(`${this.playlistItem.playListCount}个内容`)
@@ -113,6 +117,7 @@ struct playlistBox {
 
 @Component
 struct ListView {
+  @ObjectLink favoritePlaylist: PlayListItemViewModel;
   @ObjectLink userPlaylistArray: PlayListItemViewModelArray;
 
   build() {
@@ -122,6 +127,10 @@ struct ListView {
       alignItems: ItemAlign.Center
     }) {
       List() {
+        ListItem() {
+          playlistBox({ playlistItem: this.favoritePlaylist });
+        };
+
         ForEach(
           this.userPlaylistArray,
           (item: PlayListItemViewModel) => {

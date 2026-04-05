@@ -5,7 +5,6 @@ import { emitter } from '@kit.BasicServicesKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
 
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
-const DELETE_AUDIO_EVENT = 'DeleteAudio';
 
 export enum AudioListType {
   PLAY_LIST = 'PlayList',
@@ -32,21 +31,13 @@ export struct AudioListView {
       this.audioListVM.updateAudio(audioInfo);
     }
   };
-  private deleteAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
-    if (eventData.data) {
-      const audioInfo = eventData.data['info'] as AudioInfoModel;
-      this.audioListVM.removeAudio(audioInfo);
-    }
-  };
 
   aboutToAppear(): void {
     emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
-    emitter.on(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
   }
 
   aboutToDisappear(): void {
     emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
-    emitter.off(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
   }
 
   build() {

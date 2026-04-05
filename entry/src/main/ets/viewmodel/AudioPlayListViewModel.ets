@@ -46,5 +46,28 @@ export class AudioPlayListViewModel {
   async removeAudio(audioInfo: AudioInfoModel): Promise<void> {
     audioInfo;
     this.allPlaylist.playListCount -= 1;
+    // todo
+  }
+
+  async addToPlaylist(playlistName: string | null): Promise<void> {
+    if (playlistName === FAVORITE_AUDIO) {
+      this.favoritePlaylist.playListCount += 1;
+    }
+    for (let i = 0; i < this.userPlaylistArray.length; ++i) {
+      if (playlistName === this.userPlaylistArray[i].playListName) {
+        this.userPlaylistArray[i].playListCount += 1;
+      }
+    }
+  }
+
+  async deleteFromPlaylist(playlistName: string | null): Promise<void> {
+    if (playlistName === FAVORITE_AUDIO) {
+      this.favoritePlaylist.playListCount -= 1;
+    }
+    for (let i = 0; i < this.userPlaylistArray.length; ++i) {
+      if (playlistName === this.userPlaylistArray[i].playListName) {
+        this.userPlaylistArray[i].playListCount -= 1;
+      }
+    }
   }
 }

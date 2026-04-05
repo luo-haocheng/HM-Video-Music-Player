@@ -6,6 +6,7 @@ import { emitter } from '@kit.BasicServicesKit';
 
 const ALL_AUDIO = '*';
 const DELETE_AUDIO_EVENT = 'DeleteAudio';
+const DELETE_FROM_PLAYLIST_EVENT = 'DeleteFromPlaylist';
 
 @Observed
 export class AudioItemViewModelList extends Array<AudioItemViewModel> {
@@ -47,15 +48,6 @@ export class AudioListViewModel {
     }
   }
 
-  async removeAudio(audioInfo: AudioInfoModel): Promise<void> {
-    let delIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
-      return item.audioInfo.id === audioInfo.id;
-    });
-    if (delIdx !== -1) {
-      this.audioList.splice(delIdx, 1);
-    }
-  }
-
   async loadAudioList(): Promise<void> {
     switch (this.audioListInfo.type) {
       case AudioListType.PLAY_LIST:
@@ -72,6 +64,12 @@ export class AudioListViewModel {
 
   async deleteAudio(audioInfo: AudioInfoModel): Promise<void> {
     await this.audioStore.deleteAudio(audioInfo);
+    let delIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
+      return item.audioInfo.id === audioInfo.id;
+    });
+    if (delIdx !== -1) {
+      this.audioList.splice(delIdx, 1);
+    }
     // Notify
     let eventData: emitter.EventData = {
       data: {
@@ -92,6 +90,13 @@ export class AudioListViewModel {
     if (delIdx !== -1) {
       this.audioList.splice(delIdx, 1);
     }
+    // Notify
+    let eventData: emitter.EventData = {
+      data: {
+        'name': this.audioListInfo.name
+      }
+    };
+    emitter.emit(DELETE_FROM_PLAYLIST_EVENT, eventData);
   }
 
   private async loadFromPlayList(name: string | null) {

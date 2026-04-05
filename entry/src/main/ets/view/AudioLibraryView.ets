@@ -412,7 +412,18 @@ export struct AudioLibraryView {
             })
         );
       }
-      .scrollable(false);
+      .scrollable(false)
+      .onUnselected((index: number) => {
+        setTimeout(() => {
+          if (index === 0) {
+            this.playListStack.clear();
+          } else if (index === 1) {
+            this.albumListStack.clear();
+          } else {
+            this.artistListStack.clear();
+          }
+        }, 200);
+      });
     }
     .width('100%')
     .height('100%')
