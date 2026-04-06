@@ -1,14 +1,17 @@
 import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { AudioLibraryViewModel } from '../viewmodel/AudioLibraryViewModel';
-import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 import { AudioAlbumListView } from './AudioAlbumListView';
 import { AudioArtistListView } from './AudioArtistListView';
 import { AudioBottomBar } from './AudioBottomBar';
+import { AudioListInfo, AudioListType } from './AudioListView';
 import { AudioPlayListView } from './AudioPlayListView';
 
+const ALL_AUDIO = '*';
+const FAVORITE_AUDIO = '**';
 const INVALID_VALUES = '/\\:*?"<>|';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
+const AUDIO_LIST_INFO = 'AudioListInfo';
 const PLAYLIST_PATH_STACK = 'PlayListPathStack';
 const ALBUMLIST_PATH_STACK = 'AlbumListPathStack';
 const ARTISTLIST_PATH_STACK = 'ArtistListPathStack';
@@ -30,6 +33,7 @@ interface ImportOption {
 export struct AudioLibraryView {
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
+  @Provide(AUDIO_LIST_INFO) currAudioList?: AudioListInfo = undefined;
   @Provide(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
   @Provide(ALBUMLIST_PATH_STACK) albumListStack: NavPathStack = new NavPathStack();
   @Provide(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
@@ -292,7 +296,32 @@ export struct AudioLibraryView {
     }) {
       Row() {
         Row({ space: 12 }) {
-          Text('音频')
+          if (this.currAudioList) {
+            Button({ type: ButtonType.Circle, stateEffect: false }) {
+              Image($r('app.media.back'))
+                .width(14)
+                .aspectRatio(1)
+                .fillColor(Color.Black);
+            }
+            .width(36)
+            .aspectRatio(1)
+            .backgroundColor('#AADCDCDC')
+            .onClick(() => {
+              switch (this.currAudioList?.type) {
+                case AudioListType.PLAY_LIST:
+                  this.playListStack.pop();
+                  break;
+                case AudioListType.ALNUM_LIST:
+                  this.albumListStack.pop();
+                  break;
+                case AudioListType.ARTIST_LIST:
+                  this.artistListStack.pop();
+                  break;
+              }
+            });
+          }
+
+          Text(this.setAudioTitleText(this.currAudioList))
             .maxLines(1)
             .fontSize(20)
             .layoutWeight(1)
@@ -303,14 +332,16 @@ export struct AudioLibraryView {
         .layoutWeight(1);
 
         Row({ space: 12 }) {
-          Button({ type: ButtonType.Capsule, stateEffect: false }) {
-            Text('多选')
-              .fontSize(14)
-              .fontColor(Color.Black);
+          if (this.currAudioList) {
+            Button({ type: ButtonType.Capsule, stateEffect: false }) {
+              Text('多选')
+                .fontSize(14)
+                .fontColor(Color.Black);
+            }
+            .width(36 * 1.5)
+            .aspectRatio(1.5)
+            .backgroundColor('#AADCDCDC');
           }
-          .width(36 * 1.5)
-          .aspectRatio(1.5)
-          .backgroundColor('#AADCDCDC');
 
           Button({ type: ButtonType.Circle, stateEffect: false }) {
             Image($r('app.media.plus'))
@@ -417,15 +448,13 @@ export struct AudioLibraryView {
         }
         .scrollable(false)
         .onUnselected((index: number) => {
-          setTimeout(() => {
-            if (index === 0) {
-              this.playListStack.clear();
-            } else if (index === 1) {
-              this.albumListStack.clear();
-            } else {
-              this.artistListStack.clear();
-            }
-          }, 200);
+          if (index === 0) {
+            this.playListStack.clear();
+          } else if (index === 1) {
+            this.albumListStack.clear();
+          } else {
+            this.artistListStack.clear();
+          }
         });
 
         Row() {
@@ -439,6 +468,31 @@ export struct AudioLibraryView {
     .width('100%')
     .height('100%')
     .padding({ top: this.getUIContext().px2vp(this.topRectHeight) });
+  }
 
+  private setAudioTitleText(audioListInfo: AudioListInfo | undefined): string {
+    if (!audioListInfo) {
+      return '音频';
+    }
+    switch (audioListInfo.type) {
+      case AudioListType.PLAY_LIST:
+        if (audioListInfo.name === ALL_AUDIO) {
+          return '全部音频';
+        } else if (audioListInfo.name === FAVORITE_AUDIO) {
+          return '我的收藏';
+        }
+        break;
+      case AudioListType.ALNUM_LIST:
+        if (!audioListInfo.name) {
+          return '未知专辑';
+        }
+        break;
+      case AudioListType.ARTIST_LIST:
+        if (!audioListInfo.name) {
+          return '未知艺术家';
+        }
+        break;
+    }
+    return audioListInfo.name!;
   }
 }

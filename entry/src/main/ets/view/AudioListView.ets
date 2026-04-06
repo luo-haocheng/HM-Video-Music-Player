@@ -7,6 +7,7 @@ import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 import { AddToPlaylistDialog } from './AddToPlaylistDialog';
 
 const ALL_AUDIO = '*';
+const AUDIO_LIST_INFO = 'AudioListInfo';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
@@ -31,6 +32,7 @@ export function AudioListBuilder() {
 @Component
 export struct AudioListView {
   @State audioListVM: AudioListViewModel = new AudioListViewModel();
+  @Consume(AUDIO_LIST_INFO) currAudioList?: AudioListInfo = undefined;
   private importAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
     if (eventData.data) {
       const audioInfo = eventData.data['info'] as AudioInfoModel;
@@ -51,11 +53,15 @@ export struct AudioListView {
       ListView({ audioListVM: this.audioListVM, audioList: this.audioListVM.audioList });
     }
     .hideBackButton(true)
+    .onWillDisappear(() => {
+      this.currAudioList = undefined;
+    })
     .onReady(async (navDesContext: NavDestinationContext) => {
       let context = this.getUIContext().getHostContext() as Context;
       await this.audioListVM.init(context);
       if (navDesContext.pathInfo.param) {
         this.audioListVM.audioListInfo = navDesContext.pathInfo.param as AudioListInfo;
+        this.currAudioList = this.audioListVM.audioListInfo;
         this.audioListVM.loadAudioList();
       }
     });
