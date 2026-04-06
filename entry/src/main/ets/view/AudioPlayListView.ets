@@ -71,6 +71,7 @@ export struct AudioPlayListView {
 
   build() {
     ListView({
+      audioPlaylistVM: this.audioPlaylistVM,
       allPlaylist: this.audioPlaylistVM.allPlaylist,
       favoritePlaylist: this.audioPlaylistVM.favoritePlaylist,
       userPlaylistArray: this.audioPlaylistVM.userPlaylistArray,
@@ -80,10 +81,49 @@ export struct AudioPlayListView {
 
 @Component
 struct ListView {
+  @Link audioPlaylistVM: AudioPlayListViewModel;
   @ObjectLink allPlaylist: PlayListItemViewModel;
   @ObjectLink favoritePlaylist: PlayListItemViewModel;
   @ObjectLink userPlaylistArray: PlayListItemViewModelArray;
   @Consume(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
+  private selectedIdx: number = -1;
+
+  @Builder
+  longPressMenuBuilder() {
+    Flex({
+      direction: FlexDirection.Column,
+      justifyContent: FlexAlign.Start,
+      alignItems: ItemAlign.Center,
+    }) {
+      Row() {
+        Text('编辑')
+          .fontSize(14)
+          .fontColor(Color.Black);
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(() => {
+        // todo
+      });
+
+      Divider()
+        .vertical(false)
+        .strokeWidth(0.5);
+
+      Row() {
+        Text('删除')
+          .fontSize(14)
+          .fontColor(Color.Red);
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(() => {
+        this.audioPlaylistVM.deleteUserPlaylist(this.selectedIdx);
+      });
+    }
+    .width(160)
+    .padding({ left: 16, right: 16 });
+  }
 
   build() {
     Flex({
@@ -116,7 +156,7 @@ struct ListView {
 
         ForEach(
           this.userPlaylistArray,
-          (item: PlayListItemViewModel) => {
+          (item: PlayListItemViewModel, index: number) => {
             ListItem() {
               PlayListBoxView({ playlistVM: item })
                 .onClick(() => {
@@ -126,7 +166,19 @@ struct ListView {
                   };
                   this.playListStack.pushPath({ name: 'AudioList', param: audioListInfo });
                 });
-            };
+            }
+            .bindContextMenu(
+              this.longPressMenuBuilder,
+              ResponseType.LongPress,
+              {
+                previewBorderRadius: 12,
+                placement: Placement.Bottom,
+                preview: MenuPreviewMode.IMAGE,
+                aboutToAppear: () => {
+                  this.selectedIdx = index;
+                }
+              }
+            );
           }
         );
       }

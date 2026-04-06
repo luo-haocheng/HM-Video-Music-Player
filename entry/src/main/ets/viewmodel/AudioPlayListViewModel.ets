@@ -31,6 +31,7 @@ export class AudioPlayListViewModel {
     for (let i = 0; i < playlistArray.length; ++i) {
       const audioIDList = await this.audioStore.selectPlaylistAudioList(playlistArray[i].name);
       const playlistItem = new PlayListItemViewModel();
+      playlistItem.playlistInfo = playlistArray[i];
       playlistItem.playListCount = audioIDList.length;
       playlistItem.playListName = playlistArray[i].name;
       this.playlistMap.set(playlistArray[i].name, audioIDList);
@@ -41,6 +42,7 @@ export class AudioPlayListViewModel {
   async updatePlayList(playlistInfo: PlayListInfoModel): Promise<void> {
     const playlistItem = new PlayListItemViewModel();
     playlistItem.playListName = playlistInfo.name;
+    playlistItem.playlistInfo = playlistInfo;
     playlistItem.playListCount = 0;
     this.userPlaylistArray.push(playlistItem);
   }
@@ -86,6 +88,18 @@ export class AudioPlayListViewModel {
         this.playlistMap.get(this.userPlaylistArray[i].playListName)?.push(audioInfo.id);
       }
     }
+  }
+
+  async deleteUserPlaylist(selectedIdx: number): Promise<void> {
+    if (selectedIdx < 0 || selectedIdx >= this.userPlaylistArray.length) {
+      console.error(`Failed to delete selected user playlist. Index ${selectedIdx} out of range ${0}-${this.userPlaylistArray.length}`);
+      return;
+    }
+    // Delete database record
+    const delPlaylistInfo = this.userPlaylistArray[selectedIdx].playlistInfo;
+    await this.audioStore.deletePlaylist(delPlaylistInfo);
+    // Delete from view
+    this.userPlaylistArray.splice(selectedIdx, 1);
   }
 
   async deleteFromPlaylist(audioInfo: AudioInfoModel, playlistName: string | null): Promise<void> {

@@ -30,10 +30,6 @@ export struct AudioPlayerView {
     }
   }
 
-  aboutToAppear(): void {
-
-  }
-
   build() {
     NavDestination() {
       Flex({

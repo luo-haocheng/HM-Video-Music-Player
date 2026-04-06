@@ -55,9 +55,33 @@ export class AudioLibraryStore {
         let predicatePlaylistAudio = new relationalStore.RdbPredicates(PLAYLIST_AUDIO_TABLE_NAME);
         predicatePlaylistAudio.equalTo('AUDIO_ID', audioInfo.id);
         await transaction.delete(predicatePlaylistAudio);
+        // Transaction commit
         await transaction.commit();
       } catch (error) {
         console.error(`Failed to delete audio ${JSON.stringify(audioInfo)}. Cause: ${JSON.stringify(error)}`);
+        await transaction?.rollback();
+        throw new Error(error);
+      }
+    }
+  }
+
+  async deletePlaylist(playlistInfo: PlayListInfoModel): Promise<void> {
+    if (this.store !== undefined) {
+      let transaction: relationalStore.Transaction | undefined;
+      try {
+        transaction = await this.store.createTransaction();
+        // Delete playlist in playlist_table
+        let predicatePlaylist = new relationalStore.RdbPredicates(PLAYLIST_TABLE_NAME);
+        predicatePlaylist.equalTo('NAME', playlistInfo.name);
+        await transaction.delete(predicatePlaylist);
+        // Delete playlist in playlist_audio_table
+        let predicatePlaylistAudio = new relationalStore.RdbPredicates(PLAYLIST_AUDIO_TABLE_NAME);
+        predicatePlaylistAudio.equalTo('PLAYLIST_NAME', playlistInfo.name);
+        await transaction.delete(predicatePlaylistAudio);
+        // Transaction commit
+        await transaction.commit();
+      } catch (error) {
+        console.error(`Failed to delete playlist ${JSON.stringify(playlistInfo)}. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
         throw new Error(error);
       }

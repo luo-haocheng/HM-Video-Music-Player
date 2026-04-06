@@ -3,6 +3,7 @@ import { AudioLibraryStore } from '../model/AudioLibraryStore';
 import { AudioListInfo, AudioListType } from '../view/AudioListView';
 import { AudioItemViewModel } from './AudioItemViewModel';
 import { emitter } from '@kit.BasicServicesKit';
+import { fileIo } from '@kit.CoreFileKit';
 
 const ALL_AUDIO = '*';
 const DELETE_AUDIO_EVENT = 'DeleteAudio';
@@ -63,12 +64,23 @@ export class AudioListViewModel {
   }
 
   async deleteAudio(audioInfo: AudioInfoModel): Promise<void> {
+    // Delete database record
     await this.audioStore.deleteAudio(audioInfo);
     let delIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
       return item.audioInfo.id === audioInfo.id;
     });
     if (delIdx !== -1) {
       this.audioList.splice(delIdx, 1);
+    }
+    // Delete sandbox file
+    try {
+      await fileIo.unlink(audioInfo.audioPath);
+      if (audioInfo.coverPath) {
+        await fileIo.unlink(audioInfo.coverPath);
+      }
+    } catch (error) {
+      console.error(`Failed to delete file ${audioInfo.audioPath}, ${audioInfo.coverPath}. Cause: ${JSON.stringify(error)}`);
+      return;
     }
     // Notify
     let eventData: emitter.EventData = {
