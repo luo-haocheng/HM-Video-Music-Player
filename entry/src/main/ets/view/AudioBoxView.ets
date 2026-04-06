@@ -1,9 +1,16 @@
 import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { LengthMetrics } from '@kit.ArkUI';
 
+const MULTI_CHOICE = 'MultiChoice';
+const CHOICE_COUNT = 'ChoiceCount';
+
 @Component
 export struct AudioBoxView {
   @ObjectLink audioItem: AudioItemViewModel;
+  @Consume(CHOICE_COUNT) choiceCount: number = 0;
+  @Consume(MULTI_CHOICE) multiChoice: boolean = false;
+  public isAllChoice: Callback<void> = () => {
+  };
 
   build() {
     Flex({
@@ -57,12 +64,37 @@ export struct AudioBoxView {
             Text(this.audioItem.album)
               .fontSize(12)
               .fontColor(Color.Gray);
-          };
+          }
+          .width('100%');
         }
         .height('100%')
         .layoutWeight(1)
         .alignItems(HorizontalAlign.Start)
         .justifyContent(FlexAlign.SpaceAround);
+
+        if (this.multiChoice) {
+          Column() {
+            Checkbox()
+              .width(18)
+              .aspectRatio(1)
+              .select($$this.audioItem.isChoice)
+              .onDisAppear(() => {
+                // delay some time for getting choice item
+                setTimeout(() => {
+                  this.audioItem.isChoice = false;
+                }, 200);
+              })
+              .onChange((value: boolean) => {
+                this.choiceCount += value ? 1 : -1;
+                this.isAllChoice();
+              });
+          }
+          .height('100%')
+          .layoutWeight(0)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center);
+
+        }
       }
       .layoutWeight(1);
     }
@@ -70,6 +102,6 @@ export struct AudioBoxView {
     .height(80)
     .width('100%')
     .borderRadius(12)
-    .backgroundColor(Color.White)
+    .backgroundColor(Color.White);
   }
 }

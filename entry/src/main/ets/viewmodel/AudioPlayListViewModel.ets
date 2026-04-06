@@ -104,23 +104,22 @@ export class AudioPlayListViewModel {
 
   async deleteFromPlaylist(audioInfo: AudioInfoModel, playlistName: string | null): Promise<void> {
     if (playlistName === FAVORITE_AUDIO) {
-      this.favoritePlaylist.playListCount -= 1;
       const favoriteAudioIDList = this.playlistMap.get(FAVORITE_AUDIO);
       if (favoriteAudioIDList && favoriteAudioIDList.includes(audioInfo.id)) {
-        const idx = favoriteAudioIDList.indexOf(audioInfo.id);
-        if (idx !== -1) {
-          favoriteAudioIDList.splice(idx, 1);
+        const delIdx = favoriteAudioIDList.indexOf(audioInfo.id);
+        if (delIdx !== -1) {
+          favoriteAudioIDList.splice(delIdx, 1);
+          this.favoritePlaylist.playListCount -= 1;
         }
       }
     }
     for (let i = 0; i < this.userPlaylistArray.length; ++i) {
       if (playlistName === this.userPlaylistArray[i].playListName) {
-        this.userPlaylistArray[i].playListCount -= 1;
         const audioIDList = this.playlistMap.get(this.userPlaylistArray[i].playListName);
         if (audioIDList && audioIDList.includes(audioInfo.id)) {
-          const idx = audioIDList.indexOf(audioInfo.id);
-          if (idx !== -1) {
-            audioIDList.splice(idx, 1);
+          const delIdx = audioIDList.indexOf(audioInfo.id);
+          if (delIdx !== -1) {
+            audioIDList.splice(delIdx, 1);
             this.userPlaylistArray[i].playListCount -= 1;
           }
         }

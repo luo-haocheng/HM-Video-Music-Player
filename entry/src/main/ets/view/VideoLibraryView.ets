@@ -542,15 +542,15 @@ export struct VideoLibraryView {
   }
 
   @Builder
-  ChoiceOptionBuilder(icon: ResourceStr, name: ResourceStr, callback: Callback<void>) {
+  ChoiceOptionBuilder(icon: ResourceStr, name: ResourceStr, color: Color, callback: Callback<void>) {
     Column({ space: 2 }) {
       Image(icon)
         .width(24)
         .aspectRatio(1)
-        .fillColor(Color.Black);
+        .fillColor(color);
       Text(name)
         .fontSize(12)
-        .fontColor(Color.Black);
+        .fontColor(color);
     }
     .height('100%')
     .padding({ top: 8 })
@@ -564,7 +564,7 @@ export struct VideoLibraryView {
   @Builder
   multiChoiceBuilder() {
     Row() {
-      this.ChoiceOptionBuilder($r('app.media.trash'), '删除', () => {
+      this.ChoiceOptionBuilder($r('app.media.trash'), '删除', Color.Red, () => {
         emitter.emit(DELETE_CHOICE_EVENT);
         try {
           this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
@@ -573,7 +573,7 @@ export struct VideoLibraryView {
         }
       });
 
-      this.ChoiceOptionBuilder($r('app.media.arrow_right_folder_circle'), '移动', () => {
+      this.ChoiceOptionBuilder($r('app.media.arrow_right_folder_circle'), '移动', Color.Black, () => {
         emitter.emit(MOVE_CHOICE_EVENT);
         try {
           this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
@@ -583,7 +583,7 @@ export struct VideoLibraryView {
       });
 
       if (this.inSecretFolder) {
-        this.ChoiceOptionBuilder($r('app.media.lock_open'), '移出', () => {
+        this.ChoiceOptionBuilder($r('app.media.lock_open'), '移出', Color.Black, () => {
           emitter.emit(MOVE_SECRET_EVENT);
           try {
             this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
@@ -592,7 +592,7 @@ export struct VideoLibraryView {
           }
         });
       } else {
-        this.ChoiceOptionBuilder($r('app.media.lock'), '保险柜', () => {
+        this.ChoiceOptionBuilder($r('app.media.lock'), '保险柜', Color.Black, () => {
           emitter.emit(MOVE_SECRET_EVENT);
           try {
             this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
@@ -602,7 +602,7 @@ export struct VideoLibraryView {
         });
       }
 
-      this.ChoiceOptionBuilder($r('app.media.share'), '分享', () => {
+      this.ChoiceOptionBuilder($r('app.media.share'), '分享', Color.Black, () => {
         emitter.emit(SHARE_CHOICE_EVENT);
         try {
           this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);

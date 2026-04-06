@@ -8,6 +8,7 @@ export class AudioItemViewModel {
   @Track public album: string = '未知专辑';
   @Track public artist: string = '未知歌手';
   @Track public albumCover?: image.PixelMap;
+  @Track public isChoice: boolean = false;
   public audioInfo: AudioInfoModel = new AudioInfoModel();
 
   audioSizeStr(bytesCount: number): string {

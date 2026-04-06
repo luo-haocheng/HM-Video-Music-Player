@@ -5,12 +5,20 @@ import { AudioArtistListView } from './AudioArtistListView';
 import { AudioBottomBar } from './AudioBottomBar';
 import { AudioListInfo, AudioListType } from './AudioListView';
 import { AudioPlayListView } from './AudioPlayListView';
+import { emitter } from '@kit.BasicServicesKit';
 
 const ALL_AUDIO = '*';
 const FAVORITE_AUDIO = '**';
 const INVALID_VALUES = '/\\:*?"<>|';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
+const CHOICE_ALL = 'ChoiceAll';
+const CHOICE_COUNT = 'ChoiceCount';
+const MULTI_CHOICE = 'MultiChoice';
+const CHOICE_ALL_EVENT = 'ChoiceAll';
+const DELETE_CHOICE_EVENT = 'DeleteChoice';
+const ADD_PLAYLIST_CHOICE_EVENT = 'AddPlaylistChoice';
+const DELETE_PLAYLIST_CHOICE_EVENT = 'DeletePlaylistChoice';
 const AUDIO_LIST_INFO = 'AudioListInfo';
 const PLAYLIST_PATH_STACK = 'PlayListPathStack';
 const ALBUMLIST_PATH_STACK = 'AlbumListPathStack';
@@ -33,6 +41,9 @@ interface ImportOption {
 export struct AudioLibraryView {
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
+  @Provide(CHOICE_ALL) choiceAll: boolean = true;
+  @Provide(CHOICE_COUNT) choiceCount: number = 0;
+  @Provide(MULTI_CHOICE) multiChoice: boolean = false;
   @Provide(AUDIO_LIST_INFO) currAudioList?: AudioListInfo = undefined;
   @Provide(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
   @Provide(ALBUMLIST_PATH_STACK) albumListStack: NavPathStack = new NavPathStack();
@@ -43,6 +54,7 @@ export struct AudioLibraryView {
   private newPlaylistName?: string;
   private importDialogId: number = -1;
   private createPlaylistDialogId: number = 0;
+  private multiChoiceDialogId: number = 0;
 
   async aboutToAppear(): Promise<void> {
     let context = this.getUIContext().getHostContext() as Context;
@@ -288,18 +300,163 @@ export struct AudioLibraryView {
     .padding(16);
   }
 
+  @Builder
+  ChoiceOptionBuilder(icon: ResourceStr, name: ResourceStr, color: Color, callback: Callback<void>) {
+    Column({ space: 2 }) {
+      Image(icon)
+        .width(24)
+        .aspectRatio(1)
+        .fillColor(color);
+      Text(name)
+        .fontSize(12)
+        .fontColor(color);
+    }
+    .height('100%')
+    .padding({ top: 8 })
+    .justifyContent(FlexAlign.Start)
+    .alignItems(HorizontalAlign.Center)
+    .onClick(() => {
+      callback();
+    });
+  }
+
+  @Builder
+  multiChoiceBuilder() {
+    Row() {
+      this.ChoiceOptionBuilder($r('app.media.trash'), '删除', Color.Red, () => {
+        emitter.emit(DELETE_CHOICE_EVENT);
+        try {
+          this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+        } catch (error) {
+          console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+        }
+      });
+
+      if (this.currAudioList?.type === AudioListType.PLAY_LIST && this.currAudioList.name !== ALL_AUDIO) {
+        this.ChoiceOptionBuilder($r('app.media.remove_songlist'), '从歌单移除', Color.Black, () => {
+          emitter.emit(DELETE_PLAYLIST_CHOICE_EVENT);
+          try {
+            this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+          } catch (error) {
+            console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+          }
+        });
+      }
+
+      this.ChoiceOptionBuilder($r('app.media.music_note_list'), '添加到歌单', Color.Black, () => {
+        emitter.emit(ADD_PLAYLIST_CHOICE_EVENT);
+        try {
+          this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+        } catch (error) {
+          console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+        }
+      });
+
+      this.ChoiceOptionBuilder($r('app.media.share'), '分享', Color.Black, () => {
+        // todo
+        try {
+          this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+        } catch (error) {
+          console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
+        }
+      });
+    }
+    .width('100%')
+    .height('100%')
+    .padding({ left: 32, right: 32 })
+    .alignItems(VerticalAlign.Top)
+    .justifyContent(FlexAlign.SpaceBetween);
+  }
+
   build() {
     Flex({
       direction: FlexDirection.Column,
       justifyContent: FlexAlign.Start,
       alignItems: ItemAlign.Center
     }) {
-      Row() {
-        Row({ space: 12 }) {
-          if (this.currAudioList) {
+      if (!this.multiChoice) {
+        Row() {
+          Row({ space: 12 }) {
+            if (this.currAudioList) {
+              Button({ type: ButtonType.Circle, stateEffect: false }) {
+                Image($r('app.media.back'))
+                  .width(14)
+                  .aspectRatio(1)
+                  .fillColor(Color.Black);
+              }
+              .width(36)
+              .aspectRatio(1)
+              .backgroundColor('#AADCDCDC')
+              .onClick(() => {
+                switch (this.currAudioList?.type) {
+                  case AudioListType.PLAY_LIST:
+                    this.playListStack.pop();
+                    break;
+                  case AudioListType.ALNUM_LIST:
+                    this.albumListStack.pop();
+                    break;
+                  case AudioListType.ARTIST_LIST:
+                    this.artistListStack.pop();
+                    break;
+                }
+              });
+            }
+
+            Text(this.setAudioTitleText(this.currAudioList))
+              .maxLines(1)
+              .fontSize(20)
+              .layoutWeight(1)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold)
+              .textOverflow({ overflow: TextOverflow.Ellipsis });
+          }
+          .layoutWeight(1);
+
+          Row({ space: 12 }) {
+            if (this.currAudioList) {
+              Button({ type: ButtonType.Capsule, stateEffect: false }) {
+                Text('多选')
+                  .fontSize(14)
+                  .fontColor(Color.Black);
+              }
+              .width(36 * 1.5)
+              .aspectRatio(1.5)
+              .backgroundColor('#AADCDCDC')
+              .onClick(() => {
+                this.getUIContext()
+                  .getPromptAction()
+                  .openCustomDialog({
+                    builder: () => {
+                      this.multiChoiceBuilder();
+                    },
+                    width: '100%',
+                    height: 56 + this.getUIContext().px2vp(this.bottomRectHeight),
+                    isModal: false,
+                    cornerRadius: 0,
+                    alignment: DialogAlignment.Bottom,
+                    transition: TransitionEffect.SLIDE,
+                    offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) },
+                    onWillAppear: () => {
+                      this.multiChoice = true;
+                    },
+                    onWillDisappear: () => {
+                      this.multiChoice = false;
+                      this.choiceAll = true;
+                      this.choiceCount = 0;
+                    }
+                  })
+                  .then((dialogId: number) => {
+                    this.multiChoiceDialogId = dialogId;
+                  })
+                  .catch((err: BusinessError) => {
+                    console.error(`Failed to open import dialog. Cuase: ${JSON.stringify(err)}`);
+                  });
+              });
+            }
+
             Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.back'))
-                .width(14)
+              Image($r('app.media.plus'))
+                .width(24)
                 .aspectRatio(1)
                 .fillColor(Color.Black);
             }
@@ -307,91 +464,93 @@ export struct AudioLibraryView {
             .aspectRatio(1)
             .backgroundColor('#AADCDCDC')
             .onClick(() => {
-              switch (this.currAudioList?.type) {
-                case AudioListType.PLAY_LIST:
-                  this.playListStack.pop();
-                  break;
-                case AudioListType.ALNUM_LIST:
-                  this.albumListStack.pop();
-                  break;
-                case AudioListType.ARTIST_LIST:
-                  this.artistListStack.pop();
-                  break;
+              this.getUIContext()
+                .getPromptAction()
+                .openCustomDialog({
+                  builder: () => {
+                    this.importDialogBuilder();
+                  },
+                  width: '100%',
+                  alignment: DialogAlignment.Bottom,
+                  transition: TransitionEffect.SLIDE,
+                  offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
+                })
+                .then((dialogId: number) => {
+                  this.importDialogId = dialogId;
+                })
+                .catch((err: BusinessError) => {
+                  console.error(`Failed to open import dialog. Cuase: ${JSON.stringify(err)}`);
+                });
+            });
+
+            Button({ type: ButtonType.Circle, stateEffect: false }) {
+              Image($r('app.media.dot_grid_2x2'))
+                .width(24)
+                .aspectRatio(1)
+                .fillColor(Color.Black);
+            }
+            .width(36)
+            .aspectRatio(1)
+            .backgroundColor('#AADCDCDC');
+          };
+        }
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.SpaceBetween)
+        .padding({
+          top: 8,
+          left: 16,
+          right: 16,
+          bottom: 8,
+        });
+      } else {
+        Row() {
+          Row({ space: 12 }) {
+            Button({ type: ButtonType.Circle, stateEffect: false }) {
+              Image($r('app.media.xmark'))
+                .width(24)
+                .aspectRatio(1)
+                .fillColor(Color.Black);
+            }
+            .width(36)
+            .aspectRatio(1)
+            .backgroundColor('#AADCDCDC')
+            .onClick(() => {
+              try {
+                this.getUIContext().getPromptAction().closeCustomDialog(this.multiChoiceDialogId);
+              } catch (error) {
+                console.error(`Failed to closeCustomDailog. Cause: ${JSON.stringify(error)}`);
               }
             });
-          }
 
-          Text(this.setAudioTitleText(this.currAudioList))
-            .maxLines(1)
-            .fontSize(20)
-            .layoutWeight(1)
-            .fontColor(Color.Black)
-            .fontWeight(FontWeight.Bold)
-            .textOverflow({ overflow: TextOverflow.Ellipsis });
-        }
-        .layoutWeight(1);
+            Text(this.choiceCount === 0 ? '未选择' : `已选择 ${this.choiceCount} 项`)
+              .fontSize(18)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold);
+          };
 
-        Row({ space: 12 }) {
-          if (this.currAudioList) {
-            Button({ type: ButtonType.Capsule, stateEffect: false }) {
-              Text('多选')
-                .fontSize(14)
-                .fontColor(Color.Black);
-            }
-            .width(36 * 1.5)
-            .aspectRatio(1.5)
-            .backgroundColor('#AADCDCDC');
+          Button({ type: ButtonType.Capsule, stateEffect: false }) {
+            Text(this.choiceAll ? '全选' : '取消全选')
+              .fontSize(14)
+              .fontColor(Color.Black);
           }
-
-          Button({ type: ButtonType.Circle, stateEffect: false }) {
-            Image($r('app.media.plus'))
-              .width(24)
-              .aspectRatio(1)
-              .fillColor(Color.Black);
-          }
-          .width(36)
-          .aspectRatio(1)
+          .width(36 * (this.choiceAll ? 1.5 : 2))
+          .aspectRatio(this.choiceAll ? 1.5 : 2)
           .backgroundColor('#AADCDCDC')
           .onClick(() => {
-            this.getUIContext()
-              .getPromptAction()
-              .openCustomDialog({
-                builder: () => {
-                  this.importDialogBuilder();
-                },
-                width: '100%',
-                alignment: DialogAlignment.Bottom,
-                transition: TransitionEffect.SLIDE,
-                offset: { dx: 0, dy: this.getUIContext().px2vp(this.bottomRectHeight) }
-              })
-              .then((dialogId: number) => {
-                this.importDialogId = dialogId;
-              })
-              .catch((err: BusinessError) => {
-                console.error(`Failed to open import dialog. Cuase: ${JSON.stringify(err)}`);
-              });
+            emitter.emit(CHOICE_ALL_EVENT);
           });
-
-          Button({ type: ButtonType.Circle, stateEffect: false }) {
-            Image($r('app.media.dot_grid_2x2'))
-              .width(24)
-              .aspectRatio(1)
-              .fillColor(Color.Black);
-          }
-          .width(36)
-          .aspectRatio(1)
-          .backgroundColor('#AADCDCDC');
-        };
+        }
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.SpaceBetween)
+        .padding({
+          top: 8,
+          left: 16,
+          right: 16,
+          bottom: 8,
+        });
       }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-      .justifyContent(FlexAlign.SpaceBetween)
-      .padding({
-        top: 8,
-        left: 16,
-        right: 16,
-        bottom: 8,
-      });
 
       Stack({ alignContent: Alignment.Bottom }) {
         Tabs() {
@@ -447,6 +606,9 @@ export struct AudioLibraryView {
           );
         }
         .scrollable(false)
+        .onContentWillChange(() => {
+          return !this.multiChoice;
+        })
         .onUnselected((index: number) => {
           if (index === 0) {
             this.playListStack.clear();

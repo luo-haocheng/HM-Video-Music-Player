@@ -10,8 +10,13 @@ const ALL_AUDIO = '*';
 const AUDIO_LIST_INFO = 'AudioListInfo';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
+const MULTI_CHOICE = 'MultiChoice';
+const CHOICE_ALL = 'ChoiceAll';
+const CHOICE_ALL_EVENT = 'ChoiceAll';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
-
+const DELETE_CHOICE_EVENT = 'DeleteChoice';
+const ADD_PLAYLIST_CHOICE_EVENT = 'AddPlaylistChoice';
+const DELETE_PLAYLIST_CHOICE_EVENT = 'DeletePlaylistChoice';
 
 export enum AudioListType {
   PLAY_LIST = 'PlayList',
@@ -32,20 +37,78 @@ export function AudioListBuilder() {
 @Component
 export struct AudioListView {
   @State audioListVM: AudioListViewModel = new AudioListViewModel();
+  @Consume(CHOICE_ALL) choiceAll: boolean = true;
   @Consume(AUDIO_LIST_INFO) currAudioList?: AudioListInfo = undefined;
+  private addPlaylistDialogController?: CustomDialogController;
   private importAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
     if (eventData.data) {
       const audioInfo = eventData.data['info'] as AudioInfoModel;
       this.audioListVM.updateAudio(audioInfo);
     }
   };
+  private choiceAllCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    eventData;
+    this.audioListVM.audioList.forEach((item: AudioItemViewModel) => {
+      item.isChoice = this.choiceAll;
+    });
+    this.choiceAll = !this.choiceAll;
+  };
+  private deleteChoiceCallback: Callback<emitter.EventData> = async (eventData: emitter.EventData) => {
+    eventData;
+    const choiceAudioArr: AudioInfoModel[] = [];
+    this.audioListVM.audioList.forEach((item: AudioItemViewModel) => {
+      if (item.isChoice) {
+        choiceAudioArr.push(item.audioInfo);
+      }
+    });
+    for (let i = 0; i < choiceAudioArr.length; ++i) {
+      await this.audioListVM.deleteAudio(choiceAudioArr[i]);
+    }
+  };
+  private addToPlaylistCallback: Callback<emitter.EventData> = async (eventData: emitter.EventData) => {
+    eventData;
+    const choiceAudioArr: AudioInfoModel[] = [];
+    this.audioListVM.audioList.forEach((item: AudioItemViewModel) => {
+      if (item.isChoice) {
+        choiceAudioArr.push(item.audioInfo);
+      }
+    });
+    this.addPlaylistDialogController = new CustomDialogController({
+      width: '100%',
+      height: '60%',
+      alignment: DialogAlignment.Bottom,
+      builder: AddToPlaylistDialog({ audioInfoList: choiceAudioArr }),
+      offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+    });
+    this.addPlaylistDialogController.open();
+  };
+  private deleteFromPlaylistCallback: Callback<emitter.EventData> = async (eventData: emitter.EventData) => {
+    eventData;
+    const choiceAudioArr: AudioInfoModel[] = [];
+    this.audioListVM.audioList.forEach((item: AudioItemViewModel) => {
+      if (item.isChoice) {
+        choiceAudioArr.push(item.audioInfo);
+      }
+    });
+    for (let i = 0; i < choiceAudioArr.length; ++i) {
+      this.audioListVM.deleteFromPlaylist(choiceAudioArr[i]);
+    }
+  };
 
   aboutToAppear(): void {
+    emitter.on(DELETE_PLAYLIST_CHOICE_EVENT, this.deleteFromPlaylistCallback);
+    emitter.on(ADD_PLAYLIST_CHOICE_EVENT, this.addToPlaylistCallback);
+    emitter.on(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
     emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+    emitter.on(CHOICE_ALL_EVENT, this.choiceAllCallback);
   }
 
   aboutToDisappear(): void {
+    emitter.off(DELETE_PLAYLIST_CHOICE_EVENT, this.deleteFromPlaylistCallback);
+    emitter.off(ADD_PLAYLIST_CHOICE_EVENT, this.addToPlaylistCallback);
+    emitter.off(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
     emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
+    emitter.off(CHOICE_ALL_EVENT, this.choiceAllCallback);
   }
 
   build() {
@@ -72,9 +135,17 @@ export struct AudioListView {
 struct ListView {
   @Link audioListVM: AudioListViewModel;
   @ObjectLink audioList: AudioItemViewModelList;
+  @Consume(MULTI_CHOICE) multiChoice: boolean = false;
+  @Consume(CHOICE_ALL) choiceAll: boolean = true;
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
-  private addPlaylistDialogController?: CustomDialogController;
   private selectedIdx: number = -1;
+  private addPlaylistDialogController?: CustomDialogController;
+  private isAllChoice: Callback<void> = () => {
+    const choiceAll = this.audioListVM.audioList.find((item: AudioItemViewModel) => {
+      return !item.isChoice;
+    });
+    this.choiceAll = (choiceAll !== undefined);
+  };
 
   @Builder
   longPressMenuBuilder() {
@@ -149,7 +220,7 @@ struct ListView {
           this.audioList,
           (item: AudioItemViewModel, index: number) => {
             ListItem() {
-              AudioBoxView({ audioItem: item });
+              AudioBoxView({ audioItem: item, isAllChoice: this.isAllChoice });
             }
             .bindContextMenu(
               this.longPressMenuBuilder,
@@ -163,10 +234,14 @@ struct ListView {
                 }
               })
             .onClick(() => {
-              const context = this.getUIContext().getHostContext() as Context;
-              this.audioPlayerVM.init(item.audioInfo, context);
-              this.audioPlayerVM.audioList = this.audioList;
-              this.audioPlayerVM.currIndex = index;
+              if (this.multiChoice) {
+                item.isChoice = !item.isChoice;
+              } else {
+                const context = this.getUIContext().getHostContext() as Context;
+                this.audioPlayerVM.init(item.audioInfo, context);
+                this.audioPlayerVM.audioList = this.audioList;
+                this.audioPlayerVM.currIndex = index;
+              }
             });
           },
           (item: AudioItemViewModel, index: number) => {
