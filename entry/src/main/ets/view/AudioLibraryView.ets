@@ -7,7 +7,6 @@ import { AudioBottomBar } from './AudioBottomBar';
 import { AudioPlayListView } from './AudioPlayListView';
 
 const INVALID_VALUES = '/\\:*?"<>|';
-const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const PLAYLIST_PATH_STACK = 'PlayListPathStack';
@@ -34,7 +33,6 @@ export struct AudioLibraryView {
   @Provide(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
   @Provide(ALBUMLIST_PATH_STACK) albumListStack: NavPathStack = new NavPathStack();
   @Provide(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
-  @Provide(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
   @State invalidName: boolean = false;
   @State audioList: AudioItemViewModel[] = [];
   @State audioLibVM: AudioLibraryViewModel = new AudioLibraryViewModel();

@@ -5,6 +5,7 @@ const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 
 @Component
 export struct AudioBottomBar {
+  @Consume('MainPageStack') mainPageStack: NavPathStack = new NavPathStack();
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
 
   build() {
@@ -95,6 +96,11 @@ export struct AudioBottomBar {
     .padding(8)
     .opacity(0.8)
     .borderRadius(12)
-    .backgroundColor(Color.Gray);
+    .backgroundColor(Color.Gray)
+    .onClick(() => {
+      if (this.audioPlayerVM.currIndex !== -1) {
+        this.mainPageStack.pushPath({ name: 'AudioPlayer' });
+      }
+    });
   }
 }

@@ -1,6 +1,8 @@
 import { AudioLibraryView } from '../view/AudioLibraryView';
 import { VideoLibraryView } from '../view/VideoLibraryView';
+import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 
+const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Entry
@@ -9,6 +11,7 @@ struct Index {
   @State selectIdx: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Provide('MainPageStack') mainPageStack: NavPathStack = new NavPathStack();
+  @Provide(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
 
   @Builder
   tabBarBuilder(icon: ResourceStr, name: ResourceStr, index: number) {

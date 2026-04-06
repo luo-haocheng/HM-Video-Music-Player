@@ -19,6 +19,11 @@
       "name": "AudioList",
       "pageSourceFile": "src/main/ets/view/AudioListView.ets",
       "buildFunction": "AudioListBuilder"
+    },
+    {
+      "name": "AudioPlayer",
+      "pageSourceFile": "src/main/ets/view/AudioPlayerView.ets",
+      "buildFunction": "AudioPlayerBuilder"
     }
   ]
 }
