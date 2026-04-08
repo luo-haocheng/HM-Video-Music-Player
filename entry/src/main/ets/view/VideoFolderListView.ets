@@ -10,14 +10,14 @@ import { RenameDialog } from './RenameDialog';
 import { VideoBoxView } from './VideoBoxView';
 
 const CHOICE_ALL = 'ChoiceAll';
-const VIEW_OPTION = 'ViewOption';
+const VIDEO_VIEW_OPTION = 'VideoViewOption';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
 export struct VideoFolderListView {
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Consume(CHOICE_ALL) choiceAll: boolean = false;
-  @Consume(VIEW_OPTION) viewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
+  @Consume(VIDEO_VIEW_OPTION) videoViewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
   @State invalidName: boolean = false;
@@ -185,7 +185,7 @@ export struct VideoFolderListView {
           .swipeAction({
             end: {
               builder: () => {
-                if (this.viewOptions === ViewOptionValue.LIST_VIEW) {
+                if (this.videoViewOptions === ViewOptionValue.LIST_VIEW) {
                   this.folderSwipeEnd(item.folderInfo);
                 }
               }
@@ -213,7 +213,7 @@ export struct VideoFolderListView {
           .swipeAction({
             end: {
               builder: () => {
-                if (this.viewOptions === ViewOptionValue.LIST_VIEW) {
+                if (this.videoViewOptions === ViewOptionValue.LIST_VIEW) {
                   this.videoSwipeEnd(item.videoInfo);
                 }
               }
@@ -234,6 +234,6 @@ export struct VideoFolderListView {
     .padding({ left: 8, right: 8 })
     .backgroundColor(`rgb(243, 243, 243)`)
     .divider({ strokeWidth: 8, color: 'rgb(243, 243, 243)' })
-    .lanes(this.viewOptions === ViewOptionValue.LIST_VIEW ? 1 : 2, 8);
+    .lanes(this.videoViewOptions === ViewOptionValue.LIST_VIEW ? 1 : 2, 8);
   }
 }

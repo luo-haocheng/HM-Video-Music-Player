@@ -56,8 +56,8 @@ export class VideoListViewModel {
   }
 
   private async insertFolderByOrder(newItem: FolderItemViewModel): Promise<void> {
-    let sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
-    let sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    let sortMode = await this.settings.getSetting(SettingKey.VIDEO_SORT_MODE);
+    let sortRule = await this.settings.getSetting(SettingKey.VIDEO_SORT_RULE);
     let insertIdx = -1;
     if (sortMode === SortModeValue.DATE_ADD) {
       insertIdx = this.folderList.findIndex((oldItem: FolderItemViewModel) => {
@@ -86,8 +86,8 @@ export class VideoListViewModel {
   }
 
   private async insertVideoByOrder(newItem: VideoItemViewModel): Promise<void> {
-    let sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
-    let sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    let sortMode = await this.settings.getSetting(SettingKey.VIDEO_SORT_MODE);
+    let sortRule = await this.settings.getSetting(SettingKey.VIDEO_SORT_RULE);
     let insertIdx = -1;
     if (sortMode === SortModeValue.DATE_ADD) {
       insertIdx = this.videoList.findIndex((oldItem: VideoItemViewModel) => {
@@ -366,8 +366,8 @@ export class VideoListViewModel {
   }
 
   async sortFolderList(folderItemList: FolderItemViewModelList): Promise<void> {
-    let sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
-    let sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    let sortMode = await this.settings.getSetting(SettingKey.VIDEO_SORT_MODE);
+    let sortRule = await this.settings.getSetting(SettingKey.VIDEO_SORT_RULE);
     if (sortMode === SortModeValue.DATE_ADD) {
       folderItemList.sort((folderA: FolderItemViewModel, folderB: FolderItemViewModel) => {
         const diff = folderA.folderInfo.dateAdd - folderB.folderInfo.dateAdd;
@@ -390,8 +390,8 @@ export class VideoListViewModel {
   }
 
   async sortVideoList(videoItemList: VideoItemViewModelList): Promise<void> {
-    let sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
-    let sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    let sortMode = await this.settings.getSetting(SettingKey.VIDEO_SORT_MODE);
+    let sortRule = await this.settings.getSetting(SettingKey.VIDEO_SORT_RULE);
     if (sortMode === SortModeValue.DATE_ADD) {
       videoItemList.sort((videoA: VideoItemViewModel, videoB: VideoItemViewModel) => {
         const diff = videoA.videoInfo.dateAdd - videoB.videoInfo.dateAdd;

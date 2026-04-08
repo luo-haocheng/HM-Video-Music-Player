@@ -1,7 +1,10 @@
 import { AudioInfoModel } from '../model/AudioInfoModel';
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
 import { PlayListInfoModel } from '../model/PlayListInfoModel';
+import { Settings } from '../model/Settings';
+import { SettingKey, SortModeValue, SortRuleValue } from '../model/SettingsModel';
 import { PlayListItemViewModel, PlayListItemViewModelArray } from './PlayListItemViewModel';
+import { i18n } from '@kit.LocalizationKit';
 
 const ALL_AUDIO = '*';
 const FAVORITE_AUDIO = '**';
@@ -11,11 +14,13 @@ export class AudioPlayListViewModel {
   @Track allPlaylist: PlayListItemViewModel = new PlayListItemViewModel();
   @Track favoritePlaylist: PlayListItemViewModel = new PlayListItemViewModel();
   @Track userPlaylistArray: PlayListItemViewModelArray = new PlayListItemViewModelArray();
+  private settings: Settings = new Settings();
   private playlistMap: Map<string | null, number[]> = new Map();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 
   async init(context: Context): Promise<void> {
     await this.audioStore.initStore(context);
+    await this.settings.initPreference(context);
     // update all playlist
     const allAudioIDList = await this.audioStore.selectPlaylistAudioList(ALL_AUDIO);
     this.allPlaylist.playListCount = allAudioIDList.length;
@@ -37,6 +42,7 @@ export class AudioPlayListViewModel {
       this.playlistMap.set(playlistArray[i].name, audioIDList);
       this.userPlaylistArray.push(playlistItem);
     }
+    this.sortUserPlaylist();
   }
 
   async updatePlayList(playlistInfo: PlayListInfoModel): Promise<void> {
@@ -45,6 +51,7 @@ export class AudioPlayListViewModel {
     playlistItem.playlistInfo = playlistInfo;
     playlistItem.playListCount = 0;
     this.userPlaylistArray.push(playlistItem);
+    this.sortUserPlaylist();
   }
 
   async updateAudio(audioInfo: AudioInfoModel): Promise<void> {
@@ -126,5 +133,36 @@ export class AudioPlayListViewModel {
         break;
       }
     }
+  }
+
+  async sortUserPlaylist(): Promise<void> {
+    const sortMode = await this.settings.getSetting(SettingKey.PLAYLIST_SORT_MODE);
+    const sortRule = await this.settings.getSetting(SettingKey.PLAYLIST_SORT_RULE);
+    if (sortMode === SortModeValue.DATE_ADD) {
+      this.userPlaylistArray.sort((playlistA: PlayListItemViewModel, playlistB: PlayListItemViewModel) => {
+        const diff = playlistA.playlistInfo.dateAdd - playlistB.playlistInfo.dateAdd;
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else if (sortMode === SortModeValue.PLAYLIST_NAME) {
+      this.userPlaylistArray.sort((playlistA: PlayListItemViewModel, playlistB: PlayListItemViewModel) => {
+        const diff = this.sortByFileName(playlistA.playListName ?? '', playlistB.playListName ?? '');
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else {
+      this.userPlaylistArray.sort((playlistA: PlayListItemViewModel, playlistB: PlayListItemViewModel) => {
+        const diff = playlistA.playlistInfo.dateAdd - playlistB.playlistInfo.dateAdd;
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    }
+  }
+
+  private sortByFileName(nameA: string, nameB: string): number {
+    let transliterator: i18n.Transliterator = i18n.Transliterator.getInstance('Any-Latn;Latin-Ascii');
+    let name1 = transliterator.transform(nameA).toLowerCase();
+    let name2 = transliterator.transform(nameB).toLowerCase();
+    if (name1 === name2) {
+      return 0;
+    }
+    return name1 > name2 ? 1 : -1;
   }
 }

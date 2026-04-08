@@ -5,9 +5,9 @@ import { PlayListItemViewModel, PlayListItemViewModelArray } from '../viewmodel/
 import { emitter } from '@kit.BasicServicesKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
 
+const AUDIO_TAB_STACK = 'AudioTabStack';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const DELETE_AUDIO_EVENT = 'DeleteAudio';
-const ALBUMLIST_PATH_STACK = 'AlbumListPathStack';
 
 @Component
 export struct AudioAlbumListView {
@@ -46,7 +46,7 @@ export struct AudioAlbumListView {
 struct ListView {
   @ObjectLink albumList: PlayListItemViewModelArray;
   @ObjectLink unknownAlbum: PlayListItemViewModel | undefined;
-  @Consume(ALBUMLIST_PATH_STACK) albumListStack: NavPathStack = new NavPathStack();
+  @Consume(AUDIO_TAB_STACK) audioTabStack: NavPathStack = new NavPathStack();
 
   build() {
     Flex({
@@ -63,7 +63,7 @@ struct ListView {
                   type: AudioListType.ALNUM_LIST,
                   name: null
                 };
-                this.albumListStack.pushPath({ name: 'AudioList', param: audioListInfo });
+                this.audioTabStack.pushPath({ name: 'AudioList', param: audioListInfo });
               });
           };
         }
@@ -78,7 +78,7 @@ struct ListView {
                     type: AudioListType.ALNUM_LIST,
                     name: item.playListName
                   };
-                  this.albumListStack.pushPath({ name: 'AudioList', param: audioListInfo });
+                  this.audioTabStack.pushPath({ name: 'AudioList', param: audioListInfo });
                 });
             };
           },

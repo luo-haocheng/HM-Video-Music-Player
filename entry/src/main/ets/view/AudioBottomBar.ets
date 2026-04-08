@@ -2,10 +2,11 @@ import { LengthMetrics } from '@kit.ArkUI';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
+const MAIN_PAGE_STACK = 'MainPageStack';
 
 @Component
 export struct AudioBottomBar {
-  @Consume('MainPageStack') mainPageStack: NavPathStack = new NavPathStack();
+  @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
 
   build() {

@@ -18,7 +18,8 @@ const SHARE_CHOICE_EVENT = 'ShareChoice';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
 const MULTI_CHOICE = 'MultiChoice';
 const CURRENT_FOLDER = 'CurrentFolder';
-const VIEW_OPTION = 'ViewOption';
+const VIDEO_TAB_STACK = 'VideoTabStack';
+const VIDEO_VIEW_OPTION = 'VideoViewOption';
 const IN_SECRET_FOLDER = 'InSecretFolder';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
@@ -48,8 +49,8 @@ export struct VideoLibraryView {
   @Provide(MULTI_CHOICE) multiChoice: boolean = false;
   @Provide(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;
   @Provide(IN_SECRET_FOLDER) inSecretFolder: boolean = false;
-  @Provide(VIEW_OPTION) viewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
-  @Provide('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
+  @Provide(VIDEO_VIEW_OPTION) videoViewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
+  @Provide(VIDEO_TAB_STACK) videoTabStack: NavPathStack = new NavPathStack();
   @State videoLibVM: VideoLibraryViewModel = new VideoLibraryViewModel(this.getUIContext().getHostContext() as Context);
   @State invalidName: boolean = false;
   @State isSortExpand: boolean = false;
@@ -63,7 +64,7 @@ export struct VideoLibraryView {
   async aboutToAppear(): Promise<void> {
     await this.videoLibVM.init();
     this.videoTabStack.pushPath({ name: 'VideoBrowser' });
-    this.viewOptions = await this.videoLibVM.getViewOptions();
+    this.videoViewOptions = await this.videoLibVM.getViewOptions();
   }
 
   private async getRandom(len: number): Promise<Uint8Array | undefined> {
@@ -117,7 +118,7 @@ export struct VideoLibraryView {
     List() {
       ListItem() {
         Row() {
-          Text(this.viewOptions === ViewOptionValue.LIST_VIEW ? '宫格视图' : '列表视图')
+          Text(this.videoViewOptions === ViewOptionValue.LIST_VIEW ? '宫格视图' : '列表视图')
             .fontSize(14)
             .fontColor(Color.Black);
         }
@@ -127,12 +128,12 @@ export struct VideoLibraryView {
       .width('100%')
       .padding({ top: 16, bottom: 16 })
       .onClick(async () => {
-        if (this.viewOptions === ViewOptionValue.LIST_VIEW) {
+        if (this.videoViewOptions === ViewOptionValue.LIST_VIEW) {
           await this.videoLibVM.selectViewOption(ViewOptionValue.GRID_VIEW);
-          this.viewOptions = ViewOptionValue.GRID_VIEW;
+          this.videoViewOptions = ViewOptionValue.GRID_VIEW;
         } else {
           await this.videoLibVM.selectViewOption(ViewOptionValue.LIST_VIEW);
-          this.viewOptions = ViewOptionValue.LIST_VIEW;
+          this.videoViewOptions = ViewOptionValue.LIST_VIEW;
         }
       });
 
@@ -148,8 +149,11 @@ export struct VideoLibraryView {
                 .fontColor(Color.Black);
 
               if (this.videoLibVM.sortMode === SortModeValue.DATE_ADD) {
-                Image(this.videoLibVM.sortRule === SortRuleValue.ASCENDING ? $r('app.media.text_and_arrow_down') :
-                  $r('app.media.text_and_arrow_up'))
+                Image(
+                  this.videoLibVM.sortRule === SortRuleValue.ASCENDING ?
+                    $r('app.media.text_and_arrow_down') :
+                    $r('app.media.text_and_arrow_up')
+                )
                   .width(20)
                   .aspectRatio(1)
                   .backgroundColor(Color.Transparent);
@@ -174,8 +178,11 @@ export struct VideoLibraryView {
                 .fontColor(Color.Black);
 
               if (this.videoLibVM.sortMode === SortModeValue.FILE_NAME) {
-                Image(this.videoLibVM.sortRule === SortRuleValue.ASCENDING ? $r('app.media.text_and_arrow_down') :
-                  $r('app.media.text_and_arrow_up'))
+                Image(
+                  this.videoLibVM.sortRule === SortRuleValue.ASCENDING ?
+                    $r('app.media.text_and_arrow_down') :
+                    $r('app.media.text_and_arrow_up')
+                )
                   .width(20)
                   .aspectRatio(1)
                   .backgroundColor(Color.Transparent);
@@ -200,8 +207,11 @@ export struct VideoLibraryView {
                 .fontColor(Color.Black);
 
               if (this.videoLibVM.sortMode === SortModeValue.FILE_SIZE) {
-                Image(this.videoLibVM.sortRule === SortRuleValue.ASCENDING ? $r('app.media.text_and_arrow_down') :
-                  $r('app.media.text_and_arrow_up'))
+                Image(
+                  this.videoLibVM.sortRule === SortRuleValue.ASCENDING ?
+                    $r('app.media.text_and_arrow_down') :
+                    $r('app.media.text_and_arrow_up')
+                )
                   .width(20)
                   .aspectRatio(1)
                   .backgroundColor(Color.Transparent);
@@ -265,36 +275,6 @@ export struct VideoLibraryView {
         } catch (error) {
           console.error(`Initial UserAuth failed. Cause: ${JSON.stringify(error)}`);
         }
-      });
-
-      ListItem() {
-        Row() {
-          Text('设置')
-            .fontSize(14)
-            .fontColor(Color.Black);
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Start);
-      }
-      .width('100%')
-      .padding({ top: 16, bottom: 16 })
-      .onClick(() => {
-        // todo
-      });
-
-      ListItem() {
-        Row() {
-          Text('关于')
-            .fontSize(14)
-            .fontColor(Color.Black);
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Start);
-      }
-      .width('100%')
-      .padding({ top: 16, bottom: 16 })
-      .onClick(() => {
-        // todo
       });
     }
     .width(200)
@@ -731,11 +711,14 @@ export struct VideoLibraryView {
               .width(36)
               .aspectRatio(1)
               .backgroundColor('#AADCDCDC')
-              .bindMenu(this.moreOptionsBuilder, {
-                onDisappear: () => {
-                  this.isSortExpand = false;
+              .bindMenu(
+                this.moreOptionsBuilder,
+                {
+                  onDisappear: () => {
+                    this.isSortExpand = false;
+                  }
                 }
-              });
+              );
             }
           }
           .layoutWeight(0);

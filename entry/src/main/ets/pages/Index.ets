@@ -3,6 +3,7 @@ import { VideoLibraryView } from '../view/VideoLibraryView';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
+const MAIN_PAGE_STACK = 'MainPageStack';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Entry
@@ -10,7 +11,7 @@ const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 struct Index {
   @State selectIdx: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
-  @Provide('MainPageStack') mainPageStack: NavPathStack = new NavPathStack();
+  @Provide(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
   @Provide(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
 
   @Builder

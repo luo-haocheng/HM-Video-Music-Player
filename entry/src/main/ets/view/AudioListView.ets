@@ -12,6 +12,7 @@ const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MULTI_CHOICE = 'MultiChoice';
 const CHOICE_ALL = 'ChoiceAll';
+const SORT_AUDIO_EVENT = 'SortAudio';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
@@ -94,6 +95,10 @@ export struct AudioListView {
       this.audioListVM.deleteFromPlaylist(choiceAudioArr[i]);
     }
   };
+  private sortAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    eventData;
+    this.audioListVM.sortAudioList();
+  };
 
   aboutToAppear(): void {
     emitter.on(DELETE_PLAYLIST_CHOICE_EVENT, this.deleteFromPlaylistCallback);
@@ -101,6 +106,7 @@ export struct AudioListView {
     emitter.on(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
     emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
     emitter.on(CHOICE_ALL_EVENT, this.choiceAllCallback);
+    emitter.on(SORT_AUDIO_EVENT, this.sortAudioCallback);
   }
 
   aboutToDisappear(): void {
@@ -109,6 +115,7 @@ export struct AudioListView {
     emitter.off(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
     emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
     emitter.off(CHOICE_ALL_EVENT, this.choiceAllCallback);
+    emitter.off(SORT_AUDIO_EVENT, this.sortAudioCallback);
   }
 
   build() {

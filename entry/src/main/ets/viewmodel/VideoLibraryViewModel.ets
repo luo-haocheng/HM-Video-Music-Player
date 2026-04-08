@@ -16,7 +16,7 @@ import { Settings } from '../model/Settings';
 const VIDEO_DIR = '/videos';
 const THUMBNAIL_DIR = '/thumbnails';
 const DOWNLOAD_VIDEO_DIR = '/Videos';
-const SORT_ITEMS_EVENT = 'SortItems';
+const SORT_VIDEO_FOLDER_EVENT = 'SortVideoFolder';
 const IMPORT_VIDEO_EVENT = 'ImportVideo';
 const CREATE_FOLDER_EVENT = 'CreateFolder';
 
@@ -294,22 +294,22 @@ export class VideoLibraryViewModel {
 
   async selectSortMethod(selectSortMode: SortModeValue): Promise<void> {
     if (this.sortMode !== selectSortMode) {
-      await this.settings.putSetting(SettingKey.SORT_MODE, selectSortMode);
+      await this.settings.putSetting(SettingKey.VIDEO_SORT_MODE, selectSortMode);
     } else {
       const rule = (this.sortRule === SortRuleValue.ASCENDING ? SortRuleValue.DESCENDING : SortRuleValue.ASCENDING);
-      await this.settings.putSetting(SettingKey.SORT_RULE, rule);
+      await this.settings.putSetting(SettingKey.VIDEO_SORT_RULE, rule);
     }
-    this.sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
-    this.sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
-    emitter.emit(SORT_ITEMS_EVENT);
+    this.sortMode = await this.settings.getSetting(SettingKey.VIDEO_SORT_MODE);
+    this.sortRule = await this.settings.getSetting(SettingKey.VIDEO_SORT_RULE);
+    emitter.emit(SORT_VIDEO_FOLDER_EVENT);
   }
 
   async selectViewOption(viewOption: ViewOptionValue) {
-    await this.settings.putSetting(SettingKey.VIEW_OPTION, viewOption);
+    await this.settings.putSetting(SettingKey.VIDEO_VIEW_OPTION, viewOption);
   }
 
   async getViewOptions(): Promise<ViewOptionValue> {
-    return await this.settings.getSetting(SettingKey.VIEW_OPTION) as ViewOptionValue;
+    return await this.settings.getSetting(SettingKey.VIDEO_VIEW_OPTION) as ViewOptionValue;
   }
 
   async init(): Promise<void> {
@@ -317,7 +317,7 @@ export class VideoLibraryViewModel {
     await this.createVideoDownloadDir();
 
     await this.settings.initPreference(this.context);
-    this.sortMode = await this.settings.getSetting(SettingKey.SORT_MODE);
-    this.sortRule = await this.settings.getSetting(SettingKey.SORT_RULE);
+    this.sortMode = await this.settings.getSetting(SettingKey.VIDEO_SORT_MODE);
+    this.sortRule = await this.settings.getSetting(SettingKey.VIDEO_SORT_RULE);
   }
 }

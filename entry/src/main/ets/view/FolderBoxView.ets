@@ -5,9 +5,10 @@ import { VideoListViewModel } from '../viewmodel/VideoListViewModel';
 import { MovingToDialog } from './MovingToDialog';
 import { RenameDialog } from './RenameDialog';
 
-const VIEW_OPTION = 'ViewOption';
 const MULTI_CHOICE = 'MultiChoice';
 const CHOICE_COUNT = 'ChoiceCount';
+const VIDEO_TAB_STACK = 'VideoTabStack';
+const VIDEO_VIEW_OPTION = 'VideoViewOption';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
@@ -16,8 +17,8 @@ export struct FolderBoxView {
   @ObjectLink folderItem: FolderItemViewModel;
   @Consume(CHOICE_COUNT) choiceCount: number = 0;
   @Consume(MULTI_CHOICE) multiChoice: boolean = false;
-  @Consume('VideoTabStack') videoTabStack: NavPathStack = new NavPathStack();
-  @Consume(VIEW_OPTION) viewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
+  @Consume(VIDEO_TAB_STACK) videoTabStack: NavPathStack = new NavPathStack();
+  @Consume(VIDEO_VIEW_OPTION) videoViewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
   public isAllChoice: Callback<void> = () => {
   };
   private moveDialogController?: CustomDialogController;
@@ -60,7 +61,7 @@ export struct FolderBoxView {
   ];
 
   build() {
-    if (this.viewOptions === ViewOptionValue.LIST_VIEW) {
+    if (this.videoViewOptions === ViewOptionValue.LIST_VIEW) {
       Flex({
         direction: FlexDirection.Row,
         alignItems: ItemAlign.Center,

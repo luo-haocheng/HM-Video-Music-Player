@@ -8,9 +8,10 @@ import { AudioInfoModel } from '../model/AudioInfoModel';
 
 const ALL_AUDIO = '*';
 const FAVORITE_AUDIO = '**';
-const PLAYLIST_PATH_STACK = 'PlayListPathStack';
+const AUDIO_TAB_STACK = 'AudioTabStack';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const DELETE_AUDIO_EVENT = 'DeleteAudio';
+const SORT_PLAYLIST_EVENT = 'SortPlaylist';
 const ADD_TO_PLAYLIST_EVENT = 'AddToPlaylist';
 const CREATE_PLAYLIST_EVENT = 'CreatePlaylist';
 const DELETE_FROM_PLAYLIST_EVENT = 'DeleteFromPlaylist';
@@ -50,12 +51,17 @@ export struct AudioPlayListView {
       this.audioPlaylistVM.deleteFromPlaylist(audioInfo, playlistName);
     }
   };
+  private sortPlaylistCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    eventData;
+    this.audioPlaylistVM.sortUserPlaylist();
+  };
 
   aboutToAppear(): void {
     let context = this.getUIContext().getHostContext() as Context;
     this.audioPlaylistVM.init(context);
     emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
     emitter.on(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
+    emitter.on(SORT_PLAYLIST_EVENT, this.sortPlaylistCallback);
     emitter.on(ADD_TO_PLAYLIST_EVENT, this.addToPlaylistCallback);
     emitter.on(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
     emitter.on(DELETE_FROM_PLAYLIST_EVENT, this.deleteFromPlaylistCallback);
@@ -64,6 +70,7 @@ export struct AudioPlayListView {
   aboutToDisappear(): void {
     emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
     emitter.off(DELETE_AUDIO_EVENT, this.deleteAudioCallback);
+    emitter.off(SORT_PLAYLIST_EVENT, this.sortPlaylistCallback);
     emitter.off(ADD_TO_PLAYLIST_EVENT, this.addToPlaylistCallback);
     emitter.off(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
     emitter.off(DELETE_FROM_PLAYLIST_EVENT, this.deleteFromPlaylistCallback);
@@ -85,7 +92,7 @@ struct ListView {
   @ObjectLink allPlaylist: PlayListItemViewModel;
   @ObjectLink favoritePlaylist: PlayListItemViewModel;
   @ObjectLink userPlaylistArray: PlayListItemViewModelArray;
-  @Consume(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
+  @Consume(AUDIO_TAB_STACK) audioTabStack: NavPathStack = new NavPathStack();
   private selectedIdx: number = -1;
 
   @Builder
@@ -140,7 +147,7 @@ struct ListView {
             type: AudioListType.PLAY_LIST,
             name: ALL_AUDIO
           };
-          this.playListStack.pushPath({ name: 'AudioList', param: audioListInfo });
+          this.audioTabStack.pushPath({ name: 'AudioList', param: audioListInfo });
         });
 
         ListItem() {
@@ -151,7 +158,7 @@ struct ListView {
             type: AudioListType.PLAY_LIST,
             name: FAVORITE_AUDIO
           };
-          this.playListStack.pushPath({ name: 'AudioList', param: audioListInfo });
+          this.audioTabStack.pushPath({ name: 'AudioList', param: audioListInfo });
         });
 
         ForEach(
@@ -164,7 +171,7 @@ struct ListView {
                     type: AudioListType.PLAY_LIST,
                     name: item.playListName
                   };
-                  this.playListStack.pushPath({ name: 'AudioList', param: audioListInfo });
+                  this.audioTabStack.pushPath({ name: 'AudioList', param: audioListInfo });
                 });
             }
             .bindContextMenu(

@@ -5,9 +5,10 @@ import { VideoListViewModel } from '../viewmodel/VideoListViewModel';
 import { MovingToDialog } from './MovingToDialog';
 import { RenameDialog } from './RenameDialog';
 
-const VIEW_OPTION = 'ViewOption';
 const MULTI_CHOICE = 'MultiChoice';
 const CHOICE_COUNT = 'ChoiceCount';
+const MAIN_PAGE_STACK = 'MainPageStack';
+const VIDEO_VIEW_OPTION = 'VideoViewOption';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
@@ -16,8 +17,8 @@ export struct VideoBoxView {
   @ObjectLink videoItem: VideoItemViewModel;
   @Consume(CHOICE_COUNT) choiceCount: number = 0;
   @Consume(MULTI_CHOICE) multiChoice: boolean = false;
-  @Consume('MainPageStack') mainPageStack: NavPathStack;
-  @Consume(VIEW_OPTION) viewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
+  @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack;
+  @Consume(VIDEO_VIEW_OPTION) videoViewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
   public isAllChoice: Callback<void> = () => {
   };
   private moveDialogController?: CustomDialogController;
@@ -56,7 +57,7 @@ export struct VideoBoxView {
   ];
 
   build() {
-    if (this.viewOptions === ViewOptionValue.LIST_VIEW) {
+    if (this.videoViewOptions === ViewOptionValue.LIST_VIEW) {
       Flex({
         direction: FlexDirection.Row,
         alignItems: ItemAlign.Center,

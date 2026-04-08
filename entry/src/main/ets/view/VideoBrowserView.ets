@@ -22,7 +22,7 @@ const MOVE_FOLDER_EVENT = 'FolderVideo';
 const MOVE_VIDEO_EVENT = 'MoveVideo';
 const CURRENT_FOLDER = 'CurrentFolder';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
-const SORT_ITEMS_EVENT = 'SortItems';
+const SORT_VIDEO_FOLDER_EVENT = 'SortVideoFolder';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
@@ -193,7 +193,7 @@ export struct VideoBrowserView {
     emitter.on(MOVE_SECRET_EVENT, this.moveSecretCallback);
     emitter.on(SHARE_CHOICE_EVENT, this.shareChoiceCallback);
     emitter.on(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
-    emitter.on(SORT_ITEMS_EVENT, this.sortItemCallback);
+    emitter.on(SORT_VIDEO_FOLDER_EVENT, this.sortItemCallback);
   }
 
   aboutToDisappear(): void {
@@ -206,7 +206,7 @@ export struct VideoBrowserView {
     emitter.off(MOVE_SECRET_EVENT, this.moveSecretCallback);
     emitter.off(SHARE_CHOICE_EVENT, this.shareChoiceCallback);
     emitter.off(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
-    emitter.off(SORT_ITEMS_EVENT, this.sortItemCallback);
+    emitter.off(SORT_VIDEO_FOLDER_EVENT, this.sortItemCallback);
   }
 
   build() {

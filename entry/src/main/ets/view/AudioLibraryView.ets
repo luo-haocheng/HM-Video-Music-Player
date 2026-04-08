@@ -1,4 +1,3 @@
-import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { AudioLibraryViewModel } from '../viewmodel/AudioLibraryViewModel';
 import { AudioAlbumListView } from './AudioAlbumListView';
 import { AudioArtistListView } from './AudioArtistListView';
@@ -6,10 +5,12 @@ import { AudioBottomBar } from './AudioBottomBar';
 import { AudioListInfo, AudioListType } from './AudioListView';
 import { AudioPlayListView } from './AudioPlayListView';
 import { emitter } from '@kit.BasicServicesKit';
+import { SortModeValue, SortRuleValue, ViewOptionValue } from '../model/SettingsModel';
 
 const ALL_AUDIO = '*';
 const FAVORITE_AUDIO = '**';
 const INVALID_VALUES = '/\\:*?"<>|';
+const AUDIO_VIEW_OPTION = 'AudioViewOption';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const CHOICE_ALL = 'ChoiceAll';
@@ -20,9 +21,7 @@ const DELETE_CHOICE_EVENT = 'DeleteChoice';
 const ADD_PLAYLIST_CHOICE_EVENT = 'AddPlaylistChoice';
 const DELETE_PLAYLIST_CHOICE_EVENT = 'DeletePlaylistChoice';
 const AUDIO_LIST_INFO = 'AudioListInfo';
-const PLAYLIST_PATH_STACK = 'PlayListPathStack';
-const ALBUMLIST_PATH_STACK = 'AlbumListPathStack';
-const ARTISTLIST_PATH_STACK = 'ArtistListPathStack';
+const AUDIO_TAB_STACK = 'AudioTabStack';
 const IMPORT_OPTS: ImportOption[] = [
   { icon: $r('app.media.plus'), text: '新建歌单', color: Color.Green },
   { icon: $r('app.media.music'), text: '音频文件导入', color: Color.Blue },
@@ -45,11 +44,11 @@ export struct AudioLibraryView {
   @Provide(CHOICE_COUNT) choiceCount: number = 0;
   @Provide(MULTI_CHOICE) multiChoice: boolean = false;
   @Provide(AUDIO_LIST_INFO) currAudioList?: AudioListInfo = undefined;
-  @Provide(PLAYLIST_PATH_STACK) playListStack: NavPathStack = new NavPathStack();
-  @Provide(ALBUMLIST_PATH_STACK) albumListStack: NavPathStack = new NavPathStack();
-  @Provide(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
+  @Provide(AUDIO_TAB_STACK) audioTabStack: NavPathStack = new NavPathStack();
+  @Provide(AUDIO_VIEW_OPTION) audioViewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
+  @State selectedIndex: number = 0;
   @State invalidName: boolean = false;
-  @State audioList: AudioItemViewModel[] = [];
+  @State isSortExpand: boolean = false;
   @State audioLibVM: AudioLibraryViewModel = new AudioLibraryViewModel();
   private newPlaylistName?: string;
   private importDialogId: number = -1;
@@ -59,7 +58,6 @@ export struct AudioLibraryView {
   async aboutToAppear(): Promise<void> {
     let context = this.getUIContext().getHostContext() as Context;
     await this.audioLibVM.init(context);
-    this.audioList = await this.audioLibVM.loadAllAudio();
   }
 
   @Builder
@@ -203,6 +201,192 @@ export struct AudioLibraryView {
       .divider({ strokeWidth: 1, startMargin: 46, color: 'rgb(240, 240, 240)' });
     }
     .padding(16);
+  }
+
+  @Builder
+  sortHeader() {
+    Row() {
+      Text('排序方式')
+        .fontSize(14)
+        .fontColor(Color.Black);
+
+      Image(this.isSortExpand ? $r('app.media.chevron_up') : $r('app.media.chevron_down'))
+        .width(20)
+        .aspectRatio(1)
+        .backgroundColor(Color.Transparent);
+    }
+    .width('100%')
+    .padding({ top: 16, bottom: 16 })
+    .justifyContent(FlexAlign.SpaceBetween)
+    .onClick(() => {
+      this.isSortExpand = !this.isSortExpand;
+    })
+    .onTouch((event) => {
+      event.stopPropagation();
+    });
+  }
+
+  @Builder
+  audioSortBuilder() {
+    ListItem() {
+      Row({ space: 8 }) {
+        Text('标题')
+          .fontSize(14)
+          .fontColor(Color.Black);
+
+        if (this.audioLibVM.audioSortMode === SortModeValue.AUDIO_TITLE) {
+          Image(
+            this.audioLibVM.audioSortRule === SortRuleValue.ASCENDING ?
+              $r('app.media.text_and_arrow_down') :
+              $r('app.media.text_and_arrow_up')
+          )
+            .width(20)
+            .aspectRatio(1)
+            .backgroundColor(Color.Transparent);
+        }
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Start);
+    }
+    .width('100%')
+    .margin({ left: 16 })
+    .borderColor('#DCDCDC')
+    .borderWidth({ bottom: 0.5 })
+    .padding({ bottom: 16 })
+    .onClick(() => {
+      this.audioLibVM.selectAudioSortMethod(SortModeValue.AUDIO_TITLE);
+    });
+
+    ListItem() {
+      Row({ space: 8 }) {
+        Text('创建时间')
+          .fontSize(14)
+          .fontColor(Color.Black);
+
+        if (this.audioLibVM.audioSortMode === SortModeValue.DATE_ADD) {
+          Image(
+            this.audioLibVM.audioSortRule === SortRuleValue.ASCENDING ?
+              $r('app.media.text_and_arrow_down') :
+              $r('app.media.text_and_arrow_up')
+          )
+            .width(20)
+            .aspectRatio(1)
+            .backgroundColor(Color.Transparent);
+        }
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Start);
+    }
+    .width('100%')
+    .margin({ left: 16 })
+    .borderColor('#DCDCDC')
+    .padding({ top: 16, bottom: 16 })
+    .onClick(() => {
+      this.audioLibVM.selectAudioSortMethod(SortModeValue.DATE_ADD);
+    });
+  }
+
+  @Builder
+  playlistSortBuilder() {
+    ListItem() {
+      Row({ space: 8 }) {
+        Text('名称')
+          .fontSize(14)
+          .fontColor(Color.Black);
+
+        if (this.audioLibVM.playlistSortMode === SortModeValue.PLAYLIST_NAME) {
+          Image(
+            this.audioLibVM.playlistSortRule === SortRuleValue.ASCENDING ?
+              $r('app.media.text_and_arrow_down') :
+              $r('app.media.text_and_arrow_up')
+          )
+            .width(20)
+            .aspectRatio(1)
+            .backgroundColor(Color.Transparent);
+        }
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Start);
+    }
+    .width('100%')
+    .margin({ left: 16 })
+    .borderColor('#DCDCDC')
+    .borderWidth({ bottom: 0.5 })
+    .padding({ bottom: 16 })
+    .onClick(() => {
+      this.audioLibVM.selectPlaylistSortMethod(SortModeValue.PLAYLIST_NAME);
+    });
+
+    ListItem() {
+      Row({ space: 8 }) {
+        Text('创建时间')
+          .fontSize(14)
+          .fontColor(Color.Black);
+
+        if (this.audioLibVM.playlistSortMode === SortModeValue.DATE_ADD) {
+          Image(
+            this.audioLibVM.playlistSortRule === SortRuleValue.ASCENDING ?
+              $r('app.media.text_and_arrow_down') :
+              $r('app.media.text_and_arrow_up')
+          )
+            .width(20)
+            .aspectRatio(1)
+            .backgroundColor(Color.Transparent);
+        }
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Start);
+    }
+    .width('100%')
+    .margin({ left: 16 })
+    .borderColor('#DCDCDC')
+    .padding({ top: 16, bottom: 16 })
+    .onClick(() => {
+      this.audioLibVM.selectPlaylistSortMethod(SortModeValue.DATE_ADD);
+    });
+  }
+
+  @Builder
+  moreOptionsBuilder() {
+    List() {
+      ListItem() {
+        Row() {
+          Text(this.audioViewOptions === ViewOptionValue.LIST_VIEW ? '宫格视图' : '列表视图')
+            .fontSize(14)
+            .fontColor(Color.Black);
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start);
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(async () => {
+        // todo
+      });
+
+      if (this.currAudioList || this.selectedIndex === 0) {
+        ListItemGroup({
+          header: this.sortHeader(),
+          style: ListItemGroupStyle.NONE,
+        }) {
+          if (this.isSortExpand) {
+            if (this.currAudioList) {
+              this.audioSortBuilder();
+            } else {
+              this.playlistSortBuilder();
+            }
+          }
+        }
+        .width('100%');
+      }
+    }
+    .width(200)
+    .divider({
+      strokeWidth: 0.5,
+      color: '#DCDCDC'
+    })
+    .padding({ left: 8, right: 8 })
+    .backgroundColor(Color.White);
   }
 
   @Builder
@@ -388,17 +572,7 @@ export struct AudioLibraryView {
               .aspectRatio(1)
               .backgroundColor('#AADCDCDC')
               .onClick(() => {
-                switch (this.currAudioList?.type) {
-                  case AudioListType.PLAY_LIST:
-                    this.playListStack.pop();
-                    break;
-                  case AudioListType.ALNUM_LIST:
-                    this.albumListStack.pop();
-                    break;
-                  case AudioListType.ARTIST_LIST:
-                    this.artistListStack.pop();
-                    break;
-                }
+                this.audioTabStack.pop();
               });
             }
 
@@ -491,7 +665,15 @@ export struct AudioLibraryView {
             }
             .width(36)
             .aspectRatio(1)
-            .backgroundColor('#AADCDCDC');
+            .backgroundColor('#AADCDCDC')
+            .bindMenu(
+              this.moreOptionsBuilder,
+              {
+                onDisappear: () => {
+                  this.isSortExpand = false;
+                }
+              }
+            );
           };
         }
         .width('100%')
@@ -553,71 +735,54 @@ export struct AudioLibraryView {
       }
 
       Stack({ alignContent: Alignment.Bottom }) {
-        Tabs() {
-          TabContent() {
-            Navigation(this.playListStack) {
+        Navigation(this.audioTabStack) {
+          Tabs() {
+            TabContent() {
               AudioPlayListView();
             }
-            .hideToolBar(true)
-            .mode(NavigationMode.Stack);
-          }
-          .tabBar(
-            SubTabBarStyle
-              .of('歌单')
-              .labelStyle({
-                maxLines: 1,
-                font: { size: 14 },
-                overflow: TextOverflow.Ellipsis
-              })
-          );
+            .tabBar(
+              SubTabBarStyle
+                .of('歌单')
+                .labelStyle({
+                  maxLines: 1,
+                  font: { size: 14 },
+                  overflow: TextOverflow.Ellipsis
+                })
+            );
 
-          TabContent() {
-            Navigation(this.albumListStack) {
+            TabContent() {
               AudioAlbumListView();
             }
-            .hideToolBar(true)
-            .mode(NavigationMode.Stack);
-          }
-          .tabBar(
-            SubTabBarStyle
-              .of('专辑')
-              .labelStyle({
-                maxLines: 1,
-                font: { size: 14 },
-                overflow: TextOverflow.Ellipsis
-              })
-          );
+            .tabBar(
+              SubTabBarStyle
+                .of('专辑')
+                .labelStyle({
+                  maxLines: 1,
+                  font: { size: 14 },
+                  overflow: TextOverflow.Ellipsis
+                })
+            );
 
-          TabContent() {
-            Navigation(this.artistListStack) {
+            TabContent() {
               AudioArtistListView();
             }
-            .hideToolBar(true)
-            .mode(NavigationMode.Stack);
+            .tabBar(
+              SubTabBarStyle
+                .of('艺术家')
+                .labelStyle({
+                  maxLines: 1,
+                  font: { size: 14 },
+                  overflow: TextOverflow.Ellipsis
+                })
+            );
           }
-          .tabBar(
-            SubTabBarStyle
-              .of('艺术家')
-              .labelStyle({
-                maxLines: 1,
-                font: { size: 14 },
-                overflow: TextOverflow.Ellipsis
-              })
-          );
+          .scrollable(false)
+          .onSelected((index: number) => {
+            this.selectedIndex = index;
+          });
         }
-        .scrollable(false)
-        .onContentWillChange(() => {
-          return !this.multiChoice;
-        })
-        .onUnselected((index: number) => {
-          if (index === 0) {
-            this.playListStack.clear();
-          } else if (index === 1) {
-            this.albumListStack.clear();
-          } else {
-            this.artistListStack.clear();
-          }
-        });
+        .hideToolBar(true)
+        .mode(NavigationMode.Stack);
 
         Row() {
           AudioBottomBar()
@@ -634,7 +799,15 @@ export struct AudioLibraryView {
 
   private setAudioTitleText(audioListInfo: AudioListInfo | undefined): string {
     if (!audioListInfo) {
-      return '音频';
+      if (this.selectedIndex === 0) {
+        return '歌单';
+      } else if (this.selectedIndex === 1) {
+        return '专辑';
+      } else if (this.selectedIndex === 2) {
+        return '艺术家';
+      } else {
+        return '音频';
+      }
     }
     switch (audioListInfo.type) {
       case AudioListType.PLAY_LIST:

@@ -6,14 +6,13 @@ import { emitter } from '@kit.BasicServicesKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
 
 
+const AUDIO_TAB_STACK = 'AudioTabStack';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const DELETE_AUDIO_EVENT = 'DeleteAudio';
-const ARTISTLIST_PATH_STACK = 'ArtistListPathStack';
 
 @Component
 export struct AudioArtistListView {
   @State audioArtistListVM: AudioArtistListViewModel = new AudioArtistListViewModel();
-  @Consume(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
   private importAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
     if (eventData.data) {
       const audioInfo = eventData.data['info'] as AudioInfoModel;
@@ -48,7 +47,7 @@ export struct AudioArtistListView {
 struct ListView {
   @ObjectLink artistList: PlayListItemViewModelArray;
   @ObjectLink unknownArtist: PlayListItemViewModel | undefined;
-  @Consume(ARTISTLIST_PATH_STACK) artistListStack: NavPathStack = new NavPathStack();
+  @Consume(AUDIO_TAB_STACK) audioTabStack: NavPathStack = new NavPathStack();
 
   build() {
     Flex({
@@ -65,7 +64,7 @@ struct ListView {
                   type: AudioListType.ARTIST_LIST,
                   name: null
                 };
-                this.artistListStack.pushPath({ name: 'AudioList', param: audioListInfo });
+                this.audioTabStack.pushPath({ name: 'AudioList', param: audioListInfo });
               });
           };
         }
@@ -80,7 +79,7 @@ struct ListView {
                     type: AudioListType.ARTIST_LIST,
                     name: item.playListName
                   };
-                  this.artistListStack.pushPath({ name: 'AudioList', param: audioListInfo });
+                  this.audioTabStack.pushPath({ name: 'AudioList', param: audioListInfo });
                 });
             };
           },

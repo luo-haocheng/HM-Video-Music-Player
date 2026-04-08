@@ -4,6 +4,9 @@ import { AudioListInfo, AudioListType } from '../view/AudioListView';
 import { AudioItemViewModel } from './AudioItemViewModel';
 import { emitter } from '@kit.BasicServicesKit';
 import { fileIo } from '@kit.CoreFileKit';
+import { Settings } from '../model/Settings';
+import { SettingKey, SortModeValue, SortRuleValue } from '../model/SettingsModel';
+import { i18n } from '@kit.LocalizationKit';
 
 const ALL_AUDIO = '*';
 const DELETE_AUDIO_EVENT = 'DeleteAudio';
@@ -17,10 +20,12 @@ export class AudioItemViewModelList extends Array<AudioItemViewModel> {
 export class AudioListViewModel {
   @Track audioList: AudioItemViewModelList = new AudioItemViewModelList();
   @Track audioListInfo: AudioListInfo = new AudioListInfo();
+  private settings: Settings = new Settings();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 
   async init(context: Context): Promise<void> {
     await this.audioStore.initStore(context);
+    await this.settings.initPreference(context);
   }
 
   async updateAudio(audioInfo: AudioInfoModel): Promise<void> {
@@ -47,6 +52,7 @@ export class AudioListViewModel {
         }
         break;
     }
+    this.sortAudioList();
   }
 
   async loadAudioList(): Promise<void> {
@@ -61,6 +67,7 @@ export class AudioListViewModel {
         await this.loadFromArtistList(this.audioListInfo.name);
         break;
     }
+    this.sortAudioList();
   }
 
   async deleteAudio(audioInfo: AudioInfoModel): Promise<void> {
@@ -110,6 +117,37 @@ export class AudioListViewModel {
       }
     };
     emitter.emit(DELETE_FROM_PLAYLIST_EVENT, eventData);
+  }
+
+  async sortAudioList(): Promise<void> {
+    const sortMode = await this.settings.getSetting(SettingKey.AUDIO_SORT_MODE);
+    const sortRule = await this.settings.getSetting(SettingKey.AUDIO_SORT_RULE);
+    if (sortMode === SortModeValue.DATE_ADD) {
+      this.audioList.sort((audioA: AudioItemViewModel, audioB: AudioItemViewModel) => {
+        const diff = audioA.audioInfo.dateAdd - audioB.audioInfo.dateAdd;
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else if (sortMode === SortModeValue.AUDIO_TITLE) {
+      this.audioList.sort((audioA: AudioItemViewModel, audioB: AudioItemViewModel) => {
+        const diff = this.sortByFileName(audioA.title, audioB.title);
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else {
+      this.audioList.sort((audioA: AudioItemViewModel, audioB: AudioItemViewModel) => {
+        const diff = audioA.audioInfo.dateAdd - audioB.audioInfo.dateAdd;
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    }
+  }
+
+  private sortByFileName(nameA: string, nameB: string): number {
+    let transliterator: i18n.Transliterator = i18n.Transliterator.getInstance('Any-Latn;Latin-Ascii');
+    let name1 = transliterator.transform(nameA).toLowerCase();
+    let name2 = transliterator.transform(nameB).toLowerCase();
+    if (name1 === name2) {
+      return 0;
+    }
+    return name1 > name2 ? 1 : -1;
   }
 
   private async loadFromPlayList(name: string | null) {

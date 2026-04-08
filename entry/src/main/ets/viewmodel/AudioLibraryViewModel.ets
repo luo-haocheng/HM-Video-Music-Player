@@ -8,21 +8,36 @@ import { AudioInfoModel } from '../model/AudioInfoModel';
 import { AudioItemViewModel } from './AudioItemViewModel';
 import { PlayListInfoModel } from '../model/PlayListInfoModel';
 import { emitter } from '@kit.BasicServicesKit';
+import { preferences } from '@kit.ArkData';
+import { SettingKey, SortModeValue, SortRuleValue } from '../model/SettingsModel';
+import { Settings } from '../model/Settings';
 
 const AUDIO_DIR = '/audios';
 const COVER_DIR = '/covers';
 const DOWNLOAD_AUDIO_DIR = '/Audios';
+const SORT_AUDIO_EVENT = 'SortAudio';
+const SORT_PLAYLIST_EVENT = 'SortPlaylist';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const CREATE_PLAYLIST_EVENT = 'CreatePlaylist';
 
 @Observed
 export class AudioLibraryViewModel {
+  @Track audioSortMode: preferences.ValueType = SortModeValue.DATE_ADD;
+  @Track audioSortRule: preferences.ValueType = SortRuleValue.ASCENDING;
+  @Track playlistSortMode: preferences.ValueType = SortModeValue.DATE_ADD;
+  @Track playlistSortRule: preferences.ValueType = SortRuleValue.ASCENDING;
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
+  private settings: Settings = new Settings();
   private downloadPath: string = '';
 
   async init(context: Context): Promise<void> {
     await this.audioStore.initStore(context);
     await this.createAudioDownloadDir(context);
+    await this.settings.initPreference(context);
+    this.audioSortMode = await this.settings.getSetting(SettingKey.AUDIO_SORT_MODE);
+    this.audioSortRule = await this.settings.getSetting(SettingKey.AUDIO_SORT_RULE);
+    this.playlistSortMode = await this.settings.getSetting(SettingKey.PLAYLIST_SORT_MODE);
+    this.playlistSortRule = await this.settings.getSetting(SettingKey.PLAYLIST_SORT_RULE);
   }
 
   async loadAllAudio(): Promise<AudioItemViewModel[]> {
@@ -36,9 +51,38 @@ export class AudioLibraryViewModel {
     return audioItemList;
   }
 
+  async selectAudioSortMethod(selectSortMode: SortModeValue): Promise<void> {
+    if (this.audioSortMode !== selectSortMode) {
+      await this.settings.putSetting(SettingKey.AUDIO_SORT_MODE, selectSortMode);
+    } else {
+      const rule =
+        (this.audioSortRule === SortRuleValue.ASCENDING ? SortRuleValue.DESCENDING : SortRuleValue.ASCENDING);
+      await this.settings.putSetting(SettingKey.AUDIO_SORT_RULE, rule);
+    }
+    this.audioSortMode = await this.settings.getSetting(SettingKey.AUDIO_SORT_MODE);
+    this.audioSortRule = await this.settings.getSetting(SettingKey.AUDIO_SORT_RULE);
+    // Notify
+    emitter.emit(SORT_AUDIO_EVENT);
+  }
+
+  async selectPlaylistSortMethod(selectSortMode: SortModeValue): Promise<void> {
+    if (this.playlistSortMode !== selectSortMode) {
+      await this.settings.putSetting(SettingKey.PLAYLIST_SORT_MODE, selectSortMode);
+    } else {
+      const rule =
+        (this.playlistSortRule === SortRuleValue.ASCENDING ? SortRuleValue.DESCENDING : SortRuleValue.ASCENDING);
+      await this.settings.putSetting(SettingKey.PLAYLIST_SORT_RULE, rule);
+    }
+    this.playlistSortMode = await this.settings.getSetting(SettingKey.PLAYLIST_SORT_MODE);
+    this.playlistSortRule = await this.settings.getSetting(SettingKey.PLAYLIST_SORT_RULE);
+    // Notify
+    emitter.emit(SORT_PLAYLIST_EVENT);
+  }
+
   async createAudioPlaylist(playlistName: string): Promise<void> {
     const playlistInfo = new PlayListInfoModel();
     playlistInfo.name = playlistName;
+    playlistInfo.dateAdd = new Date().getTime();
     await this.audioStore.insertPlaylistInfo(playlistInfo);
     // Notify
     const eventData: emitter.EventData = {
@@ -257,6 +301,7 @@ export class AudioLibraryViewModel {
     const audioInfo = new AudioInfoModel();
     audioInfo.name = name;
     audioInfo.audioPath = audioPath;
+    audioInfo.dateAdd = new Date().getTime();
     audioInfo.coverPath = coverPath ? coverPath : null;
     audioInfo.metadata = metadata ? JSON.stringify(metadata) : null;
     audioInfo.album = (metadata && metadata.album) ? metadata.album : null;

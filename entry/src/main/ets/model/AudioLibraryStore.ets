@@ -115,10 +115,10 @@ export class AudioLibraryStore {
           NAME: audioInfo.name,
           ALBUM: audioInfo.album,
           ARTIST: audioInfo.artist,
+          DATE_ADD: audioInfo.dateAdd,
           METADATA: audioInfo.metadata,
           AUDIO_PATH: audioInfo.audioPath,
-          COVER_PATH: audioInfo.coverPath,
-          DATE_ADD: new Date().getTime(),
+          COVER_PATH: audioInfo.coverPath
         };
         rowId = await transaction.insert(AUDIO_TABLE_NAME, valueBucket1);
         const valueBucket2: relationalStore.ValuesBucket = {
@@ -142,7 +142,7 @@ export class AudioLibraryStore {
       try {
         const valueBucket: relationalStore.ValuesBucket = {
           NAME: playlistInfo.name,
-          DATE_ADD: new Date().getTime(),
+          DATE_ADD: playlistInfo.dateAdd,
         };
         rowId = await this.store.insert(PLAYLIST_TABLE_NAME, valueBucket);
       } catch (error) {
@@ -205,6 +205,7 @@ export class AudioLibraryStore {
           let audioInfo = new AudioInfoModel();
           audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
           audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
+          audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
           audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
           if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
             audioInfo.album = null;
@@ -268,6 +269,7 @@ export class AudioLibraryStore {
             let audioInfo = new AudioInfoModel();
             audioInfo.id = resultSetAudio.getLong(resultSetAudio.getColumnIndex('ID'));
             audioInfo.name = resultSetAudio.getString(resultSetAudio.getColumnIndex('NAME'));
+            audioInfo.dateAdd = resultSetAudio.getLong(resultSetAudio.getColumnIndex('DATE_ADD'));
             audioInfo.audioPath = resultSetAudio.getString(resultSetAudio.getColumnIndex('AUDIO_PATH'));
             if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('ALBUM'))) {
               audioInfo.album = null;
@@ -314,6 +316,7 @@ export class AudioLibraryStore {
           let audioInfo = new AudioInfoModel();
           audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
           audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
+          audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
           audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
           if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
             audioInfo.album = null;
@@ -359,6 +362,7 @@ export class AudioLibraryStore {
           let audioInfo = new AudioInfoModel();
           audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
           audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
+          audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
           audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
           if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
             audioInfo.album = null;
