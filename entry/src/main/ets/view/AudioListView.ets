@@ -145,7 +145,7 @@ struct ListView {
   @Consume(MULTI_CHOICE) multiChoice: boolean = false;
   @Consume(CHOICE_ALL) choiceAll: boolean = true;
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
-  private selectedIdx: number = -1;
+  private selectedItem?: AudioItemViewModel;
   private addPlaylistDialogController?: CustomDialogController;
   private isAllChoice: Callback<void> = () => {
     const choiceAll = this.audioListVM.audioList.find((item: AudioItemViewModel) => {
@@ -169,14 +169,16 @@ struct ListView {
       .width('100%')
       .padding({ top: 16, bottom: 16 })
       .onClick(() => {
-        this.addPlaylistDialogController = new CustomDialogController({
-          width: '100%',
-          height: '60%',
-          alignment: DialogAlignment.Bottom,
-          builder: AddToPlaylistDialog({ audioInfoList: [this.audioList[this.selectedIdx].audioInfo] }),
-          offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
-        });
-        this.addPlaylistDialogController.open();
+        if (this.selectedItem) {
+          this.addPlaylistDialogController = new CustomDialogController({
+            width: '100%',
+            height: '60%',
+            alignment: DialogAlignment.Bottom,
+            builder: AddToPlaylistDialog({ audioInfoList: [this.selectedItem.audioInfo] }),
+            offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+          });
+          this.addPlaylistDialogController.open();
+        }
       });
 
       Divider()
@@ -193,7 +195,9 @@ struct ListView {
         .width('100%')
         .padding({ top: 16, bottom: 16 })
         .onClick(() => {
-          this.audioListVM.deleteFromPlaylist(this.audioList[this.selectedIdx].audioInfo);
+          if (this.selectedItem) {
+            this.audioListVM.deleteFromPlaylist(this.selectedItem.audioInfo);
+          }
         });
 
         Divider()
@@ -209,7 +213,9 @@ struct ListView {
       .width('100%')
       .padding({ top: 16, bottom: 16 })
       .onClick(() => {
-        this.audioListVM.deleteAudio(this.audioList[this.selectedIdx].audioInfo);
+        if (this.selectedItem) {
+          this.audioListVM.deleteAudio(this.selectedItem.audioInfo);
+        }
       });
     }
     .width(160)
@@ -225,7 +231,7 @@ struct ListView {
       List() {
         ForEach(
           this.audioList,
-          (item: AudioItemViewModel, index: number) => {
+          (item: AudioItemViewModel) => {
             ListItem() {
               AudioBoxView({ audioItem: item, isAllChoice: this.isAllChoice });
             }
@@ -237,7 +243,7 @@ struct ListView {
                 placement: Placement.Bottom,
                 preview: MenuPreviewMode.IMAGE,
                 aboutToAppear: () => {
-                  this.selectedIdx = index;
+                  this.selectedItem = item;
                 }
               })
             .onClick(() => {
@@ -245,14 +251,13 @@ struct ListView {
                 item.isChoice = !item.isChoice;
               } else {
                 const context = this.getUIContext().getHostContext() as Context;
-                this.audioPlayerVM.init(item.audioInfo, context);
+                this.audioPlayerVM.setAudioAsset(item.audioInfo, context);
                 this.audioPlayerVM.audioList = this.audioList;
-                this.audioPlayerVM.currIndex = index;
+                this.audioPlayerVM.currAudioItem = item;
               }
             });
           },
-          (item: AudioItemViewModel, index: number) => {
-            index;
+          (item: AudioItemViewModel) => {
             return item.audioInfo.id.toString();
           }
         );

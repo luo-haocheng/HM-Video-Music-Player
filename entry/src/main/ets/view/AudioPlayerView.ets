@@ -1,3 +1,4 @@
+import { AudioRepeatMode } from '../model/SettingsModel';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
@@ -38,11 +39,11 @@ export struct AudioPlayerView {
         alignItems: ItemAlign.Center
       }) {
         Column({ space: 3 }) {
-          Text(this.audioPlayerVM.audioList[this.audioPlayerVM.currIndex].title)
+          Text(this.audioPlayerVM.currAudioItem?.title)
             .fontSize(24)
             .fontColor(Color.Black)
             .fontWeight(FontWeight.Bold);
-          Text(this.audioPlayerVM.audioList[this.audioPlayerVM.currIndex].artist)
+          Text(this.audioPlayerVM.currAudioItem?.artist)
             .fontSize(12)
             .fontColor(Color.Black);
         }
@@ -53,9 +54,8 @@ export struct AudioPlayerView {
 
         Column({ space: 12 }) {
           Row() {
-            if (this.audioPlayerVM.currIndex !== -1 &&
-            this.audioPlayerVM.audioList[this.audioPlayerVM.currIndex].albumCover) {
-              Image(this.audioPlayerVM.audioList[this.audioPlayerVM.currIndex].albumCover)
+            if (this.audioPlayerVM.currAudioItem && this.audioPlayerVM.currAudioItem.albumCover) {
+              Image(this.audioPlayerVM.currAudioItem.albumCover)
                 .width('100%')
                 .height('100%')
                 .borderRadius(12)
@@ -120,7 +120,9 @@ export struct AudioPlayerView {
               .trackColor('#22000000')
               .blockSize({ width: 12, height: 12 })
               .onChange(async (value: number, mode: SliderChangeMode) => {
-                // todo
+                if (mode === SliderChangeMode.End) {
+                  this.audioPlayerVM.seek(value);
+                }
               });
 
             Text(this.timeStr(this.audioPlayerVM.duration))
@@ -141,7 +143,8 @@ export struct AudioPlayerView {
             }
             .backgroundColor(Color.Transparent)
             .onClick(async () => {
-              // todo
+              const context = this.getUIContext().getHostContext() as Context;
+              this.audioPlayerVM.switchPrev(context);
             });
 
             Button({ type: ButtonType.Circle, stateEffect: false }) {
@@ -167,7 +170,8 @@ export struct AudioPlayerView {
             }
             .backgroundColor(Color.Transparent)
             .onClick(async () => {
-              // todo
+              const context = this.getUIContext().getHostContext() as Context;
+              this.audioPlayerVM.switchNext(context);
             });
           }
           .width('100%')
@@ -187,14 +191,26 @@ export struct AudioPlayerView {
             });
 
             Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.repeat'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
+              if (this.audioPlayerVM.repeatMode === AudioRepeatMode.SINGLE_REPEAT) {
+                Image($r('app.media.repeat_1'))
+                  .width(24)
+                  .aspectRatio(1)
+                  .fillColor(Color.Black);
+              } else if (this.audioPlayerVM.repeatMode === AudioRepeatMode.LIST_REPEAT) {
+                Image($r('app.media.repeat'))
+                  .width(24)
+                  .aspectRatio(1)
+                  .fillColor(Color.Black);
+              } else {
+                Image($r('app.media.shuffle'))
+                  .width(24)
+                  .aspectRatio(1)
+                  .fillColor(Color.Black);
+              }
             }
             .backgroundColor(Color.Transparent)
             .onClick(async () => {
-              // todo
+              this.audioPlayerVM.switchRepeatMode();
             });
 
             Button({ type: ButtonType.Circle, stateEffect: false }) {

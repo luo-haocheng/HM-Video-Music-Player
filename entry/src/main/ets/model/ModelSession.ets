@@ -9,7 +9,7 @@ export class MediaSessionManager {
   private session?: AVSessionMananger.AVSession;
   private callbacks: Map<string, Function> = new Map();
 
-  async initAudioSession(info: AudioInfoModel, context: Context): Promise<void> {
+  async initAudioSession(context: Context): Promise<void> {
     if (!this.session) {
       try {
         let sessionName = util.generateRandomUUID();
@@ -18,49 +18,53 @@ export class MediaSessionManager {
         console.error(`Failed to create avsession. Cause: ${JSON.stringify(error)}`);
         return;
       }
-    }
-    let duration = -1;
-    let title: string | undefined;
-    let mediaImg: image.PixelMap | undefined;
-    try {
-      if (info.coverPath) {
-        mediaImg = await this.getMediaImage(info.coverPath);
-      } else {
-        mediaImg = await this.getDefaultImage(context);
+      try {
+        this.registerCtrlCmd();
+      } catch (error) {
+        console.error(`Failed to register avsession control command. Cuase: ${JSON.stringify(error)}`);
+        return;
       }
-      if (info.metadata) {
-        duration = await this.getMediaDuration(info.metadata);
-        title = await this.getAudioTitle(info.metadata);
-      }
-      let metadata: AVSessionMananger.AVMetadata = {
-        assetId: util.generateRandomUUID(),
-        title: title ? title : info.name,
-        artist: info.artist ? info.artist : '',
-        mediaImage: mediaImg,
-        duration: duration,
-      };
-      await this.session.setAVMetadata(metadata);
-    } catch (error) {
-      console.error(`Failed to invoke avsession.setAVMetadata. Cause: ${JSON.stringify(error)}`);
-      return;
-    } finally {
-      if (mediaImg) {
-        await mediaImg.release();
-      }
-    }
 
-    try {
-      this.registerCtrlCmd();
-    } catch (error) {
-      console.error(`Failed to register avsession control command. Cuase: ${JSON.stringify(error)}`);
-      return;
+      try {
+        await this.session.activate();
+      } catch (error) {
+        console.error(`Failed to invoke avsession.activate. Cause: ${JSON.stringify(error)}`);
+        return;
+      }
     }
+  }
 
-    try {
-      await this.session.activate();
-    } catch (error) {
-      console.error(`Failed to invoke avsession.activate. Cause: ${JSON.stringify(error)}`);
-      return;
+  async setAudioAsset(audioInfo: AudioInfoModel, context: Context) {
+    if (this.session) {
+      let duration = -1;
+      let title: string | undefined;
+      let mediaImg: image.PixelMap | undefined;
+      try {
+        if (audioInfo.coverPath) {
+          mediaImg = await this.getMediaImage(audioInfo.coverPath);
+        } else {
+          mediaImg = await this.getDefaultImage(context);
+        }
+        if (audioInfo.metadata) {
+          duration = await this.getMediaDuration(audioInfo.metadata);
+          title = await this.getAudioTitle(audioInfo.metadata);
+        }
+        let metadata: AVSessionMananger.AVMetadata = {
+          assetId: util.generateRandomUUID(),
+          title: title ? title : audioInfo.name,
+          artist: audioInfo.artist ? audioInfo.artist : '',
+          mediaImage: mediaImg,
+          duration: duration,
+        };
+        await this.session.setAVMetadata(metadata);
+      } catch (error) {
+        console.error(`Failed to invoke avsession.setAVMetadata. Cause: ${JSON.stringify(error)}`);
+        return;
+      } finally {
+        if (mediaImg) {
+          await mediaImg.release();
+        }
+      }
     }
   }
 

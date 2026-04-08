@@ -17,9 +17,8 @@ export struct AudioBottomBar {
       space: { main: LengthMetrics.vp(12) }
     }) {
       Row() {
-        if (this.audioPlayerVM.currIndex !== -1 &&
-        this.audioPlayerVM.audioList[this.audioPlayerVM.currIndex].albumCover) {
-          Image(this.audioPlayerVM.audioList[this.audioPlayerVM.currIndex].albumCover)
+        if (this.audioPlayerVM.currAudioItem && this.audioPlayerVM.currAudioItem.albumCover) {
+          Image(this.audioPlayerVM.currAudioItem.albumCover)
             .width('100%')
             .height('100%')
             .borderRadius(12)
@@ -43,15 +42,15 @@ export struct AudioBottomBar {
       .alignItems(VerticalAlign.Center);
 
       Column() {
-        if (this.audioPlayerVM.currIndex !== -1) {
-          Text(this.audioPlayerVM.audioList[this.audioPlayerVM.currIndex].title)
+        if (this.audioPlayerVM.currAudioItem) {
+          Text(this.audioPlayerVM.currAudioItem.title)
             .maxLines(1)
             .fontSize(16)
             .fontColor(Color.Black)
             .fontWeight(FontWeight.Bold)
             .textOverflow({ overflow: TextOverflow.Ellipsis });
 
-          Text(this.audioPlayerVM.audioList[this.audioPlayerVM.currIndex].artist)
+          Text(this.audioPlayerVM.currAudioItem.artist)
             .fontSize(10)
             .fontColor(Color.Black);
         } else {
@@ -99,7 +98,7 @@ export struct AudioBottomBar {
     .borderRadius(12)
     .backgroundColor(Color.Gray)
     .onClick(() => {
-      if (this.audioPlayerVM.currIndex !== -1) {
+      if (this.audioPlayerVM.currAudioItem) {
         this.mainPageStack.pushPath({ name: 'AudioPlayer' });
       }
     });

@@ -7,7 +7,8 @@ export enum SettingKey {
   VIDEO_SORT_RULE = 'VideoSortRule',
   PLAYLIST_SORT_MODE = 'PlaylistSortMode',
   PLAYLIST_SORT_RULE = 'PlaylistSortRule',
-  VIDEO_VIEW_OPTION = 'VideoViewOption'
+  VIDEO_VIEW_OPTION = 'VideoViewOption',
+  AUDIO_REPEAT_MODE = 'AudioRepeatMode',
 }
 
 export enum SortModeValue {
@@ -28,6 +29,12 @@ export enum ViewOptionValue {
   GRID_VIEW = 'GridView',
 }
 
+export enum AudioRepeatMode {
+  SINGLE_REPEAT = 'SingleRepeat',
+  LIST_REPEAT = 'ListRepeat',
+  SHUFFLE = 'Shuffle',
+}
+
 export const DEFAULT_SETTING = new Map<SettingKey, preferences.ValueType>([
   [SettingKey.VIDEO_SORT_MODE, SortModeValue.DATE_ADD],
   [SettingKey.VIDEO_SORT_RULE, SortRuleValue.ASCENDING],
@@ -36,4 +43,5 @@ export const DEFAULT_SETTING = new Map<SettingKey, preferences.ValueType>([
   [SettingKey.PLAYLIST_SORT_MODE, SortModeValue.DATE_ADD],
   [SettingKey.PLAYLIST_SORT_RULE, SortRuleValue.ASCENDING],
   [SettingKey.VIDEO_VIEW_OPTION, ViewOptionValue.LIST_VIEW],
+  [SettingKey.AUDIO_REPEAT_MODE, AudioRepeatMode.SINGLE_REPEAT],
 ]);

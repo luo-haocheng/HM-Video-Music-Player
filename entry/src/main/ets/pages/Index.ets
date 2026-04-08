@@ -1,6 +1,7 @@
 import { AudioLibraryView } from '../view/AudioLibraryView';
 import { VideoLibraryView } from '../view/VideoLibraryView';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
+import { Context } from '@kit.AbilityKit';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MAIN_PAGE_STACK = 'MainPageStack';
@@ -13,6 +14,11 @@ struct Index {
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Provide(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
   @Provide(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
+
+  aboutToAppear(): void {
+    const context = this.getUIContext().getHostContext() as Context;
+    this.audioPlayerVM.init(context);
+  }
 
   @Builder
   tabBarBuilder(icon: ResourceStr, name: ResourceStr, index: number) {
