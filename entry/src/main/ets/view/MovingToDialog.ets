@@ -128,7 +128,7 @@ export struct MovingToDialog {
       Row() {
         Button({ type: ButtonType.Circle, stateEffect: false }) {
           Image($r('app.media.arrow_left'))
-            .width(24)
+            .width(20)
             .aspectRatio(1)
             .fillColor([ROOT_PATH, SECRET_FOLDER].includes(this.moveToFolder) ? '#55000000' : Color.Black);
         }
@@ -151,7 +151,7 @@ export struct MovingToDialog {
 
         Button({ type: ButtonType.Circle, stateEffect: false }) {
           Image($r('app.media.checkmark'))
-            .width(24)
+            .width(20)
             .aspectRatio(1)
             .fillColor(this.moveToFolder === this.origFolder ? '#55000000' : Color.Black);
         }

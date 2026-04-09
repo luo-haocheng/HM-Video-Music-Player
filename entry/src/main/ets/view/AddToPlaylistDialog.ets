@@ -14,57 +14,55 @@ export struct AddToPlaylistDialog {
   }
 
   build() {
-    Column() {
-      Flex({
-        direction: FlexDirection.Column,
-        justifyContent: FlexAlign.Start,
-        alignItems: ItemAlign.Center,
-      }) {
-        Row() {
-          Button({ type: ButtonType.Circle, stateEffect: false }) {
-            Image($r('app.media.xmark'))
-              .width(24)
-              .aspectRatio(1)
-              .fillColor(Color.Black);
-          }
-          .padding(8)
-          .backgroundColor('#AADCDCDC')
-          .onClick(() => {
-            this.controller.close();
-          });
-
-          Button({ type: ButtonType.Circle, stateEffect: false }) {
-            Image($r('app.media.checkmark'))
-              .width(24)
-              .aspectRatio(1)
-              .fillColor(Color.Black);
-          }
-          .padding(8)
-          .backgroundColor('#AADCDCDC')
-          .onClick(async () => {
-            for (let i = 0; i < this.audioInfoList.length; ++i) {
-              await this.addToPlaylistVM.addToPlaylist(this.audioInfoList[i]);
-            }
-            this.controller.close();
-          });
+    Flex({
+      direction: FlexDirection.Column,
+      justifyContent: FlexAlign.Start,
+      alignItems: ItemAlign.Center,
+    }) {
+      Row() {
+        Button({ type: ButtonType.Circle, stateEffect: false }) {
+          Image($r('app.media.xmark'))
+            .width(20)
+            .aspectRatio(1)
+            .fillColor(Color.Black);
         }
-        .width('100%')
-        .layoutWeight(0)
-        .margin({ bottom: 8 })
-        .justifyContent(FlexAlign.SpaceBetween);
+        .padding(8)
+        .backgroundColor('#AADCDCDC')
+        .onClick(() => {
+          this.controller.close();
+        });
 
-        ListView({
-          favoritePlaylist: this.addToPlaylistVM.favoritePlaylist,
-          userPlaylistArray: this.addToPlaylistVM.userPlaylistArray
-        })
-          .layoutWeight(1);
+        Button({ type: ButtonType.Circle, stateEffect: false }) {
+          Image($r('app.media.checkmark'))
+            .width(20)
+            .aspectRatio(1)
+            .fillColor(Color.Black);
+        }
+        .padding(8)
+        .backgroundColor('#AADCDCDC')
+        .onClick(async () => {
+          for (let i = 0; i < this.audioInfoList.length; ++i) {
+            await this.addToPlaylistVM.addToPlaylist(this.audioInfoList[i]);
+          }
+          this.controller.close();
+        });
       }
-      .padding(16)
       .width('100%')
-      .height('100%')
-      .backgroundColor('#FFF1F3F5');
-    };
-  }
+      .layoutWeight(0)
+      .margin({ bottom: 16 })
+      .justifyContent(FlexAlign.SpaceBetween);
+
+      ListView({
+        favoritePlaylist: this.addToPlaylistVM.favoritePlaylist,
+        userPlaylistArray: this.addToPlaylistVM.userPlaylistArray
+      })
+        .layoutWeight(1);
+    }
+    .padding(16)
+    .width('100%')
+    .height('100%')
+    .backgroundColor('#FFF1F3F5');
+  };
 }
 
 @Component

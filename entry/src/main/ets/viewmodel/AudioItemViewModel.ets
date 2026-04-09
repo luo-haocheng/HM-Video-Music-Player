@@ -4,6 +4,7 @@ import { media } from '@kit.MediaKit';
 
 @Observed
 export class AudioItemViewModel {
+  @Track public id: number = -1;
   @Track public title: string = '';
   @Track public album: string = '未知专辑';
   @Track public artist: string = '未知歌手';
@@ -45,6 +46,7 @@ export class AudioItemViewModel {
   }
 
   async updateAudioItem(audioInfo: AudioInfoModel) {
+    this.id = audioInfo.id;
     this.audioInfo = audioInfo;
     this.title = audioInfo.name;
 

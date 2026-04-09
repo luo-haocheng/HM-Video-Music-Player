@@ -1,13 +1,16 @@
 import { LengthMetrics } from '@kit.ArkUI';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
+import { CurrentPlaylistView } from './CurrentPlaylistView';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MAIN_PAGE_STACK = 'MainPageStack';
+const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
 export struct AudioBottomBar {
   @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
+  private currPlaylistDialogController?: CustomDialogController;
 
   build() {
     Flex({
@@ -66,13 +69,15 @@ export struct AudioBottomBar {
       .alignItems(HorizontalAlign.Center)
       .justifyContent(FlexAlign.SpaceAround);
 
-      Row({ space: 16 }) {
+      Row() {
         Button({ type: ButtonType.Circle, stateEffect: false }) {
           Image(this.audioPlayerVM.isPlaying ? $r('app.media.pause') : $r('app.media.play'))
             .width(24)
             .aspectRatio(1)
             .fillColor(Color.Black);
         }
+        .height('100%')
+        .aspectRatio(1)
         .backgroundColor(Color.Transparent)
         .onClick(async () => {
           if (this.audioPlayerVM.isPlaying) {
@@ -82,10 +87,27 @@ export struct AudioBottomBar {
           }
         });
 
-        Image($r('app.media.music_note_list'))
-          .width(24)
-          .aspectRatio(1)
-          .fillColor(Color.Black);
+        Button({ type: ButtonType.Circle, stateEffect: false }) {
+          Image($r('app.media.music_note_list'))
+            .width(24)
+            .aspectRatio(1)
+            .fillColor(Color.Black);
+        }
+        .height('100%')
+        .aspectRatio(1)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          if (this.audioPlayerVM.currAudioItem) {
+            this.currPlaylistDialogController = new CustomDialogController({
+              width: '100%',
+              height: '60%',
+              builder: CurrentPlaylistView(),
+              alignment: DialogAlignment.Bottom,
+              offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+            });
+            this.currPlaylistDialogController.open();
+          }
+        });
       }
       .layoutWeight(0)
       .justifyContent(FlexAlign.Start)

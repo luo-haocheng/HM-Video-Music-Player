@@ -1,14 +1,17 @@
 import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { LengthMetrics } from '@kit.ArkUI';
+import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 
 const MULTI_CHOICE = 'MultiChoice';
 const CHOICE_COUNT = 'ChoiceCount';
+const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 
 @Component
 export struct AudioBoxView {
   @ObjectLink audioItem: AudioItemViewModel;
   @Consume(CHOICE_COUNT) choiceCount: number = 0;
   @Consume(MULTI_CHOICE) multiChoice: boolean = false;
+  @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
   public isAllChoice: Callback<void> = () => {
   };
 
@@ -51,19 +54,19 @@ export struct AudioBoxView {
           Text(this.audioItem.title)
             .maxLines(1)
             .fontSize(14)
-            .fontColor(Color.Black)
+            .fontColor(this.audioItem.id === this.audioPlayerVM.currAudioItem?.id ? '#FF007DFF' : Color.Black)
             .textOverflow({ overflow: TextOverflow.Ellipsis });
 
           Row() {
             Text(this.audioItem.artist)
               .fontSize(12)
-              .fontColor(Color.Gray);
+              .fontColor(this.audioItem.id === this.audioPlayerVM.currAudioItem?.id ? '#FF007DFF' : Color.Gray);
             Text(' · ')
               .fontSize(12)
-              .fontColor(Color.Black);
+              .fontColor(this.audioItem.id === this.audioPlayerVM.currAudioItem?.id ? '#FF007DFF' : Color.Gray);
             Text(this.audioItem.album)
               .fontSize(12)
-              .fontColor(Color.Gray);
+              .fontColor(this.audioItem.id === this.audioPlayerVM.currAudioItem?.id ? '#FF007DFF' : Color.Gray);
           }
           .width('100%');
         }

@@ -1,5 +1,7 @@
 import { AudioRepeatMode } from '../model/SettingsModel';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
+import { AVCastPicker } from '@kit.AVSessionKit';
+import { CurrentPlaylistView } from './CurrentPlaylistView';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
@@ -15,6 +17,20 @@ export struct AudioPlayerView {
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
+  private currPlaylistDialogController?: CustomDialogController;
+
+  @Builder
+  pickerBuilder() {
+    Button({ type: ButtonType.Circle, stateEffect: false }) {
+      Image($r('app.media.dot_radiowaves_left_and_right'))
+        .width(24)
+        .aspectRatio(1)
+        .fillColor(Color.Black);
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor(Color.Transparent);
+  }
 
   private timeStr(timeMs: number): string {
     let helper = (num: number): string => {
@@ -221,19 +237,25 @@ export struct AudioPlayerView {
             }
             .backgroundColor(Color.Transparent)
             .onClick(async () => {
-              // todo
+              if (this.audioPlayerVM.currAudioItem) {
+                this.currPlaylistDialogController = new CustomDialogController({
+                  width: '100%',
+                  height: '60%',
+                  builder: CurrentPlaylistView(),
+                  alignment: DialogAlignment.Bottom,
+                  offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+                });
+                this.currPlaylistDialogController.open();
+              }
             });
 
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.dot_radiowaves_left_and_right'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            }
-            .backgroundColor(Color.Transparent)
-            .onClick(async () => {
-              // todo
-            });
+            AVCastPicker({
+              customPicker: () => {
+                this.pickerBuilder();
+              }
+            })
+              .width(24)
+              .aspectRatio(1);
           }
           .width('90%')
           .alignItems(VerticalAlign.Center)
