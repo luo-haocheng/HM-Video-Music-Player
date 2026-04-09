@@ -6,6 +6,8 @@ import { Settings } from '../model/Settings';
 import { AudioRepeatMode, SettingKey } from '../model/SettingsModel';
 import { AudioItemViewModel } from './AudioItemViewModel';
 import { AudioItemViewModelList } from './AudioListViewModel';
+import { avSession as AVSessionMananger } from '@kit.AVSessionKit';
+import { AudioLibraryStore } from '../model/AudioLibraryStore';
 
 
 @Observed
@@ -20,6 +22,7 @@ export class AudioPlayerViewModel {
   @Track sampleRate?: string;
   @Track repeatMode: AudioRepeatMode = AudioRepeatMode.SINGLE_REPEAT;
   private settings: Settings = new Settings();
+  private audioStore: AudioLibraryStore = new AudioLibraryStore();
   private playerState: media.AVPlayerState = 'idle';
   private audioPlayer: AVPlayerModel = new AVPlayerModel();
   private mediaSession: MediaSessionManager = new MediaSessionManager();
@@ -31,6 +34,23 @@ export class AudioPlayerViewModel {
     this.mediaSession.registerCallback('pause', () => {
       this.audioPlayer.pause();
     });
+    this.mediaSession.registerCallback('seek', (timeMs: number) => {
+      this.seek(timeMs);
+    });
+    this.mediaSession.registerCallback('playNext', () => {
+      this.switchNext(context);
+    });
+    this.mediaSession.registerCallback('playPrevious', () => {
+      this.switchPrev(context);
+    });
+    this.mediaSession.registerCallback('setLoopMode', (loopMode: AVSessionMananger.LoopMode) => {
+      loopMode;
+      this.switchRepeatMode();
+    });
+    this.mediaSession.registerCallback('toggleFavorite', (assetId: string) => {
+      assetId;
+      this.toggleFavorite();
+    });
     this.mediaSession.initAudioSession(context);
 
     this.audioPlayer.registerCallback('durationUpdate', (duration: number) => {
@@ -38,6 +58,9 @@ export class AudioPlayerViewModel {
     });
     this.audioPlayer.registerCallback('timeUpdate', (timeMs: number) => {
       this.currTime = timeMs;
+    });
+    this.audioPlayer.registerCallback('seekDone', (timeMs: number) => {
+      this.mediaSession.updatePlayPosition(timeMs);
     });
     this.audioPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
       this.playerState = state;
@@ -66,6 +89,7 @@ export class AudioPlayerViewModel {
     });
     await this.audioPlayer.initPlayer();
 
+    await this.audioStore.initStore(context);
     await this.settings.initPreference(context);
     this.repeatMode = (await this.settings.getSetting(SettingKey.AUDIO_REPEAT_MODE)) as AudioRepeatMode;
   }
@@ -73,10 +97,27 @@ export class AudioPlayerViewModel {
   async setAudioAsset(audioInfo: AudioInfoModel, context: Context) {
     await this.mediaSession.setAudioAsset(audioInfo, context);
     await this.audioPlayer.setMediaAsset(audioInfo.audioPath);
+    await this.mediaSession.updateLoopMode(this.currTime, this.repeatMode);
+    await this.mediaSession.updateFavorite(this.currTime, audioInfo.favorite === 0 ? false : true);
     this.parseAudioMetadata();
   }
 
-  async switchShuffle(context: Context) {
+  async toggleFavorite(): Promise<void> {
+    if (this.currAudioItem) {
+      let isFavorite: boolean = false;
+      if (this.currAudioItem.audioInfo.favorite === 0) {
+        this.currAudioItem.audioInfo.favorite = 1;
+        isFavorite = true;
+      } else {
+        this.currAudioItem.audioInfo.favorite = 0;
+        isFavorite = false;
+      }
+      await this.audioStore.updateAudioFavorite(this.currAudioItem.audioInfo);
+      await this.mediaSession.updateFavorite(this.currTime, isFavorite);
+    }
+  }
+
+  async switchShuffle(context: Context): Promise<void> {
     if (this.currAudioItem) {
       const currIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
         return this.currAudioItem?.audioInfo.id === item.audioInfo.id;
@@ -126,6 +167,7 @@ export class AudioPlayerViewModel {
       this.repeatMode = AudioRepeatMode.SINGLE_REPEAT;
       this.settings.putSetting(SettingKey.AUDIO_REPEAT_MODE, AudioRepeatMode.SINGLE_REPEAT);
     }
+    this.mediaSession.updateLoopMode(this.currTime, this.repeatMode);
   }
 
   async play(): Promise<void> {
@@ -137,6 +179,7 @@ export class AudioPlayerViewModel {
   }
 
   async seek(timeMs: number): Promise<void> {
+    timeMs = Math.min(this.duration, Math.max(0, timeMs));
     await this.audioPlayer.seek(timeMs);
   }
 

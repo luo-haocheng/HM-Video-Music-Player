@@ -8,7 +8,7 @@ const AUDIO_TABLE_NAME = 'VIDEO_IMPORTED';
 const PLAYLIST_TABLE_NAME = 'PLAYLIST_CREATED';
 const PLAYLIST_AUDIO_TABLE_NAME = 'PLAYLIST_AUDIO';
 const SQL_CREATE_AUDIO_TABLE =
-  `CREATE TABLE IF NOT EXISTS ${AUDIO_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL, DATE_ADD INTEGER NOT NULL, METADATA TEXT, ALBUM TEXT, ARTIST TEXT, AUDIO_PATH TEXT NOT NULL, COVER_PATH TEXT)`;
+  `CREATE TABLE IF NOT EXISTS ${AUDIO_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL, DATE_ADD INTEGER NOT NULL, METADATA TEXT, ALBUM TEXT, ARTIST TEXT, AUDIO_PATH TEXT NOT NULL, COVER_PATH TEXT, FAVORITE INTEGER NOT NULL)`;
 const SQL_CREATE_PLAYLIST_TABLE =
   `CREATE TABLE IF NOT EXISTS ${PLAYLIST_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL UNIQUE, DATE_ADD INTEGER NOT NULL)`;
 const SQL_CREATE_PLAYLIST_AUDIO_TABLE =
@@ -100,9 +100,26 @@ export class AudioLibraryStore {
         return delNum;
       } catch (error) {
         console.error(`Failed to delete ${audioInfo.id}, ${playlistName}. Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
       }
     }
     return 0;
+  }
+
+  async updateAudioFavorite(audioInfo: AudioInfoModel): Promise<void> {
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('ID', audioInfo.id);
+        const valueBucket: relationalStore.ValuesBucket = {
+          FAVORITE: audioInfo.favorite,
+        };
+        await this.store.update(valueBucket, predicate);
+      } catch (error) {
+        console.error(`Failed to update ${JSON.stringify(audioInfo)} favorite. Cause: ${JSON.stringify(error)}`);
+        throw new Error(error);
+      }
+    }
   }
 
   async insertAudioInfo(audioInfo: AudioInfoModel): Promise<number> {
@@ -117,6 +134,7 @@ export class AudioLibraryStore {
           ARTIST: audioInfo.artist,
           DATE_ADD: audioInfo.dateAdd,
           METADATA: audioInfo.metadata,
+          FAVORITE: audioInfo.favorite,
           AUDIO_PATH: audioInfo.audioPath,
           COVER_PATH: audioInfo.coverPath
         };
@@ -206,6 +224,7 @@ export class AudioLibraryStore {
           audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
           audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
           audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
+          audioInfo.favorite = resultSet.getLong(resultSet.getColumnIndex('FAVORITE'));
           audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
           if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
             audioInfo.album = null;
@@ -270,6 +289,7 @@ export class AudioLibraryStore {
             audioInfo.id = resultSetAudio.getLong(resultSetAudio.getColumnIndex('ID'));
             audioInfo.name = resultSetAudio.getString(resultSetAudio.getColumnIndex('NAME'));
             audioInfo.dateAdd = resultSetAudio.getLong(resultSetAudio.getColumnIndex('DATE_ADD'));
+            audioInfo.favorite = resultSetAudio.getLong(resultSetAudio.getColumnIndex('FAVORITE'));
             audioInfo.audioPath = resultSetAudio.getString(resultSetAudio.getColumnIndex('AUDIO_PATH'));
             if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('ALBUM'))) {
               audioInfo.album = null;
@@ -317,6 +337,7 @@ export class AudioLibraryStore {
           audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
           audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
           audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
+          audioInfo.favorite = resultSet.getLong(resultSet.getColumnIndex('FAVORITE'));
           audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
           if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
             audioInfo.album = null;
@@ -363,6 +384,7 @@ export class AudioLibraryStore {
           audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
           audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
           audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
+          audioInfo.favorite = resultSet.getLong(resultSet.getColumnIndex('FAVORITE'));
           audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
           if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
             audioInfo.album = null;

@@ -300,6 +300,7 @@ export class AudioLibraryViewModel {
 
     const audioInfo = new AudioInfoModel();
     audioInfo.name = name;
+    audioInfo.favorite = 0;
     audioInfo.audioPath = audioPath;
     audioInfo.dateAdd = new Date().getTime();
     audioInfo.coverPath = coverPath ? coverPath : null;

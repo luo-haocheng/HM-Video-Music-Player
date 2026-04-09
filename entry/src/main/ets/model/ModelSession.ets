@@ -4,6 +4,7 @@ import image from '@ohos.multimedia.image';
 import { util } from '@kit.ArkTS';
 import { VideoInfoModel } from './VideoInfoModel';
 import { AudioInfoModel } from './AudioInfoModel';
+import { AudioRepeatMode } from './SettingsModel';
 
 export class MediaSessionManager {
   private session?: AVSessionMananger.AVSession;
@@ -19,7 +20,7 @@ export class MediaSessionManager {
         return;
       }
       try {
-        this.registerCtrlCmd();
+        this.registerAudioCtrlCmd();
       } catch (error) {
         console.error(`Failed to register avsession control command. Cuase: ${JSON.stringify(error)}`);
         return;
@@ -99,7 +100,7 @@ export class MediaSessionManager {
     }
 
     try {
-      this.registerCtrlCmd();
+      this.registerVideoCtrlCmd();
     } catch (error) {
       console.error(`Failed to register avsession control command. Cuase: ${JSON.stringify(error)}`);
       return;
@@ -162,6 +163,50 @@ export class MediaSessionManager {
     }
   }
 
+  async updateLoopMode(timeMs: number, repeatMode: AudioRepeatMode) {
+    let loopMode = AVSessionMananger.LoopMode.LOOP_MODE_SINGLE;
+    switch (repeatMode) {
+      case AudioRepeatMode.SINGLE_REPEAT:
+        loopMode = AVSessionMananger.LoopMode.LOOP_MODE_SINGLE;
+        break;
+      case AudioRepeatMode.LIST_REPEAT:
+        loopMode = AVSessionMananger.LoopMode.LOOP_MODE_LIST;
+        break;
+      case AudioRepeatMode.SHUFFLE:
+        loopMode = AVSessionMananger.LoopMode.LOOP_MODE_SHUFFLE;
+        break;
+    }
+    try {
+      let playbackState: AVSessionMananger.AVPlaybackState = {
+        loopMode: loopMode,
+        position: {
+          elapsedTime: timeMs,
+          updateTime: new Date().getTime()
+        }
+      };
+      await this.session?.setAVPlaybackState(playbackState);
+    } catch (error) {
+      console.error(`Failed to update avsession loop mode. Cause: ${JSON.stringify(error)}`);
+      return;
+    }
+  }
+
+  async updateFavorite(timeMs: number, isFavorite: boolean) {
+    try {
+      let playbackState: AVSessionMananger.AVPlaybackState = {
+        isFavorite: isFavorite,
+        position: {
+          elapsedTime: timeMs,
+          updateTime: new Date().getTime()
+        }
+      };
+      await this.session?.setAVPlaybackState(playbackState);
+    } catch (error) {
+      console.error(`Failed to update avsession loop mode. Cause: ${JSON.stringify(error)}`);
+      return;
+    }
+  }
+
   async updatePlayPosition(timeMs: number): Promise<void> {
     try {
       let playbackState: AVSessionMananger.AVPlaybackState = {
@@ -205,35 +250,84 @@ export class MediaSessionManager {
     this.callbacks.set(event, callback);
   }
 
-  private registerCtrlCmd() {
+  private registerAudioCtrlCmd() {
     try {
       this.session?.on('play', () => {
         if (this.callbacks.has('play')) {
-          let callback = this.callbacks.get('play') as () => void;
+          const callback = this.callbacks.get('play') as () => void;
           callback();
         }
       });
       this.session?.on('pause', () => {
         if (this.callbacks.has('pause')) {
-          let callback = this.callbacks.get('pause') as () => void;
+          const callback = this.callbacks.get('pause') as () => void;
           callback();
         }
       });
       this.session?.on('seek', (timeMs: number) => {
         if (this.callbacks.has('seek')) {
-          let callback = this.callbacks.get('seek') as (timeMs: number) => void;
+          const callback = this.callbacks.get('seek') as (timeMs: number) => void;
+          callback(timeMs);
+        }
+      });
+      this.session?.on('playNext', () => {
+        if (this.callbacks.has('playNext')) {
+          const callback = this.callbacks.get('playNext') as () => void;
+          callback();
+        }
+      });
+      this.session?.on('playPrevious', () => {
+        if (this.callbacks.has('playPrevious')) {
+          const callback = this.callbacks.get('playPrevious') as () => void;
+          callback();
+        }
+      });
+      this.session?.on('setLoopMode', (loopMode: AVSessionMananger.LoopMode) => {
+        if (this.callbacks.has('setLoopMode')) {
+          const callback = this.callbacks.get('setLoopMode') as (loopMode: AVSessionMananger.LoopMode) => void;
+          callback(loopMode);
+        }
+      });
+      this.session?.on('toggleFavorite', (assetId: string) => {
+        if (this.callbacks.has('toggleFavorite')) {
+          const callback = this.callbacks.get('toggleFavorite') as (assetId: string) => void;
+          callback(assetId);
+        }
+      });
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+
+  private registerVideoCtrlCmd() {
+    try {
+      this.session?.on('play', () => {
+        if (this.callbacks.has('play')) {
+          const callback = this.callbacks.get('play') as () => void;
+          callback();
+        }
+      });
+      this.session?.on('pause', () => {
+        if (this.callbacks.has('pause')) {
+          const callback = this.callbacks.get('pause') as () => void;
+          callback();
+        }
+      });
+      this.session?.on('seek', (timeMs: number) => {
+        if (this.callbacks.has('seek')) {
+          const callback = this.callbacks.get('seek') as (timeMs: number) => void;
           callback(timeMs);
         }
       });
       this.session?.on('rewind', (timeS?: number) => {
         if (this.callbacks.has('rewind')) {
-          let callback = this.callbacks.get('rewind') as (timeS?: number) => void;
+          const callback = this.callbacks.get('rewind') as (timeS?: number) => void;
           callback(timeS);
         }
       });
       this.session?.on('fastForward', (timeS?: number) => {
         if (this.callbacks.has('fastForward')) {
-          let callback = this.callbacks.get('fastForward') as (timeS?: number) => void;
+          const callback = this.callbacks.get('fastForward') as (timeS?: number) => void;
           callback(timeS);
         }
       });
