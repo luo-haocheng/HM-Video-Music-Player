@@ -48,12 +48,11 @@ export class MediaSessionManager {
         }
         if (audioInfo.metadata) {
           duration = await this.getMediaDuration(audioInfo.metadata);
-          title = await this.getAudioTitle(audioInfo.metadata);
         }
         let metadata: AVSessionMananger.AVMetadata = {
           assetId: util.generateRandomUUID(),
-          title: title ? title : audioInfo.name,
           artist: audioInfo.artist ? audioInfo.artist : '',
+          title: audioInfo.title,
           mediaImage: mediaImg,
           duration: duration,
         };
@@ -373,10 +372,5 @@ export class MediaSessionManager {
     let metadata = JSON.parse(metadataStr) as media.AVMetadata;
     let duration = metadata.duration ? parseInt(metadata.duration) : 0;
     return duration;
-  }
-
-  private async getAudioTitle(metadataStr: string): Promise<string | undefined> {
-    const metadata = JSON.parse(metadataStr) as media.AVMetadata;
-    return metadata.title;
   }
 }

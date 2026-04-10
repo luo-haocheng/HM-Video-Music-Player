@@ -64,6 +64,14 @@ export class AVPlayerModel {
     this.avPlayer?.setSpeed(speed);
   }
 
+  async reset(): Promise<void> {
+    try {
+      await this.avPlayer?.reset();
+    } catch (err) {
+      console.error(`Failed to invoke avplayer reset, error: ${JSON.stringify(err)}`);
+    }
+  }
+
   async release(): Promise<void> {
     if (this.avPlayer) {
       try {

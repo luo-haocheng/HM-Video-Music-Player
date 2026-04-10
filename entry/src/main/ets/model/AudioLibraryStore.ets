@@ -8,7 +8,7 @@ const AUDIO_TABLE_NAME = 'VIDEO_IMPORTED';
 const PLAYLIST_TABLE_NAME = 'PLAYLIST_CREATED';
 const PLAYLIST_AUDIO_TABLE_NAME = 'PLAYLIST_AUDIO';
 const SQL_CREATE_AUDIO_TABLE =
-  `CREATE TABLE IF NOT EXISTS ${AUDIO_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL, DATE_ADD INTEGER NOT NULL, METADATA TEXT, ALBUM TEXT, ARTIST TEXT, AUDIO_PATH TEXT NOT NULL, COVER_PATH TEXT, FAVORITE INTEGER NOT NULL)`;
+  `CREATE TABLE IF NOT EXISTS ${AUDIO_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, TITLE TEXT NOT NULL, DATE_ADD INTEGER NOT NULL, METADATA TEXT, ALBUM TEXT, ARTIST TEXT, AUDIO_PATH TEXT NOT NULL, COVER_PATH TEXT, LYRICS_PATH TEXT, FAVORITE INTEGER NOT NULL)`;
 const SQL_CREATE_PLAYLIST_TABLE =
   `CREATE TABLE IF NOT EXISTS ${PLAYLIST_TABLE_NAME} (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT NOT NULL UNIQUE, DATE_ADD INTEGER NOT NULL)`;
 const SQL_CREATE_PLAYLIST_AUDIO_TABLE =
@@ -129,14 +129,15 @@ export class AudioLibraryStore {
       try {
         transaction = await this.store.createTransaction();
         const valueBucket1: relationalStore.ValuesBucket = {
-          NAME: audioInfo.name,
+          TITLE: audioInfo.title,
           ALBUM: audioInfo.album,
           ARTIST: audioInfo.artist,
           DATE_ADD: audioInfo.dateAdd,
           METADATA: audioInfo.metadata,
           FAVORITE: audioInfo.favorite,
           AUDIO_PATH: audioInfo.audioPath,
-          COVER_PATH: audioInfo.coverPath
+          COVER_PATH: audioInfo.coverPath,
+          LYRICS_PATH: audioInfo.lyricsPath,
         };
         rowId = await transaction.insert(AUDIO_TABLE_NAME, valueBucket1);
         const valueBucket2: relationalStore.ValuesBucket = {
@@ -220,32 +221,7 @@ export class AudioLibraryStore {
         let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
         resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
-          let audioInfo = new AudioInfoModel();
-          audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
-          audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
-          audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
-          audioInfo.favorite = resultSet.getLong(resultSet.getColumnIndex('FAVORITE'));
-          audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
-            audioInfo.album = null;
-          } else {
-            audioInfo.album = resultSet.getString(resultSet.getColumnIndex('ALBUM'));
-          }
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('ARTIST'))) {
-            audioInfo.artist = null;
-          } else {
-            audioInfo.artist = resultSet.getString(resultSet.getColumnIndex('ARTIST'));
-          }
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('METADATA'))) {
-            audioInfo.metadata = null;
-          } else {
-            audioInfo.metadata = resultSet.getString(resultSet.getColumnIndex('METADATA'));
-          }
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('COVER_PATH'))) {
-            audioInfo.coverPath = null;
-          } else {
-            audioInfo.coverPath = resultSet.getString(resultSet.getColumnIndex('COVER_PATH'));
-          }
+          const audioInfo = this.fetchAudioInfoFromResult(resultSet);
           audioInfoList.push(audioInfo);
         }
       } catch (error) {
@@ -257,6 +233,7 @@ export class AudioLibraryStore {
     }
     return audioInfoList;
   }
+
 
   async selectAudioByPlayList(playlistName: string | null): Promise<AudioInfoModel[]> {
     let audioIdList: number[] = [];
@@ -285,32 +262,7 @@ export class AudioLibraryStore {
           predicate.equalTo('ID', audioIdList[i]);
           resultSetAudio = await this.store.query(predicate);
           while (resultSetAudio.goToNextRow()) {
-            let audioInfo = new AudioInfoModel();
-            audioInfo.id = resultSetAudio.getLong(resultSetAudio.getColumnIndex('ID'));
-            audioInfo.name = resultSetAudio.getString(resultSetAudio.getColumnIndex('NAME'));
-            audioInfo.dateAdd = resultSetAudio.getLong(resultSetAudio.getColumnIndex('DATE_ADD'));
-            audioInfo.favorite = resultSetAudio.getLong(resultSetAudio.getColumnIndex('FAVORITE'));
-            audioInfo.audioPath = resultSetAudio.getString(resultSetAudio.getColumnIndex('AUDIO_PATH'));
-            if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('ALBUM'))) {
-              audioInfo.album = null;
-            } else {
-              audioInfo.album = resultSetAudio.getString(resultSetAudio.getColumnIndex('ALBUM'));
-            }
-            if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('ARTIST'))) {
-              audioInfo.artist = null;
-            } else {
-              audioInfo.artist = resultSetAudio.getString(resultSetAudio.getColumnIndex('ARTIST'));
-            }
-            if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('METADATA'))) {
-              audioInfo.metadata = null;
-            } else {
-              audioInfo.metadata = resultSetAudio.getString(resultSetAudio.getColumnIndex('METADATA'));
-            }
-            if (resultSetAudio.isColumnNull(resultSetAudio.getColumnIndex('COVER_PATH'))) {
-              audioInfo.coverPath = null;
-            } else {
-              audioInfo.coverPath = resultSetAudio.getString(resultSetAudio.getColumnIndex('COVER_PATH'));
-            }
+            const audioInfo = this.fetchAudioInfoFromResult(resultSetAudio);
             audioInfoList.push(audioInfo);
           }
         }
@@ -333,32 +285,7 @@ export class AudioLibraryStore {
         album ? predicate.equalTo('ALBUM', album) : predicate.isNull('ALBUM');
         resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
-          let audioInfo = new AudioInfoModel();
-          audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
-          audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
-          audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
-          audioInfo.favorite = resultSet.getLong(resultSet.getColumnIndex('FAVORITE'));
-          audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
-            audioInfo.album = null;
-          } else {
-            audioInfo.album = resultSet.getString(resultSet.getColumnIndex('ALBUM'));
-          }
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('ARTIST'))) {
-            audioInfo.artist = null;
-          } else {
-            audioInfo.artist = resultSet.getString(resultSet.getColumnIndex('ARTIST'));
-          }
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('METADATA'))) {
-            audioInfo.metadata = null;
-          } else {
-            audioInfo.metadata = resultSet.getString(resultSet.getColumnIndex('METADATA'));
-          }
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('COVER_PATH'))) {
-            audioInfo.coverPath = null;
-          } else {
-            audioInfo.coverPath = resultSet.getString(resultSet.getColumnIndex('COVER_PATH'));
-          }
+          const audioInfo = this.fetchAudioInfoFromResult(resultSet);
           audioInfoList.push(audioInfo);
         }
       } catch (error) {
@@ -380,32 +307,7 @@ export class AudioLibraryStore {
         artist ? predicate.equalTo('ARTIST', artist) : predicate.isNull('ARTIST');
         resultSet = await this.store.query(predicate);
         while (resultSet.goToNextRow()) {
-          let audioInfo = new AudioInfoModel();
-          audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
-          audioInfo.name = resultSet.getString(resultSet.getColumnIndex('NAME'));
-          audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
-          audioInfo.favorite = resultSet.getLong(resultSet.getColumnIndex('FAVORITE'));
-          audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
-            audioInfo.album = null;
-          } else {
-            audioInfo.album = resultSet.getString(resultSet.getColumnIndex('ALBUM'));
-          }
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('ARTIST'))) {
-            audioInfo.artist = null;
-          } else {
-            audioInfo.artist = resultSet.getString(resultSet.getColumnIndex('ARTIST'));
-          }
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('METADATA'))) {
-            audioInfo.metadata = null;
-          } else {
-            audioInfo.metadata = resultSet.getString(resultSet.getColumnIndex('METADATA'));
-          }
-          if (resultSet.isColumnNull(resultSet.getColumnIndex('COVER_PATH'))) {
-            audioInfo.coverPath = null;
-          } else {
-            audioInfo.coverPath = resultSet.getString(resultSet.getColumnIndex('COVER_PATH'));
-          }
+          const audioInfo = this.fetchAudioInfoFromResult(resultSet);
           audioInfoList.push(audioInfo);
         }
       } catch (error) {
@@ -438,5 +340,35 @@ export class AudioLibraryStore {
       }
     }
     return audioIDList;
+  }
+
+  private fetchAudioInfoFromResult(resultSet: relationalStore.ResultSet): AudioInfoModel {
+    const audioInfo = new AudioInfoModel();
+    try {
+      audioInfo.id = resultSet.getLong(resultSet.getColumnIndex('ID'));
+      audioInfo.title = resultSet.getString(resultSet.getColumnIndex('TITLE'));
+      audioInfo.dateAdd = resultSet.getLong(resultSet.getColumnIndex('DATE_ADD'));
+      audioInfo.favorite = resultSet.getLong(resultSet.getColumnIndex('FAVORITE'));
+      audioInfo.audioPath = resultSet.getString(resultSet.getColumnIndex('AUDIO_PATH'));
+      if (!resultSet.isColumnNull(resultSet.getColumnIndex('ALBUM'))) {
+        audioInfo.album = resultSet.getString(resultSet.getColumnIndex('ALBUM'));
+      }
+      if (!resultSet.isColumnNull(resultSet.getColumnIndex('ARTIST'))) {
+        audioInfo.artist = resultSet.getString(resultSet.getColumnIndex('ARTIST'));
+      }
+      if (!resultSet.isColumnNull(resultSet.getColumnIndex('METADATA'))) {
+        audioInfo.metadata = resultSet.getString(resultSet.getColumnIndex('METADATA'));
+      }
+      if (!resultSet.isColumnNull(resultSet.getColumnIndex('COVER_PATH'))) {
+        audioInfo.coverPath = resultSet.getString(resultSet.getColumnIndex('COVER_PATH'));
+      }
+      if (!resultSet.isColumnNull(resultSet.getColumnIndex('LYRICS_PATH'))) {
+        audioInfo.lyricsPath = resultSet.getString(resultSet.getColumnIndex('LYRICS_PATH'));
+      }
+    } catch (error) {
+      console.error(`Failed to fetch audio info from resultSet`);
+      throw new Error(error);
+    }
+    return audioInfo;
   }
 }

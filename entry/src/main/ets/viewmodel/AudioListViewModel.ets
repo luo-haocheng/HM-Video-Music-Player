@@ -73,7 +73,7 @@ export class AudioListViewModel {
   async deleteAudio(audioInfo: AudioInfoModel): Promise<void> {
     // Delete database record
     await this.audioStore.deleteAudio(audioInfo);
-    let delIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
+    const delIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
       return item.audioInfo.id === audioInfo.id;
     });
     if (delIdx !== -1) {

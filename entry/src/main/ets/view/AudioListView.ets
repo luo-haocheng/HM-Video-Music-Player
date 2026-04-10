@@ -40,6 +40,7 @@ export struct AudioListView {
   @State audioListVM: AudioListViewModel = new AudioListViewModel();
   @Consume(CHOICE_ALL) choiceAll: boolean = true;
   @Consume(AUDIO_LIST_INFO) currAudioList?: AudioListInfo = undefined;
+  @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
   private addPlaylistDialogController?: CustomDialogController;
   private importAudioCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
     if (eventData.data) {
@@ -62,7 +63,9 @@ export struct AudioListView {
         choiceAudioArr.push(item.audioInfo);
       }
     });
+    const context = this.getUIContext().getHostContext() as Context;
     for (let i = 0; i < choiceAudioArr.length; ++i) {
+      await this.audioPlayerVM.deleteAudio(choiceAudioArr[i], context);
       await this.audioListVM.deleteAudio(choiceAudioArr[i]);
     }
   };
@@ -212,9 +215,11 @@ struct ListView {
       }
       .width('100%')
       .padding({ top: 16, bottom: 16 })
-      .onClick(() => {
+      .onClick(async () => {
+        const context = this.getUIContext().getHostContext() as Context;
         if (this.selectedItem) {
-          this.audioListVM.deleteAudio(this.selectedItem.audioInfo);
+          await this.audioPlayerVM.deleteAudio(this.selectedItem.audioInfo, context);
+          await this.audioListVM.deleteAudio(this.selectedItem.audioInfo);
         }
       });
     }

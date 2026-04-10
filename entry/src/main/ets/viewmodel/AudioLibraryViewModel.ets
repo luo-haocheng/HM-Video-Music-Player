@@ -141,6 +141,14 @@ export class AudioLibraryViewModel {
       console.error(`Failed to import video from download directory`);
     }
   }
+ 
+  private getAudioNameFromFileUri(uri: string): string {
+    const lastSlashIdx = uri.lastIndexOf('/');
+    const audioFullName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
+    const lastDotIdx = audioFullName.lastIndexOf('.');
+    const audioName = audioFullName.slice(0, lastDotIdx);
+    return audioName;
+  }
 
   private async importAudio(uri: string, context: Context): Promise<void> {
     // Create audio and cover sandbox directory if not exist
@@ -167,8 +175,7 @@ export class AudioLibraryViewModel {
     }
     // Insert audio record to database
     let audioInfo: AudioInfoModel | undefined;
-    const lastSlashIdx = uri.lastIndexOf('/');
-    const audioName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
+    const audioName = this.getAudioNameFromFileUri(uri);
     try {
       audioInfo = await this.insertAudio2DB(audioName, audioPath, coverPath);
     } catch (error) {
@@ -275,7 +282,8 @@ export class AudioLibraryViewModel {
     return coverPath;
   }
 
-  private async insertAudio2DB(name: string, audioPath: string, coverPath: string | null): Promise<AudioInfoModel> {
+  private async insertAudio2DB(audioName: string, audioPath: string,
+    coverPath: string | null): Promise<AudioInfoModel> {
     let audioFile: fileIo.File | undefined;
     let metadata: media.AVMetadata | undefined;
     let avMetadataExtractor: media.AVMetadataExtractor | undefined;
@@ -299,11 +307,11 @@ export class AudioLibraryViewModel {
     }
 
     const audioInfo = new AudioInfoModel();
-    audioInfo.name = name;
     audioInfo.favorite = 0;
     audioInfo.audioPath = audioPath;
     audioInfo.dateAdd = new Date().getTime();
     audioInfo.coverPath = coverPath ? coverPath : null;
+    audioInfo.title = metadata?.title ? metadata.title : audioName;
     audioInfo.metadata = metadata ? JSON.stringify(metadata) : null;
     audioInfo.album = (metadata && metadata.album) ? metadata.album : null;
     audioInfo.artist = (metadata && metadata.artist) ? metadata.artist : null;

@@ -54,12 +54,11 @@ export class AudioItemViewModel {
   async updateAudioItem(audioInfo: AudioInfoModel) {
     this.id = audioInfo.id;
     this.audioInfo = audioInfo;
-    this.title = audioInfo.name;
+    this.title = audioInfo.title;
     this.isFavorite = audioInfo.favorite === 0 ? false : true;
 
     if (audioInfo.metadata) {
       let metadata = JSON.parse(audioInfo.metadata) as media.AVMetadata;
-      this.title = metadata.title ? metadata.title : audioInfo.name;
       this.artist = metadata.artist ? metadata.artist : this.artist;
       this.album = metadata.album ? metadata.album : this.album;
     }

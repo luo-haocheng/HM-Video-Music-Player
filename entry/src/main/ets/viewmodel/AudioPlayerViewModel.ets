@@ -181,6 +181,27 @@ export class AudioPlayerViewModel {
     await this.audioPlayer.seek(timeMs);
   }
 
+  async deleteAudio(audioInfo: AudioInfoModel, context: Context) {
+    if (this.currAudioItem) {
+      if (audioInfo.id === this.currAudioItem.id) {
+        this.audioPlayer.reset();
+        // Switch to next
+        if (this.audioList.length > 1) {
+          await this.switchNext(context);
+        } else {
+          this.currAudioItem = undefined;
+        }
+      }
+      // Delete from audio list
+      const delIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
+        return item.audioInfo.id === audioInfo.id;
+      });
+      if (delIdx !== -1) {
+        this.audioList.splice(delIdx, 1);
+      }
+    }
+  }
+
   private getRandomIndex(currIdx: number, len: number): number {
     if (len <= 1) {
       return 0;
