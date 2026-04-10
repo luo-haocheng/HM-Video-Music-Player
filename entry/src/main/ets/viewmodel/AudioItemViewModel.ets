@@ -8,6 +8,7 @@ export class AudioItemViewModel {
   @Track public title: string = '';
   @Track public album: string = '未知专辑';
   @Track public artist: string = '未知歌手';
+  @Track public isFavorite: boolean = false;
   @Track public albumCover?: image.PixelMap;
   @Track public isChoice: boolean = false;
   public audioInfo: AudioInfoModel = new AudioInfoModel();
@@ -45,10 +46,16 @@ export class AudioItemViewModel {
     }
   }
 
+  updateFavorite(isFavorite: boolean) {
+    this.isFavorite = isFavorite;
+    this.audioInfo.favorite = isFavorite ? 1 : 0;
+  }
+
   async updateAudioItem(audioInfo: AudioInfoModel) {
     this.id = audioInfo.id;
     this.audioInfo = audioInfo;
     this.title = audioInfo.name;
+    this.isFavorite = audioInfo.favorite === 0 ? false : true;
 
     if (audioInfo.metadata) {
       let metadata = JSON.parse(audioInfo.metadata) as media.AVMetadata;

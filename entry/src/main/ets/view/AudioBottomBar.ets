@@ -121,7 +121,7 @@ export struct AudioBottomBar {
     .backgroundColor(Color.Gray)
     .onClick(() => {
       if (this.audioPlayerVM.currAudioItem) {
-        this.mainPageStack.pushPath({ name: 'AudioPlayer' });
+        this.mainPageStack.pushPath({ name: 'AudioImmersive' });
       }
     });
   }

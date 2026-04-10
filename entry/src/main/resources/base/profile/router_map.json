@@ -21,9 +21,9 @@
       "buildFunction": "AudioListBuilder"
     },
     {
-      "name": "AudioPlayer",
-      "pageSourceFile": "src/main/ets/view/AudioPlayerView.ets",
-      "buildFunction": "AudioPlayerBuilder"
+      "name": "AudioImmersive",
+      "pageSourceFile": "src/main/ets/view/AudioImmersiveView.ets",
+      "buildFunction": "AudioImmersiveBuilder"
     }
   ]
 }

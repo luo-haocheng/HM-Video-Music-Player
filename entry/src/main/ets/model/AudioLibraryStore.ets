@@ -106,13 +106,13 @@ export class AudioLibraryStore {
     return 0;
   }
 
-  async updateAudioFavorite(audioInfo: AudioInfoModel): Promise<void> {
+  async updateAudioFavorite(audioInfo: AudioInfoModel, isFavorite: boolean): Promise<void> {
     if (this.store !== undefined) {
       try {
         let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
         predicate.equalTo('ID', audioInfo.id);
         const valueBucket: relationalStore.ValuesBucket = {
-          FAVORITE: audioInfo.favorite,
+          FAVORITE: isFavorite ? 1 : 0,
         };
         await this.store.update(valueBucket, predicate);
       } catch (error) {

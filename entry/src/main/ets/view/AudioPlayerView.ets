@@ -7,11 +7,6 @@ const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
-@Builder
-export function AudioPlayerBuilder() {
-  AudioPlayerView();
-}
-
 @Component
 export struct AudioPlayerView {
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
@@ -48,236 +43,218 @@ export struct AudioPlayerView {
   }
 
   build() {
-    NavDestination() {
-      Flex({
-        direction: FlexDirection.Column,
-        justifyContent: FlexAlign.SpaceBetween,
-        alignItems: ItemAlign.Center
-      }) {
-        Column({ space: 3 }) {
-          Text(this.audioPlayerVM.currAudioItem?.title)
-            .fontSize(24)
-            .fontColor(Color.Black)
-            .fontWeight(FontWeight.Bold);
-          Text(this.audioPlayerVM.currAudioItem?.artist)
-            .fontSize(12)
-            .fontColor(Color.Black);
+    Flex({
+      direction: FlexDirection.Column,
+      justifyContent: FlexAlign.SpaceBetween,
+      alignItems: ItemAlign.Center
+    }) {
+      Column({ space: 24 }) {
+        Row() {
+          if (this.audioPlayerVM.currAudioItem && this.audioPlayerVM.currAudioItem.albumCover) {
+            Image(this.audioPlayerVM.currAudioItem.albumCover)
+              .width('100%')
+              .height('100%')
+              .borderRadius(12)
+              .draggable(false)
+              .objectFit(ImageFit.Cover);
+          } else {
+            Image($r('app.media.music_fill'))
+              .width('50%')
+              .aspectRatio(1)
+              .draggable(false)
+              .fillColor('#FF007DFF')
+              .objectFit(ImageFit.Contain);
+          }
         }
         .width('100%')
-        .layoutWeight(0)
+        .aspectRatio(1)
+        .borderRadius(24)
+        .backgroundColor(Color.White)
         .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center);
+        .alignItems(VerticalAlign.Center);
 
-        Column({ space: 12 }) {
-          Row() {
-            if (this.audioPlayerVM.currAudioItem && this.audioPlayerVM.currAudioItem.albumCover) {
-              Image(this.audioPlayerVM.currAudioItem.albumCover)
-                .width('100%')
-                .height('100%')
-                .borderRadius(12)
-                .draggable(false)
-                .objectFit(ImageFit.Cover);
-            } else {
-              Image($r('app.media.music_fill'))
-                .width('50%')
-                .aspectRatio(1)
-                .draggable(false)
-                .fillColor('#FF007DFF')
-                .objectFit(ImageFit.Contain);
-            }
+        Row() {
+          Column({ space: 5 }) {
+            Text(this.audioPlayerVM.currAudioItem?.title)
+              .fontSize(24)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold);
+            Text(this.audioPlayerVM.currAudioItem?.artist)
+              .fontSize(14)
+              .fontColor(Color.Black);
           }
-          .width('90%')
-          .aspectRatio(1)
-          .borderRadius(24)
-          .backgroundColor(Color.White)
           .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center);
+          .alignItems(HorizontalAlign.Start);
 
-          Row() {
-            if (this.audioPlayerVM.bitRate && this.audioPlayerVM.codecMime && this.audioPlayerVM.sampleRate) {
-              Text(this.audioPlayerVM.codecMime)
-                .fontSize(10)
-                .fontColor(Color.Black);
-
-              Text(this.audioPlayerVM.sampleRate)
-                .fontSize(10)
-                .fontColor(Color.Black);
-
-              Text(this.audioPlayerVM.bitRate)
-                .fontSize(10)
-                .fontColor(Color.Black);
-            }
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-          .justifyContent(FlexAlign.SpaceEvenly);
-        }
-        .width('100%')
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center);
-
-        Column({ space: 30 }) {
-          Row({ space: 8 }) {
-            Text(this.timeStr(this.audioPlayerVM.currTime))
-              .fontSize(12)
-              .fontColor(Color.Black)
-              .layoutWeight(0);
-
-            Slider({
-              min: 0,
-              max: this.audioPlayerVM.duration,
-              value: this.audioPlayerVM.currTime,
-              style: SliderStyle.NONE,
-            })
-              .height(24)
-              .layoutWeight(1)
-              .trackThickness(8)
-              .trackColor('#22000000')
-              .blockSize({ width: 12, height: 12 })
-              .onChange(async (value: number, mode: SliderChangeMode) => {
-                if (mode === SliderChangeMode.End) {
-                  this.audioPlayerVM.seek(value);
-                }
-              });
-
-            Text(this.timeStr(this.audioPlayerVM.duration))
-              .fontSize(12)
-              .fontColor(Color.Black)
-              .layoutWeight(0);
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-          .justifyContent(FlexAlign.SpaceBetween);
-
-          Row() {
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.backward_end_fill'))
-                .width(36)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            }
-            .backgroundColor(Color.Transparent)
-            .onClick(async () => {
-              const context = this.getUIContext().getHostContext() as Context;
-              this.audioPlayerVM.switchPrev(context);
-            });
-
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image(this.audioPlayerVM.isPlaying ? $r('app.media.pause') : $r('app.media.play'))
-                .width(36)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            }
-            .backgroundColor(Color.Transparent)
-            .onClick(async () => {
-              if (this.audioPlayerVM.isPlaying) {
-                await this.audioPlayerVM.pause();
-              } else {
-                await this.audioPlayerVM.play();
-              }
-            });
-
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.forward_end_fill'))
-                .width(36)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            }
-            .backgroundColor(Color.Transparent)
-            .onClick(async () => {
-              const context = this.getUIContext().getHostContext() as Context;
-              this.audioPlayerVM.switchNext(context);
-            });
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-          .justifyContent(FlexAlign.SpaceAround);
-
-          Row() {
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.dot_grid_1x2'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            }
-            .backgroundColor(Color.Transparent)
-            .onClick(async () => {
-              // todo
-            });
-
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              if (this.audioPlayerVM.repeatMode === AudioRepeatMode.SINGLE_REPEAT) {
-                Image($r('app.media.repeat_1'))
-                  .width(24)
-                  .aspectRatio(1)
-                  .fillColor(Color.Black);
-              } else if (this.audioPlayerVM.repeatMode === AudioRepeatMode.LIST_REPEAT) {
-                Image($r('app.media.repeat'))
-                  .width(24)
-                  .aspectRatio(1)
-                  .fillColor(Color.Black);
-              } else {
-                Image($r('app.media.shuffle'))
-                  .width(24)
-                  .aspectRatio(1)
-                  .fillColor(Color.Black);
-              }
-            }
-            .backgroundColor(Color.Transparent)
-            .onClick(async () => {
-              this.audioPlayerVM.switchRepeatMode();
-            });
-
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.music_note_list'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            }
-            .backgroundColor(Color.Transparent)
-            .onClick(async () => {
-              if (this.audioPlayerVM.currAudioItem) {
-                this.currPlaylistDialogController = new CustomDialogController({
-                  width: '100%',
-                  height: '60%',
-                  builder: CurrentPlaylistView(),
-                  alignment: DialogAlignment.Bottom,
-                  offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
-                });
-                this.currPlaylistDialogController.open();
-              }
-            });
-
-            AVCastPicker({
-              customPicker: () => {
-                this.pickerBuilder();
-              }
-            })
-              .width(24)
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            Image(this.audioPlayerVM.isFavorite ? $r('app.media.heart_fill') : $r('app.media.heart'))
+              .width(28)
               .aspectRatio(1);
           }
-          .width('90%')
-          .alignItems(VerticalAlign.Center)
-          .justifyContent(FlexAlign.SpaceBetween);
+          .backgroundColor(Color.Transparent)
+          .onClick(async () => {
+            await this.audioPlayerVM.toggleFavorite();
+          });
         }
-        .layoutWeight(0)
-        .alignItems(HorizontalAlign.Center);
+        .width('100%')
+        .alignItems(VerticalAlign.Top)
+        .justifyContent(FlexAlign.SpaceBetween);
       }
       .width('100%')
-      .height('100%')
-      .padding({
-        top: 32,
-        bottom: 32
-      });
+      .layoutWeight(1)
+      .justifyContent(FlexAlign.Start)
+      .alignItems(HorizontalAlign.Center);
+
+
+      Column({ space: 32 }) {
+        Row({ space: 8 }) {
+          Text(this.timeStr(this.audioPlayerVM.currTime))
+            .fontSize(12)
+            .fontColor(Color.Black)
+            .layoutWeight(0);
+
+          Slider({
+            min: 0,
+            max: this.audioPlayerVM.duration,
+            value: this.audioPlayerVM.currTime,
+            style: SliderStyle.NONE,
+          })
+            .height(24)
+            .layoutWeight(1)
+            .trackThickness(8)
+            .trackColor('#22000000')
+            .blockSize({ width: 12, height: 12 })
+            .onChange(async (value: number, mode: SliderChangeMode) => {
+              if (mode === SliderChangeMode.End) {
+                this.audioPlayerVM.seek(value);
+              }
+            });
+
+          Text(this.timeStr(this.audioPlayerVM.duration))
+            .fontSize(12)
+            .fontColor(Color.Black)
+            .layoutWeight(0);
+        }
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.SpaceBetween);
+
+        Row() {
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            Image($r('app.media.backward_end_fill'))
+              .width(36)
+              .aspectRatio(1)
+              .fillColor(Color.Black);
+          }
+          .backgroundColor(Color.Transparent)
+          .onClick(async () => {
+            const context = this.getUIContext().getHostContext() as Context;
+            this.audioPlayerVM.switchPrev(context);
+          });
+
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            Image(this.audioPlayerVM.isPlaying ? $r('app.media.pause') : $r('app.media.play'))
+              .width(36)
+              .aspectRatio(1)
+              .fillColor(Color.Black);
+          }
+          .backgroundColor(Color.Transparent)
+          .onClick(async () => {
+            if (this.audioPlayerVM.isPlaying) {
+              await this.audioPlayerVM.pause();
+            } else {
+              await this.audioPlayerVM.play();
+            }
+          });
+
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            Image($r('app.media.forward_end_fill'))
+              .width(36)
+              .aspectRatio(1)
+              .fillColor(Color.Black);
+          }
+          .backgroundColor(Color.Transparent)
+          .onClick(async () => {
+            const context = this.getUIContext().getHostContext() as Context;
+            this.audioPlayerVM.switchNext(context);
+          });
+        }
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.SpaceAround);
+
+        Row() {
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            Image($r('app.media.dot_grid_1x2'))
+              .width(24)
+              .aspectRatio(1)
+              .fillColor(Color.Black);
+          }
+          .backgroundColor(Color.Transparent)
+          .onClick(async () => {
+            // todo
+          });
+
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            if (this.audioPlayerVM.repeatMode === AudioRepeatMode.SINGLE_REPEAT) {
+              Image($r('app.media.repeat_1'))
+                .width(24)
+                .aspectRatio(1)
+                .fillColor(Color.Black);
+            } else if (this.audioPlayerVM.repeatMode === AudioRepeatMode.LIST_REPEAT) {
+              Image($r('app.media.repeat'))
+                .width(24)
+                .aspectRatio(1)
+                .fillColor(Color.Black);
+            } else {
+              Image($r('app.media.shuffle'))
+                .width(24)
+                .aspectRatio(1)
+                .fillColor(Color.Black);
+            }
+          }
+          .backgroundColor(Color.Transparent)
+          .onClick(async () => {
+            this.audioPlayerVM.switchRepeatMode();
+          });
+
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            Image($r('app.media.music_note_list'))
+              .width(24)
+              .aspectRatio(1)
+              .fillColor(Color.Black);
+          }
+          .backgroundColor(Color.Transparent)
+          .onClick(async () => {
+            if (this.audioPlayerVM.currAudioItem) {
+              this.currPlaylistDialogController = new CustomDialogController({
+                width: '100%',
+                height: '60%',
+                builder: CurrentPlaylistView(),
+                alignment: DialogAlignment.Bottom,
+                offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+              });
+              this.currPlaylistDialogController.open();
+            }
+          });
+
+          AVCastPicker({
+            customPicker: () => {
+              this.pickerBuilder();
+            }
+          })
+            .width(24)
+            .aspectRatio(1);
+        }
+        .width('90%')
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.SpaceBetween);
+      }
+      .layoutWeight(0)
+      .alignItems(HorizontalAlign.Center);
     }
-    .padding({
-      left: 32,
-      right: 32,
-      top: this.getUIContext().px2vp(this.topRectHeight),
-      bottom: this.getUIContext().px2vp(this.bottomRectHeight)
-    })
-    .backgroundColor('#DCDCDC')
-    .hideBackButton(true);
+    .padding(32)
+    .width('100%')
+    .height('100%');
   }
 }
