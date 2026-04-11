@@ -68,7 +68,7 @@ export struct AudioPlayerView {
         }
         .width('100%')
         .aspectRatio(1)
-        .borderRadius(24)
+        .borderRadius(12)
         .backgroundColor(Color.White)
         .justifyContent(FlexAlign.Center)
         .alignItems(VerticalAlign.Center);

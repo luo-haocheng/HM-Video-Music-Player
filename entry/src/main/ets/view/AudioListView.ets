@@ -5,6 +5,7 @@ import { emitter } from '@kit.BasicServicesKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 import { AddToPlaylistDialog } from './AddToPlaylistDialog';
+import { AudioEditDialog } from './AudioEditDialog';
 
 const ALL_AUDIO = '*';
 const AUDIO_LIST_INFO = 'AudioListInfo';
@@ -149,6 +150,7 @@ struct ListView {
   @Consume(CHOICE_ALL) choiceAll: boolean = true;
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
   private selectedItem?: AudioItemViewModel;
+  private audioEditDialogController?: CustomDialogController;
   private addPlaylistDialogController?: CustomDialogController;
   private isAllChoice: Callback<void> = () => {
     const choiceAll = this.audioListVM.audioList.find((item: AudioItemViewModel) => {
@@ -172,16 +174,18 @@ struct ListView {
       .width('100%')
       .padding({ top: 16, bottom: 16 })
       .onClick(() => {
-        if (this.selectedItem) {
-          this.addPlaylistDialogController = new CustomDialogController({
-            width: '100%',
-            height: '60%',
-            alignment: DialogAlignment.Bottom,
-            builder: AddToPlaylistDialog({ audioInfoList: [this.selectedItem.audioInfo] }),
-            offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
-          });
-          this.addPlaylistDialogController.open();
-        }
+        setTimeout(() => {
+          if (this.selectedItem) {
+            this.addPlaylistDialogController = new CustomDialogController({
+              width: '100%',
+              height: '60%',
+              alignment: DialogAlignment.Bottom,
+              builder: AddToPlaylistDialog({ audioInfoList: [this.selectedItem.audioInfo] }),
+              offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+            });
+            this.addPlaylistDialogController.open();
+          }
+        }, 200);
       });
 
       Divider()
@@ -207,6 +211,33 @@ struct ListView {
           .vertical(false)
           .strokeWidth(0.5);
       }
+
+      Row() {
+        Text('编辑')
+          .fontSize(14)
+          .fontColor(Color.Black);
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(async () => {
+        // todo
+        setTimeout(() => {
+          if (this.selectedItem) {
+            this.audioEditDialogController = new CustomDialogController({
+              width: '100%',
+              height: '80%',
+              alignment: DialogAlignment.Bottom,
+              builder: AudioEditDialog({ audioItem: this.selectedItem }),
+              offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+            });
+            this.audioEditDialogController.open();
+          }
+        }, 200);
+      });
+
+      Divider()
+        .vertical(false)
+        .strokeWidth(0.5);
 
       Row() {
         Text('删除')

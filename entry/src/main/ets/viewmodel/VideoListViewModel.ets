@@ -40,7 +40,7 @@ export class VideoListViewModel {
       videoItem.updateVideoItem(info);
       this.insertVideoByOrder(videoItem);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
   }
 
@@ -51,7 +51,7 @@ export class VideoListViewModel {
       folderItem.updateFolderItem(info);
       this.insertFolderByOrder(folderItem);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
   }
 
@@ -312,13 +312,13 @@ export class VideoListViewModel {
         await fileIo.unlink(delVideoList[i].videoPath);
       } catch (error) {
         console.error(`Failed to unlink video file: ${delVideoList[i].videoPath}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       }
       try {
         await fileIo.unlink(delVideoList[i].thumbnailPath);
       } catch (error) {
         console.error(`Failed to unlink thumbnail file: ${delVideoList[i].thumbnailPath}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       }
     }
     // delete from list
@@ -338,13 +338,13 @@ export class VideoListViewModel {
       await fileIo.unlink(videoInfo.videoPath);
     } catch (error) {
       console.error(`Failed to unlink video file: ${videoInfo.videoPath}. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     }
     try {
       await fileIo.unlink(videoInfo.thumbnailPath);
     } catch (error) {
       console.error(`Failed to unlink thumbnail file: $ {videoInfo.thumbnailPath}. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     }
     // Remove the video from list
     let idx = this.videoList.findIndex((item: VideoItemViewModel) => {

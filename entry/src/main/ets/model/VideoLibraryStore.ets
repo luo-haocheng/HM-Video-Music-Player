@@ -22,7 +22,7 @@ export class VideoLibraryStore {
       this.store = await relationalStore.getRdbStore(context, storeConfig);
     } catch (error) {
       console.error(`Failed to get RdbStore. Casuse: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     }
     let transaction: relationalStore.Transaction | undefined;
     try {
@@ -33,7 +33,7 @@ export class VideoLibraryStore {
     } catch (error) {
       console.error(`Failed to execute create table sql. Cause: ${JSON.stringify(error)}`);
       await transaction?.rollback();
-      throw new Error(error);
+      throw Error(error);
     }
   }
 
@@ -52,7 +52,7 @@ export class VideoLibraryStore {
         rowId = await this.store.insert(VIDEO_TABLE_NAME, valueBucket);
       } catch (error) {
         console.error(`Failed to insert ${JSON.stringify(valueBucket)}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       }
     }
     return rowId;
@@ -70,7 +70,7 @@ export class VideoLibraryStore {
         rowId = await this.store.insert(FOLDER_TABLE_NAME, valueBucket);
       } catch (error) {
         console.error(`Failed to insert ${JSON.stringify(valueBucket)}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       }
     }
     return rowId;
@@ -87,7 +87,7 @@ export class VideoLibraryStore {
         await this.store.update(valueBucket, predicate);
       } catch (error) {
         console.error(`Failed to move video id=${videoInfo.id} to ${moveFolder}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       }
     }
   }
@@ -121,7 +121,7 @@ export class VideoLibraryStore {
       } catch (error) {
         console.error(`Failed to move folder. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
-        throw new Error(error);
+        throw Error(error);
       }
     }
   }
@@ -137,7 +137,7 @@ export class VideoLibraryStore {
         await this.store.update(valueBucket, predicate);
       } catch (error) {
         console.error(`Failed to rename video id=${videoInfo.id}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       }
     }
   }
@@ -170,7 +170,7 @@ export class VideoLibraryStore {
       } catch (error) {
         console.error(`Failed to rename folder. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
-        throw new Error(error);
+        throw Error(error);
       }
     }
   }
@@ -183,7 +183,7 @@ export class VideoLibraryStore {
         await this.store.delete(predicate);
       } catch (error) {
         console.error(`Failed to delete video by id=${rowId}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       }
     }
   }
@@ -207,7 +207,7 @@ export class VideoLibraryStore {
       } catch (error) {
         console.error(`Failed to delete ${JSON.stringify(subFolders)} and ${JSON.stringify(subVideos)}. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
-        throw new Error(error);
+        throw Error(error);
       }
     }
   }
@@ -231,7 +231,7 @@ export class VideoLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to query video by id=${rowId}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSet?.close();
       }
@@ -255,7 +255,7 @@ export class VideoLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to query folder by id=${rowId}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSet?.close();
       }
@@ -284,7 +284,7 @@ export class VideoLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to execute query video by folder=${folder}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSet?.close();
       }
@@ -310,7 +310,7 @@ export class VideoLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to execute query folder by folder=${folder}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSet?.close();
       }

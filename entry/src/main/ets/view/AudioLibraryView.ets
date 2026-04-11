@@ -776,7 +776,6 @@ export struct AudioLibraryView {
                 })
             );
           }
-          .scrollable(false)
           .onSelected((index: number) => {
             this.selectedIndex = index;
           });

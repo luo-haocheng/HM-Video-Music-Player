@@ -27,6 +27,7 @@ export struct AudioBoxView {
           Image(this.audioItem.albumCover)
             .width('100%')
             .height('100%')
+            .borderRadius(12)
             .draggable(false)
             .objectFit(ImageFit.Cover);
         } else {

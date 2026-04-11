@@ -294,7 +294,7 @@ export class MediaSessionManager {
         }
       });
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
   }
 
@@ -331,7 +331,7 @@ export class MediaSessionManager {
         }
       });
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
   }
 

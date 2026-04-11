@@ -26,7 +26,7 @@ export class AudioLibraryStore {
       this.store = await relationalStore.getRdbStore(context, storeConfig);
     } catch (error) {
       console.error(`Failed to get RdbStore. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     }
     let transaction: relationalStore.Transaction | undefined;
     try {
@@ -38,7 +38,7 @@ export class AudioLibraryStore {
     } catch (error) {
       console.error(`Failed to execute create table sql. Cause: ${JSON.stringify(error)}`);
       await transaction?.rollback();
-      throw new Error(error);
+      throw Error(error);
     }
   }
 
@@ -60,7 +60,7 @@ export class AudioLibraryStore {
       } catch (error) {
         console.error(`Failed to delete audio ${JSON.stringify(audioInfo)}. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
-        throw new Error(error);
+        throw Error(error);
       }
     }
   }
@@ -83,7 +83,7 @@ export class AudioLibraryStore {
       } catch (error) {
         console.error(`Failed to delete playlist ${JSON.stringify(playlistInfo)}. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
-        throw new Error(error);
+        throw Error(error);
       }
     }
   }
@@ -100,7 +100,7 @@ export class AudioLibraryStore {
         return delNum;
       } catch (error) {
         console.error(`Failed to delete ${audioInfo.id}, ${playlistName}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       }
     }
     return 0;
@@ -117,7 +117,23 @@ export class AudioLibraryStore {
         await this.store.update(valueBucket, predicate);
       } catch (error) {
         console.error(`Failed to update ${JSON.stringify(audioInfo)} favorite. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
+      }
+    }
+  }
+
+  async updateAudioLyrics(audioInfo: AudioInfoModel, lyricsPath: string): Promise<void> {
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('ID', audioInfo.id);
+        const valueBucket: relationalStore.ValuesBucket = {
+          LYRICS_PATH: lyricsPath,
+        };
+        await this.store.update(valueBucket, predicate);
+      } catch (error) {
+        console.error(`Failed to update ${JSON.stringify(audioInfo)} favorite. Cause: ${JSON.stringify(error)}`);
+        throw Error(error);
       }
     }
   }
@@ -149,7 +165,7 @@ export class AudioLibraryStore {
       } catch (error) {
         console.error(`Failed to insert ${JSON.stringify(audioInfo)}. Cause: ${JSON.stringify(error)}`);
         await transaction?.rollback();
-        throw new Error(error);
+        throw Error(error);
       }
     }
     return rowId;
@@ -166,7 +182,7 @@ export class AudioLibraryStore {
         rowId = await this.store.insert(PLAYLIST_TABLE_NAME, valueBucket);
       } catch (error) {
         console.error(`Failed to insert ${JSON.stringify(playlistInfo)}. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       }
     }
     return rowId;
@@ -205,7 +221,7 @@ export class AudioLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to select all playlist. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSet?.close();
       }
@@ -226,7 +242,7 @@ export class AudioLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to execute query all audio. Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSet?.close();
       }
@@ -250,7 +266,7 @@ export class AudioLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to execute query audio id of playlist: ${playlistName} . Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSetID?.close();
       }
@@ -268,7 +284,7 @@ export class AudioLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to execute query audio id of playlist: ${playlistName} . Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSetAudio?.close();
       }
@@ -290,7 +306,7 @@ export class AudioLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to execute query audio of album: ${album} . Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSet?.close();
       }
@@ -312,7 +328,7 @@ export class AudioLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to execute query audio of artist: ${artist} . Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSet?.close();
       }
@@ -334,7 +350,7 @@ export class AudioLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to execute query audio id of playlist: ${playlistName} . Cause: ${JSON.stringify(error)}`);
-        throw new Error(error);
+        throw Error(error);
       } finally {
         resultSet?.close();
       }
@@ -367,7 +383,7 @@ export class AudioLibraryStore {
       }
     } catch (error) {
       console.error(`Failed to fetch audio info from resultSet`);
-      throw new Error(error);
+      throw Error(error);
     }
     return audioInfo;
   }

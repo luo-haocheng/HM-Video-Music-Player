@@ -11,7 +11,7 @@ export class Settings {
       this.SettingPreferences = await preferences.getPreferences(context, options);
     } catch (error) {
       console.error(`Failed to invoke Preferencs.getPreferences. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     }
   }
 
@@ -35,6 +35,6 @@ export class Settings {
         console.error(`Failed to get setting, key=${key}. Cause: ${JSON.stringify(error)}.`);
       }
     }
-    throw new Error('Setting preference is null');
+    throw Error('Setting preference is null');
   }
 }

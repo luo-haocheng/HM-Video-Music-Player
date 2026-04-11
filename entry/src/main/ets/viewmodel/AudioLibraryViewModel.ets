@@ -141,7 +141,7 @@ export class AudioLibraryViewModel {
       console.error(`Failed to import video from download directory`);
     }
   }
- 
+
   private getAudioNameFromFileUri(uri: string): string {
     const lastSlashIdx = uri.lastIndexOf('/');
     const audioFullName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
@@ -157,21 +157,21 @@ export class AudioLibraryViewModel {
     try {
       await this.createAudioCoverDir(audioDir, coverDir);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
     // Copy audio file to sandbox
     let audioPath: string = audioDir + `/${util.generateRandomUUID()}.mp4`;
     try {
       await this.copyAudio2Sandbox(uri, audioPath);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
     // Fetch and save album cover to sandbox
     let coverPath: string | null = coverDir + `/${util.generateRandomUUID()}.jpg`;
     try {
       coverPath = await this.fetchSaveAlbumCover(audioPath, coverPath);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
     // Insert audio record to database
     let audioInfo: AudioInfoModel | undefined;
@@ -179,7 +179,7 @@ export class AudioLibraryViewModel {
     try {
       audioInfo = await this.insertAudio2DB(audioName, audioPath, coverPath);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
     // Notify
     if (audioInfo) {
@@ -199,7 +199,7 @@ export class AudioLibraryViewModel {
       }
     } catch (error) {
       console.error(`Failed to create audio directory. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     }
     try {
       if (!fileIo.accessSync(coverDir)) {
@@ -207,7 +207,7 @@ export class AudioLibraryViewModel {
       }
     } catch (error) {
       console.error(`Failed to create cover directory. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     }
   }
 
@@ -220,7 +220,7 @@ export class AudioLibraryViewModel {
       await fileIo.copyFile(srcFile.fd, dstFile.fd);
     } catch (error) {
       console.error(`Failed to copy audio file from ${srcPath} to ${dstPath}. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     } finally {
       if (srcFile) {
         await fileIo.close(srcFile.fd);
@@ -266,7 +266,7 @@ export class AudioLibraryViewModel {
       await imagePacker.packToFile(coverImg, coverFile.fd, packOpts);
     } catch (error) {
       console.error(`Faile to save album cover. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     } finally {
       if (coverImg) {
         await coverImg.release();
@@ -318,7 +318,7 @@ export class AudioLibraryViewModel {
     try {
       audioInfo.id = await this.audioStore.insertAudioInfo(audioInfo);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
 
     return audioInfo;

@@ -40,7 +40,7 @@ export class VideoLibraryViewModel {
       }
     } catch (error) {
       console.error(`Failed to create video directory. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     }
     try {
       if (!fileIo.accessSync(thumbnailDir)) {
@@ -48,7 +48,7 @@ export class VideoLibraryViewModel {
       }
     } catch (error) {
       console.error(`Failed to create thumbnail directory. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     }
   }
 
@@ -61,7 +61,7 @@ export class VideoLibraryViewModel {
       await fileIo.copyFile(srcFile.fd, dstFile.fd);
     } catch (error) {
       console.error(`Failed to copy video file ${srcPath} to ${dstPath}. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     } finally {
       if (srcFile) {
         await fileIo.close(srcFile.fd);
@@ -87,7 +87,7 @@ export class VideoLibraryViewModel {
       previewImg = await avImageGenerator.fetchFrameByTime(timeUs, queryOption, {});
     } catch (error) {
       console.error(`Failed to create thumbnail. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     } finally {
       if (videoFile) {
         await fileIo.close(videoFile.fd);
@@ -105,7 +105,7 @@ export class VideoLibraryViewModel {
       await imagePacker.packToFile(previewImg, thumbnailFile.fd, packOpts);
     } catch (error) {
       console.error(`Failed to save thumbnail. Cause: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     } finally {
       if (previewImg) {
         await previewImg.release();
@@ -132,7 +132,7 @@ export class VideoLibraryViewModel {
       metadata = await avMetadataExtractor.fetchMetadata();
     } catch (error) {
       console.error(`Failed to fetch metadata, error: ${JSON.stringify(error)}`);
-      throw new Error(error);
+      throw Error(error);
     } finally {
       if (avMetadataExtractor) {
         await avMetadataExtractor.release();
@@ -157,21 +157,21 @@ export class VideoLibraryViewModel {
     try {
       await this.createVidThumbDir(videoDir, thumbnailDir);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
     // Copy video file to sandbox
     let videoPath: string = videoDir + `/${util.generateRandomUUID()}.mp4`;
     try {
       await this.copyVideo2Sandbox(uri, videoPath);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
     // create and save thumbnail to sandbox
     let thumbnailPath: string = thumbnailDir + `/${util.generateRandomUUID()}.jpg`;
     try {
       await this.createSaveThumbnail(videoPath, thumbnailPath);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
     // Insert video record to database
     let rowId: number = -1;
@@ -180,7 +180,7 @@ export class VideoLibraryViewModel {
     try {
       rowId = await this.insert2DB(folder, videoName, videoPath, thumbnailPath);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
     // Update Video
     let eventData: emitter.EventData = {
@@ -280,7 +280,7 @@ export class VideoLibraryViewModel {
     try {
       rowId = await this.videoStore.insertFolderInfo(folderInfo);
     } catch (error) {
-      throw new Error(error);
+      throw Error(error);
     }
     // Update folder
     let eventData: emitter.EventData = {
