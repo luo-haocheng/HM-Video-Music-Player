@@ -99,6 +99,17 @@ export struct AudioPlayerView {
         .width('100%')
         .alignItems(VerticalAlign.Top)
         .justifyContent(FlexAlign.SpaceBetween);
+
+        Row() {
+          Text(this.audioPlayerVM.currLyrics)
+            .maxLines(1)
+            .fontSize(14)
+            .fontColor(Color.Black)
+            .textOverflow({ overflow: TextOverflow.MARQUEE });
+        }
+        .width('100%')
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.Start);
       }
       .width('100%')
       .layoutWeight(1)

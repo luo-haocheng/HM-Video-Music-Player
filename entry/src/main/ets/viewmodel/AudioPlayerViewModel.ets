@@ -8,7 +8,8 @@ import { AudioItemViewModel } from './AudioItemViewModel';
 import { AudioItemViewModelList } from './AudioListViewModel';
 import { avSession as AVSessionMananger } from '@kit.AVSessionKit';
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
-
+import { fileIo } from '@kit.CoreFileKit';
+import { LyricsInfo } from '../model/LyricsInfoModel';
 
 @Observed
 export class AudioPlayerViewModel {
@@ -16,13 +17,17 @@ export class AudioPlayerViewModel {
   @Track currTime: number = 0;
   @Track isPlaying: boolean = false;
   @Track isFavorite: boolean = false;
+  @Track currLyrics: string = '';
+  @Track currLyricsIdx: number = 0;
+  @Track lyricsInfoArr: Array<LyricsInfo> = [];
   @Track currAudioItem?: AudioItemViewModel;
   @Track audioList: AudioItemViewModelList = new AudioItemViewModelList();
   @Track repeatMode: AudioRepeatMode = AudioRepeatMode.SINGLE_REPEAT;
-  private settings: Settings = new Settings();
-  private audioStore: AudioLibraryStore = new AudioLibraryStore();
+  @Track lyricsScroller: Scroller = new Scroller();
   private playerState: media.AVPlayerState = 'idle';
+  private settings: Settings = new Settings();
   private audioPlayer: AVPlayerModel = new AVPlayerModel();
+  private audioStore: AudioLibraryStore = new AudioLibraryStore();
   private mediaSession: MediaSessionManager = new MediaSessionManager();
 
   async init(context: Context): Promise<void> {
@@ -56,6 +61,7 @@ export class AudioPlayerViewModel {
     });
     this.audioPlayer.registerCallback('timeUpdate', (timeMs: number) => {
       this.currTime = timeMs;
+      this.updateLyrics(timeMs);
     });
     this.audioPlayer.registerCallback('seekDone', (timeMs: number) => {
       this.mediaSession.updatePlayPosition(timeMs);
@@ -93,9 +99,10 @@ export class AudioPlayerViewModel {
   }
 
   async setAudioAsset(audioInfo: AudioInfoModel, context: Context) {
+    await this.loadLyrics(audioInfo);
+    this.isFavorite = audioInfo.favorite === 0 ? false : true;
     await this.mediaSession.setAudioAsset(audioInfo, context);
     await this.audioPlayer.setMediaAsset(audioInfo.audioPath);
-    this.isFavorite = audioInfo.favorite === 0 ? false : true;
     await this.mediaSession.updateLoopMode(this.currTime, this.repeatMode);
     await this.mediaSession.updateFavorite(this.currTime, audioInfo.favorite === 0 ? false : true);
   }
@@ -199,6 +206,42 @@ export class AudioPlayerViewModel {
       if (delIdx !== -1) {
         this.audioList.splice(delIdx, 1);
       }
+    }
+  }
+
+  private updateLyrics(timeMs: number) {
+    for (let i = 0; i < this.lyricsInfoArr.length; ++i) {
+      const startMs = this.lyricsInfoArr[i].startMs;
+      const endMS = i === this.lyricsInfoArr.length - 1 ? Infinity : this.lyricsInfoArr[i + 1].startMs;
+      if (timeMs >= startMs && timeMs < endMS) {
+        if (this.currLyricsIdx !== i) {
+          this.currLyricsIdx = i;
+          this.lyricsScroller.scrollToIndex(this.currLyricsIdx, true, ScrollAlign.CENTER);
+        }
+        this.currLyrics = this.lyricsInfoArr[i].text;
+      }
+    }
+  }
+
+  private async loadLyrics(audioInfo: AudioInfoModel): Promise<void> {
+    this.currLyrics = '';
+    this.currLyricsIdx = 0;
+    this.lyricsInfoArr = [];
+    if (!audioInfo.lyricsPath) {
+      return;
+    }
+    try {
+      const lyricsText = await fileIo.readText(audioInfo.lyricsPath);
+      const lyricsLines = lyricsText.split('\n');
+      for (let i = 0; i < lyricsLines.length; ++i) {
+        const lyricsInfo = new LyricsInfo();
+        if (lyricsInfo.updateLyrics(lyricsLines[i])) {
+          this.lyricsInfoArr.push(lyricsInfo);
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to load lyrics from ${audioInfo.lyricsPath}. Cause: ${JSON.stringify(error)}`);
+      return;
     }
   }
 

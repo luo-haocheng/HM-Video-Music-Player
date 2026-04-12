@@ -58,7 +58,7 @@ export class AudioEditViewModel {
     let srcFile: fileIo.File | undefined;
     let desFile: fileIo.File | undefined;
     try {
-      const desPath = lyricsDir + `/${util.generateRandomUUID()}.mp4`;
+      const desPath = lyricsDir + `/${util.generateRandomUUID()}.lrc`;
       srcFile = await fileIo.open(srcPath, fileIo.OpenMode.READ_ONLY);
       desFile = await fileIo.open(desPath, fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.CREATE);
       await fileIo.copyFile(srcFile.fd, desFile.fd);

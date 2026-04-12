@@ -38,7 +38,6 @@ export class MediaSessionManager {
   async setAudioAsset(audioInfo: AudioInfoModel, context: Context) {
     if (this.session) {
       let duration = -1;
-      let title: string | undefined;
       let mediaImg: image.PixelMap | undefined;
       try {
         if (audioInfo.coverPath) {
