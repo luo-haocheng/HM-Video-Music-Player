@@ -9,27 +9,31 @@ export struct AudioLyricsView {
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
 
   build() {
-    Column({ space: 24 }) {
-      Column({ space: 5 }) {
-        Text(this.audioPlayerVM.currAudioItem?.title)
-          .fontSize(24)
-          .fontColor(Color.Black)
-          .fontWeight(FontWeight.Bold);
-        Text(this.audioPlayerVM.currAudioItem?.artist)
-          .fontSize(14)
-          .fontColor(Color.Black);
-      }
-      .width('100%')
-      .justifyContent(FlexAlign.Start)
-      .alignItems(HorizontalAlign.Center);
-
+    Column() {
       if (this.audioPlayerVM.lyricsInfoArr.length === 0) {
-        Text('暂无歌词')
-          .fontSize(32)
-          .fontColor(Color.Black)
-          .fontWeight(FontWeight.Bold)
-          .layoutWeight(1);
+        Column() {
+          Text('暂无歌词')
+            .fontSize(32)
+            .fontColor(Color.Black)
+            .fontWeight(FontWeight.Bold);
+        }
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center);
       } else {
+        Column({ space: 5 }) {
+          Text(this.audioPlayerVM.currAudioItem?.title)
+            .fontSize(24)
+            .fontColor(Color.Black)
+            .fontWeight(FontWeight.Bold);
+          Text(this.audioPlayerVM.currAudioItem?.artist)
+            .fontSize(14)
+            .fontColor(Color.Black);
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+        .alignItems(HorizontalAlign.Center);
+
         List({ space: 16, scroller: this.audioPlayerVM.lyricsScroller }) {
           ForEach(
             this.audioPlayerVM.lyricsInfoArr,
@@ -53,11 +57,10 @@ export struct AudioLyricsView {
           .height('50%')
           .backgroundColor(Color.Transparent);
         }
-        .width('100%')
-        .height('100%')
+        .layoutWeight(1)
+        .contentStartOffset(24)
         .scrollBar(BarState.Off)
-        .fadingEdge(true, { fadingEdgeLength: LengthMetrics.vp(24) })
-        .layoutWeight(1);
+        .fadingEdge(true, { fadingEdgeLength: LengthMetrics.vp(48) });
       }
     }
     .width('100%')

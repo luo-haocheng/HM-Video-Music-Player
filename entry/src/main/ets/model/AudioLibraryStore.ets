@@ -2,7 +2,6 @@ import { relationalStore } from '@kit.ArkData';
 import { AudioInfoModel } from './AudioInfoModel';
 import { PlayListInfoModel } from './PlayListInfoModel';
 
-const ALL_AUDIO = '*';
 const AUDIO_STORE_NAME = 'AudioStore.db';
 const AUDIO_TABLE_NAME = 'VIDEO_IMPORTED';
 const PLAYLIST_TABLE_NAME = 'PLAYLIST_CREATED';
@@ -141,10 +140,8 @@ export class AudioLibraryStore {
   async insertAudioInfo(audioInfo: AudioInfoModel): Promise<number> {
     let rowId = -1;
     if (this.store !== undefined) {
-      let transaction: relationalStore.Transaction | undefined;
       try {
-        transaction = await this.store.createTransaction();
-        const valueBucket1: relationalStore.ValuesBucket = {
+        const valueBucket: relationalStore.ValuesBucket = {
           TITLE: audioInfo.title,
           ALBUM: audioInfo.album,
           ARTIST: audioInfo.artist,
@@ -155,16 +152,9 @@ export class AudioLibraryStore {
           COVER_PATH: audioInfo.coverPath,
           LYRICS_PATH: audioInfo.lyricsPath,
         };
-        rowId = await transaction.insert(AUDIO_TABLE_NAME, valueBucket1);
-        const valueBucket2: relationalStore.ValuesBucket = {
-          PLAYLIST_NAME: ALL_AUDIO,
-          AUDIO_ID: rowId,
-        };
-        await transaction.insert(PLAYLIST_AUDIO_TABLE_NAME, valueBucket2);
-        await transaction.commit();
+        rowId = await this.store.insert(AUDIO_TABLE_NAME, valueBucket);
       } catch (error) {
         console.error(`Failed to insert ${JSON.stringify(audioInfo)}. Cause: ${JSON.stringify(error)}`);
-        await transaction?.rollback();
         throw Error(error);
       }
     }
@@ -242,6 +232,28 @@ export class AudioLibraryStore {
         }
       } catch (error) {
         console.error(`Failed to execute query all audio. Cause: ${JSON.stringify(error)}`);
+        throw Error(error);
+      } finally {
+        resultSet?.close();
+      }
+    }
+    return audioInfoList;
+  }
+
+  async selectFavoriteAudio(): Promise<AudioInfoModel[]> {
+    let audioInfoList: AudioInfoModel[] = [];
+    let resultSet: relationalStore.ResultSet | undefined;
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('FAVORITE', 1);
+        resultSet = await this.store.query(predicate);
+        while (resultSet.goToNextRow()) {
+          const audioInfo = this.fetchAudioInfoFromResult(resultSet);
+          audioInfoList.push(audioInfo);
+        }
+      } catch (error) {
+        console.error(`Failed to execute query favorite audio. Cause: ${JSON.stringify(error)}`);
         throw Error(error);
       } finally {
         resultSet?.close();

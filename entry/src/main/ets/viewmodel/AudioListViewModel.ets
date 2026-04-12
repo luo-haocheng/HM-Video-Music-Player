@@ -9,6 +9,7 @@ import { SettingKey, SortModeValue, SortRuleValue } from '../model/SettingsModel
 import { i18n } from '@kit.LocalizationKit';
 
 const ALL_AUDIO = '*';
+const FAVORITE_AUDIO = '**';
 const DELETE_AUDIO_EVENT = 'DeleteAudio';
 const DELETE_FROM_PLAYLIST_EVENT = 'DeleteFromPlaylist';
 
@@ -70,6 +71,15 @@ export class AudioListViewModel {
     this.sortAudioList();
   }
 
+  async toggleFavorite(audioInfo: AudioInfoModel): Promise<void> {
+    const idx = this.audioList.findIndex((item: AudioItemViewModel) => {
+      return item.audioInfo.id === audioInfo.id;
+    });
+    if (idx !== -1) {
+      this.audioList.splice(idx, 1);
+    }
+  }
+
   async deleteAudio(audioInfo: AudioInfoModel): Promise<void> {
     // Delete database record
     await this.audioStore.deleteAudio(audioInfo);
@@ -84,6 +94,9 @@ export class AudioListViewModel {
       await fileIo.unlink(audioInfo.audioPath);
       if (audioInfo.coverPath) {
         await fileIo.unlink(audioInfo.coverPath);
+      }
+      if (audioInfo.lyricsPath) {
+        await fileIo.unlink(audioInfo.lyricsPath);
       }
     } catch (error) {
       console.error(`Failed to delete file ${audioInfo.audioPath}, ${audioInfo.coverPath}. Cause: ${JSON.stringify(error)}`);
@@ -151,7 +164,17 @@ export class AudioListViewModel {
   }
 
   private async loadFromPlayList(name: string | null) {
-    const audioInfoList = await this.audioStore.selectAudioByPlayList(name);
+    let audioInfoList: AudioInfoModel[] = [];
+    switch (name) {
+      case ALL_AUDIO:
+        audioInfoList = await this.audioStore.selectAllAudio();
+        break;
+      case FAVORITE_AUDIO:
+        audioInfoList = await this.audioStore.selectFavoriteAudio();
+        break;
+      default:
+        audioInfoList = await this.audioStore.selectAudioByPlayList(name);
+    }
     for (let i = 0; i < audioInfoList.length; ++i) {
       let audioItem = new AudioItemViewModel();
       audioItem.updateAudioItem(audioInfoList[i]);

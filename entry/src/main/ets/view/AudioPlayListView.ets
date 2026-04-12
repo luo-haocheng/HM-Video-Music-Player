@@ -14,6 +14,7 @@ const DELETE_AUDIO_EVENT = 'DeleteAudio';
 const SORT_PLAYLIST_EVENT = 'SortPlaylist';
 const ADD_TO_PLAYLIST_EVENT = 'AddToPlaylist';
 const CREATE_PLAYLIST_EVENT = 'CreatePlaylist';
+const TOGGLE_FAVORITE_EVENT = 'ToggleFavorite';
 const DELETE_FROM_PLAYLIST_EVENT = 'DeleteFromPlaylist';
 
 @Component
@@ -55,6 +56,12 @@ export struct AudioPlayListView {
     eventData;
     this.audioPlaylistVM.sortUserPlaylist();
   };
+  private toggleFavoriteCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data) {
+      const audioInfo = eventData.data['info'] as AudioInfoModel;
+      this.audioPlaylistVM.toggleFavorite(audioInfo);
+    }
+  };
 
   aboutToAppear(): void {
     let context = this.getUIContext().getHostContext() as Context;
@@ -64,6 +71,7 @@ export struct AudioPlayListView {
     emitter.on(SORT_PLAYLIST_EVENT, this.sortPlaylistCallback);
     emitter.on(ADD_TO_PLAYLIST_EVENT, this.addToPlaylistCallback);
     emitter.on(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
+    emitter.on(TOGGLE_FAVORITE_EVENT, this.toggleFavoriteCallback);
     emitter.on(DELETE_FROM_PLAYLIST_EVENT, this.deleteFromPlaylistCallback);
   }
 
@@ -73,6 +81,7 @@ export struct AudioPlayListView {
     emitter.off(SORT_PLAYLIST_EVENT, this.sortPlaylistCallback);
     emitter.off(ADD_TO_PLAYLIST_EVENT, this.addToPlaylistCallback);
     emitter.off(CREATE_PLAYLIST_EVENT, this.createPlaylistCallback);
+    emitter.off(TOGGLE_FAVORITE_EVENT, this.toggleFavoriteCallback);
     emitter.off(DELETE_FROM_PLAYLIST_EVENT, this.deleteFromPlaylistCallback);
   }
 

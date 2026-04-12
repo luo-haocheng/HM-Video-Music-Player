@@ -516,7 +516,10 @@ export struct AudioLibraryView {
         }
       });
 
-      if (this.currAudioList?.type === AudioListType.PLAY_LIST && this.currAudioList.name !== ALL_AUDIO) {
+      if (
+        this.currAudioList?.type === AudioListType.PLAY_LIST &&
+          ![ALL_AUDIO, FAVORITE_AUDIO].includes(this.currAudioList.name ?? '')
+      ) {
         this.ChoiceOptionBuilder($r('app.media.remove_songlist'), '从歌单移除', Color.Black, () => {
           emitter.emit(DELETE_PLAYLIST_CHOICE_EVENT);
           try {

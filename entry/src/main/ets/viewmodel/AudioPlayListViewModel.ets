@@ -15,31 +15,31 @@ export class AudioPlayListViewModel {
   @Track favoritePlaylist: PlayListItemViewModel = new PlayListItemViewModel();
   @Track userPlaylistArray: PlayListItemViewModelArray = new PlayListItemViewModelArray();
   private settings: Settings = new Settings();
-  private playlistMap: Map<string | null, number[]> = new Map();
+  private playlistMap: Map<string | null, AudioInfoModel[]> = new Map();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 
   async init(context: Context): Promise<void> {
     await this.audioStore.initStore(context);
     await this.settings.initPreference(context);
     // update all playlist
-    const allAudioIDList = await this.audioStore.selectPlaylistAudioList(ALL_AUDIO);
-    this.allPlaylist.playListCount = allAudioIDList.length;
+    const allAudioList = await this.audioStore.selectAllAudio();
+    this.allPlaylist.playListCount = allAudioList.length;
     this.allPlaylist.playListName = '全部音频';
-    this.playlistMap.set(ALL_AUDIO, allAudioIDList);
+    this.playlistMap.set(ALL_AUDIO, allAudioList);
     // update favorite playlist
-    const favoriteAudioIDList = await this.audioStore.selectPlaylistAudioList(FAVORITE_AUDIO);
-    this.favoritePlaylist.playListCount = favoriteAudioIDList.length;
+    const favoriteAudioList = await this.audioStore.selectFavoriteAudio();
+    this.favoritePlaylist.playListCount = favoriteAudioList.length;
     this.favoritePlaylist.playListName = '我的收藏';
-    this.playlistMap.set(FAVORITE_AUDIO, favoriteAudioIDList);
+    this.playlistMap.set(FAVORITE_AUDIO, favoriteAudioList);
     // update user playlist
     const playlistArray = await this.audioStore.selectAllPlaylist();
     for (let i = 0; i < playlistArray.length; ++i) {
-      const audioIDList = await this.audioStore.selectPlaylistAudioList(playlistArray[i].name);
+      const audioList = await this.audioStore.selectAudioByPlayList(playlistArray[i].name);
       const playlistItem = new PlayListItemViewModel();
       playlistItem.playlistInfo = playlistArray[i];
-      playlistItem.playListCount = audioIDList.length;
+      playlistItem.playListCount = audioList.length;
       playlistItem.playListName = playlistArray[i].name;
-      this.playlistMap.set(playlistArray[i].name, audioIDList);
+      this.playlistMap.set(playlistArray[i].name, audioList);
       this.userPlaylistArray.push(playlistItem);
     }
     this.sortUserPlaylist();
@@ -55,31 +55,65 @@ export class AudioPlayListViewModel {
   }
 
   async updateAudio(audioInfo: AudioInfoModel): Promise<void> {
-    audioInfo;
-    this.allPlaylist.playListCount += 1;
+    const allAudioList = this.playlistMap.get(ALL_AUDIO);
+    if (allAudioList) {
+      allAudioList.push(audioInfo);
+      this.allPlaylist.playListCount += 1;
+    }
+  }
+
+  async toggleFavorite(audioInfo: AudioInfoModel): Promise<void> {
+    const favoriteAudioList = this.playlistMap.get(FAVORITE_AUDIO);
+    if (favoriteAudioList) {
+      if (audioInfo.favorite) {
+        favoriteAudioList.push(audioInfo);
+        this.favoritePlaylist.playListCount += 1;
+      } else {
+        const idx = favoriteAudioList.findIndex((info: AudioInfoModel) => {
+          return info.id === audioInfo.id;
+        });
+        if (idx !== -1) {
+          favoriteAudioList.splice(idx, 1);
+          this.favoritePlaylist.playListCount -= 1;
+        }
+      }
+    }
   }
 
   async removeAudio(audioInfo: AudioInfoModel): Promise<void> {
     // remove from all playlist
-    this.allPlaylist.playListCount -= 1;
-    // remove from favorite playlist
-    const favoriteAudioIDList = this.playlistMap.get(FAVORITE_AUDIO);
-    if (favoriteAudioIDList && favoriteAudioIDList.includes(audioInfo.id)) {
-      const idx = favoriteAudioIDList.indexOf(audioInfo.id);
+    const allAudioList = this.playlistMap.get(ALL_AUDIO);
+    if (allAudioList) {
+      const idx = allAudioList.findIndex((info: AudioInfoModel) => {
+        return info.id === audioInfo.id;
+      });
       if (idx !== -1) {
-        favoriteAudioIDList.splice(idx, 1);
-        this.favoritePlaylist.playListCount -= 1;
+        allAudioList.splice(idx, 1);
       }
+      this.allPlaylist.playListCount = allAudioList.length;
+    }
+    // remove from favorite playlist
+    const favoriteAudioList = this.playlistMap.get(FAVORITE_AUDIO);
+    if (favoriteAudioList) {
+      const idx = favoriteAudioList.findIndex((info: AudioInfoModel) => {
+        return info.id === audioInfo.id;
+      });
+      if (idx !== -1) {
+        favoriteAudioList.splice(idx, 1);
+      }
+      this.favoritePlaylist.playListCount = favoriteAudioList.length;
     }
     // remove from user playlist
     for (let i = 0; i < this.userPlaylistArray.length; ++i) {
-      const audioIDList = this.playlistMap.get(this.userPlaylistArray[i].playListName);
-      if (audioIDList && audioIDList.includes(audioInfo.id)) {
-        const idx = audioIDList.indexOf(audioInfo.id);
+      const userAudioList = this.playlistMap.get(this.userPlaylistArray[i].playListName);
+      if (userAudioList) {
+        const idx = userAudioList.findIndex((info: AudioInfoModel) => {
+          return info.id === audioInfo.id;
+        });
         if (idx !== -1) {
-          audioIDList.splice(idx, 1);
-          this.userPlaylistArray[i].playListCount -= 1;
+          userAudioList.splice(idx, 1);
         }
+        this.userPlaylistArray[i].playListCount = userAudioList.length;
       }
     }
   }
@@ -87,12 +121,12 @@ export class AudioPlayListViewModel {
   async addToPlaylist(audioInfo: AudioInfoModel, playlistName: string | null): Promise<void> {
     if (playlistName === FAVORITE_AUDIO) {
       this.favoritePlaylist.playListCount += 1;
-      this.playlistMap.get(FAVORITE_AUDIO)?.push(audioInfo.id);
+      this.playlistMap.get(FAVORITE_AUDIO)?.push(audioInfo);
     }
     for (let i = 0; i < this.userPlaylistArray.length; ++i) {
       if (playlistName === this.userPlaylistArray[i].playListName) {
         this.userPlaylistArray[i].playListCount += 1;
-        this.playlistMap.get(this.userPlaylistArray[i].playListName)?.push(audioInfo.id);
+        this.playlistMap.get(this.userPlaylistArray[i].playListName)?.push(audioInfo);
       }
     }
   }
@@ -111,22 +145,26 @@ export class AudioPlayListViewModel {
 
   async deleteFromPlaylist(audioInfo: AudioInfoModel, playlistName: string | null): Promise<void> {
     if (playlistName === FAVORITE_AUDIO) {
-      const favoriteAudioIDList = this.playlistMap.get(FAVORITE_AUDIO);
-      if (favoriteAudioIDList && favoriteAudioIDList.includes(audioInfo.id)) {
-        const delIdx = favoriteAudioIDList.indexOf(audioInfo.id);
+      const favoriteAudioList = this.playlistMap.get(FAVORITE_AUDIO);
+      if (favoriteAudioList) {
+        const delIdx = favoriteAudioList.findIndex((info: AudioInfoModel) => {
+          return info.id === audioInfo.id;
+        });
         if (delIdx !== -1) {
-          favoriteAudioIDList.splice(delIdx, 1);
-          this.favoritePlaylist.playListCount -= 1;
+          favoriteAudioList.splice(delIdx, 1);
         }
+        this.favoritePlaylist.playListCount = favoriteAudioList.length;
       }
     }
     for (let i = 0; i < this.userPlaylistArray.length; ++i) {
       if (playlistName === this.userPlaylistArray[i].playListName) {
-        const audioIDList = this.playlistMap.get(this.userPlaylistArray[i].playListName);
-        if (audioIDList && audioIDList.includes(audioInfo.id)) {
-          const delIdx = audioIDList.indexOf(audioInfo.id);
+        const userAudioList = this.playlistMap.get(this.userPlaylistArray[i].playListName);
+        if (userAudioList) {
+          const delIdx = userAudioList.findIndex((info: AudioInfoModel) => {
+            return info.id === audioInfo.id;
+          });
           if (delIdx !== -1) {
-            audioIDList.splice(delIdx, 1);
+            userAudioList.splice(delIdx, 1);
             this.userPlaylistArray[i].playListCount -= 1;
           }
         }

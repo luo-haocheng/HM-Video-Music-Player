@@ -8,6 +8,7 @@ import { AddToPlaylistDialog } from './AddToPlaylistDialog';
 import { AudioEditDialog } from './AudioEditDialog';
 
 const ALL_AUDIO = '*';
+const FAVORITE_AUDIO = '**';
 const AUDIO_LIST_INFO = 'AudioListInfo';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
@@ -17,6 +18,7 @@ const SORT_AUDIO_EVENT = 'SortAudio';
 const CHOICE_ALL_EVENT = 'ChoiceAll';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const DELETE_CHOICE_EVENT = 'DeleteChoice';
+const TOGGLE_FAVORITE_EVENT = 'ToggleFavorite';
 const ADD_PLAYLIST_CHOICE_EVENT = 'AddPlaylistChoice';
 const DELETE_PLAYLIST_CHOICE_EVENT = 'DeletePlaylistChoice';
 
@@ -103,10 +105,17 @@ export struct AudioListView {
     eventData;
     this.audioListVM.sortAudioList();
   };
+  private toggleFavoriteCallback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data) {
+      const audioInfo = eventData.data['info'] as AudioInfoModel;
+      this.audioListVM.toggleFavorite(audioInfo);
+    }
+  };
 
   aboutToAppear(): void {
     emitter.on(DELETE_PLAYLIST_CHOICE_EVENT, this.deleteFromPlaylistCallback);
     emitter.on(ADD_PLAYLIST_CHOICE_EVENT, this.addToPlaylistCallback);
+    emitter.on(TOGGLE_FAVORITE_EVENT, this.toggleFavoriteCallback);
     emitter.on(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
     emitter.on(IMPORT_AUDIO_EVENT, this.importAudioCallback);
     emitter.on(CHOICE_ALL_EVENT, this.choiceAllCallback);
@@ -116,6 +125,8 @@ export struct AudioListView {
   aboutToDisappear(): void {
     emitter.off(DELETE_PLAYLIST_CHOICE_EVENT, this.deleteFromPlaylistCallback);
     emitter.off(ADD_PLAYLIST_CHOICE_EVENT, this.addToPlaylistCallback);
+    emitter.off(TOGGLE_FAVORITE_EVENT, this.toggleFavoriteCallback);
+    emitter.on(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
     emitter.off(DELETE_CHOICE_EVENT, this.deleteChoiceCallback);
     emitter.off(IMPORT_AUDIO_EVENT, this.importAudioCallback);
     emitter.off(CHOICE_ALL_EVENT, this.choiceAllCallback);
@@ -192,8 +203,10 @@ struct ListView {
         .vertical(false)
         .strokeWidth(0.5);
 
-      if (this.audioListVM.audioListInfo.type === AudioListType.PLAY_LIST &&
-        this.audioListVM.audioListInfo.name !== ALL_AUDIO) {
+      if (
+        this.audioListVM.audioListInfo.type === AudioListType.PLAY_LIST &&
+          ![ALL_AUDIO, FAVORITE_AUDIO].includes(this.audioListVM.audioListInfo.name ?? '')
+      ) {
         Row() {
           Text('从歌单中移除')
             .fontSize(14)
@@ -288,8 +301,7 @@ struct ListView {
               } else {
                 const context = this.getUIContext().getHostContext() as Context;
                 this.audioPlayerVM.setAudioAsset(item.audioInfo, context);
-                this.audioPlayerVM.audioList = this.audioList;
-                this.audioPlayerVM.currAudioItem = item;
+                this.audioPlayerVM.updatePlaylist(this.audioList, item);
               }
             });
           },

@@ -10,6 +10,9 @@ import { avSession as AVSessionMananger } from '@kit.AVSessionKit';
 import { AudioLibraryStore } from '../model/AudioLibraryStore';
 import { fileIo } from '@kit.CoreFileKit';
 import { LyricsInfo } from '../model/LyricsInfoModel';
+import { emitter } from '@kit.BasicServicesKit';
+
+const TOGGLE_FAVORITE_EVENT = 'ToggleFavorite';
 
 @Observed
 export class AudioPlayerViewModel {
@@ -98,6 +101,11 @@ export class AudioPlayerViewModel {
     this.repeatMode = (await this.settings.getSetting(SettingKey.AUDIO_REPEAT_MODE)) as AudioRepeatMode;
   }
 
+  async updatePlaylist(audioList: AudioItemViewModelList, currItem: AudioItemViewModel) {
+    this.audioList = [...audioList];
+    this.currAudioItem = this.audioList[audioList.indexOf(currItem)];
+  }
+
   async setAudioAsset(audioInfo: AudioInfoModel, context: Context) {
     await this.loadLyrics(audioInfo);
     this.isFavorite = audioInfo.favorite === 0 ? false : true;
@@ -119,6 +127,13 @@ export class AudioPlayerViewModel {
       await this.mediaSession.updateFavorite(this.currTime, isFavorite);
       this.currAudioItem.updateFavorite(isFavorite);
       this.isFavorite = isFavorite;
+      // Notify
+      let eventData: emitter.EventData = {
+        data: {
+          'info': this.currAudioItem.audioInfo,
+        }
+      };
+      emitter.emit(TOGGLE_FAVORITE_EVENT, eventData);
     }
   }
 

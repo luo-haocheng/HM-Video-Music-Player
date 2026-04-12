@@ -52,10 +52,7 @@ export struct AddToPlaylistDialog {
       .margin({ bottom: 16 })
       .justifyContent(FlexAlign.SpaceBetween);
 
-      ListView({
-        favoritePlaylist: this.addToPlaylistVM.favoritePlaylist,
-        userPlaylistArray: this.addToPlaylistVM.userPlaylistArray
-      })
+      ListView({ userPlaylistArray: this.addToPlaylistVM.userPlaylistArray })
         .layoutWeight(1);
     }
     .padding(16)
@@ -115,7 +112,6 @@ struct playlistBox {
 
 @Component
 struct ListView {
-  @ObjectLink favoritePlaylist: PlayListItemViewModel;
   @ObjectLink userPlaylistArray: PlayListItemViewModelArray;
 
   build() {
@@ -125,10 +121,6 @@ struct ListView {
       alignItems: ItemAlign.Center
     }) {
       List() {
-        ListItem() {
-          playlistBox({ playlistItem: this.favoritePlaylist });
-        };
-
         ForEach(
           this.userPlaylistArray,
           (item: PlayListItemViewModel) => {
