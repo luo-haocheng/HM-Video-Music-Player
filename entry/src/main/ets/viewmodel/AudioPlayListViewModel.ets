@@ -23,11 +23,13 @@ export class AudioPlayListViewModel {
     await this.settings.initPreference(context);
     // update all playlist
     const allAudioList = await this.audioStore.selectAllAudio();
+    this.updateAlbumCover(this.allPlaylist, allAudioList);
     this.allPlaylist.playListCount = allAudioList.length;
     this.allPlaylist.playListName = '全部音频';
     this.playlistMap.set(ALL_AUDIO, allAudioList);
     // update favorite playlist
     const favoriteAudioList = await this.audioStore.selectFavoriteAudio();
+    this.updateAlbumCover(this.favoritePlaylist, favoriteAudioList);
     this.favoritePlaylist.playListCount = favoriteAudioList.length;
     this.favoritePlaylist.playListName = '我的收藏';
     this.playlistMap.set(FAVORITE_AUDIO, favoriteAudioList);
@@ -36,6 +38,7 @@ export class AudioPlayListViewModel {
     for (let i = 0; i < playlistArray.length; ++i) {
       const audioList = await this.audioStore.selectAudioByPlayList(playlistArray[i].name);
       const playlistItem = new PlayListItemViewModel();
+      this.updateAlbumCover(playlistItem, audioList);
       playlistItem.playlistInfo = playlistArray[i];
       playlistItem.playListCount = audioList.length;
       playlistItem.playListName = playlistArray[i].name;
@@ -202,5 +205,17 @@ export class AudioPlayListViewModel {
       return 0;
     }
     return name1 > name2 ? 1 : -1;
+  }
+
+  private async updateAlbumCover(item: PlayListItemViewModel, audioInfoList?: AudioInfoModel[]): Promise<void> {
+    if (audioInfoList && !item.albumCover) {
+      for (let i = 0; i < audioInfoList.length; ++i) {
+        const coverPath = audioInfoList[i].coverPath;
+        if (coverPath) {
+          item.updateAlbumCover(coverPath);
+          break;
+        }
+      }
+    }
   }
 }
