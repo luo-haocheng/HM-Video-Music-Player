@@ -201,7 +201,7 @@ export class AudioEditViewModel {
     // Update database
     if (!audioInfo.coverPath) {
       try {
-        this.audioStore.updateAudioAlbumCover(audioInfo, audioInfo.coverPath);
+        this.audioStore.updateAudioAlbumCover(audioInfo, coverPath);
         audioInfo.coverPath = coverPath;
       } catch (err) {
         throw Error(err);
