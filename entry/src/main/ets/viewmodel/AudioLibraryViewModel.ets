@@ -9,7 +9,7 @@ import { AudioItemViewModel } from './AudioItemViewModel';
 import { PlayListInfoModel } from '../model/PlayListInfoModel';
 import { emitter } from '@kit.BasicServicesKit';
 import { preferences } from '@kit.ArkData';
-import { SettingKey, SortModeValue, SortRuleValue } from '../model/SettingsModel';
+import { SettingKey, SortModeValue, SortRuleValue, ViewOptionValue } from '../model/SettingsModel';
 import { Settings } from '../model/Settings';
 
 const AUDIO_DIR = '/audios';
@@ -140,6 +140,14 @@ export class AudioLibraryViewModel {
     } catch (error) {
       console.error(`Failed to import video from download directory`);
     }
+  }
+
+  async selectViewOption(viewOption: ViewOptionValue) {
+    await this.settings.putSetting(SettingKey.AUDIO_VIEW_OPTION, viewOption);
+  }
+
+  async getViewOptions(): Promise<ViewOptionValue> {
+    return await this.settings.getSetting(SettingKey.AUDIO_VIEW_OPTION) as ViewOptionValue;
   }
 
   private getAudioNameFromFileUri(uri: string): string {

@@ -4,8 +4,10 @@ import { PlayListBoxView } from './PlayListBoxView';
 import { PlayListItemViewModel, PlayListItemViewModelArray } from '../viewmodel/PlayListItemViewModel';
 import { emitter } from '@kit.BasicServicesKit';
 import { AudioInfoModel } from '../model/AudioInfoModel';
+import { ViewOptionValue } from '../model/SettingsModel';
 
 const AUDIO_TAB_STACK = 'AudioTabStack';
+const AUDIO_VIEW_OPTION = 'AudioViewOption';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
 const DELETE_AUDIO_EVENT = 'DeleteAudio';
 
@@ -47,6 +49,7 @@ struct ListView {
   @ObjectLink albumList: PlayListItemViewModelArray;
   @ObjectLink unknownAlbum: PlayListItemViewModel | undefined;
   @Consume(AUDIO_TAB_STACK) audioTabStack: NavPathStack = new NavPathStack();
+  @Consume(AUDIO_VIEW_OPTION) audioViewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
 
   build() {
     Flex({
@@ -95,7 +98,8 @@ struct ListView {
       .scrollBar(BarState.Off)
       .padding({ left: 8, right: 8 })
       .backgroundColor(`rgb(243, 243, 243)`)
-      .divider({ strokeWidth: 8, color: 'rgb(243, 243, 243)' });
+      .divider({ strokeWidth: 8, color: 'rgb(243, 243, 243)' })
+      .lanes(this.audioViewOptions === ViewOptionValue.LIST_VIEW ? 1 : 2, 8);
     }
     .width('100%')
     .height('100%');

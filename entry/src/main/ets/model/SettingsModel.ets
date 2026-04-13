@@ -8,6 +8,7 @@ export enum SettingKey {
   PLAYLIST_SORT_MODE = 'PlaylistSortMode',
   PLAYLIST_SORT_RULE = 'PlaylistSortRule',
   VIDEO_VIEW_OPTION = 'VideoViewOption',
+  AUDIO_VIEW_OPTION = 'AudioViewOption',
   AUDIO_REPEAT_MODE = 'AudioRepeatMode',
 }
 
@@ -43,5 +44,6 @@ export const DEFAULT_SETTING = new Map<SettingKey, preferences.ValueType>([
   [SettingKey.PLAYLIST_SORT_MODE, SortModeValue.DATE_ADD],
   [SettingKey.PLAYLIST_SORT_RULE, SortRuleValue.ASCENDING],
   [SettingKey.VIDEO_VIEW_OPTION, ViewOptionValue.LIST_VIEW],
+  [SettingKey.AUDIO_VIEW_OPTION, ViewOptionValue.LIST_VIEW],
   [SettingKey.AUDIO_REPEAT_MODE, AudioRepeatMode.SINGLE_REPEAT],
 ]);

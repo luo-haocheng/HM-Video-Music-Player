@@ -58,6 +58,7 @@ export struct AudioLibraryView {
   async aboutToAppear(): Promise<void> {
     let context = this.getUIContext().getHostContext() as Context;
     await this.audioLibVM.init(context);
+    this.audioViewOptions = await this.audioLibVM.getViewOptions();
   }
 
   @Builder
@@ -361,7 +362,13 @@ export struct AudioLibraryView {
       .width('100%')
       .padding({ top: 16, bottom: 16 })
       .onClick(async () => {
-        // todo
+        if (this.audioViewOptions === ViewOptionValue.LIST_VIEW) {
+          await this.audioLibVM.selectViewOption(ViewOptionValue.GRID_VIEW);
+          this.audioViewOptions = ViewOptionValue.GRID_VIEW;
+        } else {
+          await this.audioLibVM.selectViewOption(ViewOptionValue.LIST_VIEW);
+          this.audioViewOptions = ViewOptionValue.LIST_VIEW;
+        }
       });
 
       if (this.currAudioList || this.selectedIndex === 0) {
