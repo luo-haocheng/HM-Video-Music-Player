@@ -10,7 +10,7 @@ export struct AudioEditDialog {
 
   aboutToAppear(): void {
     const context = this.getUIContext().getHostContext() as Context;
-    this.audioEditVM.init(context, this.audioItem.audioInfo, this.audioItem.albumCover);
+    this.audioEditVM.init(context, this.audioItem.audioInfo);
   }
 
   @Builder

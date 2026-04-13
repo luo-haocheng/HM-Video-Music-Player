@@ -21,7 +21,7 @@ export class AudioEditViewModel {
   private originalAlbumCover?: image.PixelMap;
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 
-  async init(context: Context, audioInfo: AudioInfoModel, albumCover?: image.PixelMap): Promise<void> {
+  async init(context: Context, audioInfo: AudioInfoModel): Promise<void> {
     await this.audioStore.initStore(context);
     this.title = audioInfo.title;
     this.album = audioInfo.album ?? '';
