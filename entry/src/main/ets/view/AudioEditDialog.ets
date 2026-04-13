@@ -10,136 +10,221 @@ export struct AudioEditDialog {
 
   aboutToAppear(): void {
     const context = this.getUIContext().getHostContext() as Context;
-    this.audioEditVM.init(context, this.audioItem.audioInfo.lyricsPath);
+    this.audioEditVM.init(context, this.audioItem.audioInfo, this.audioItem.albumCover);
+  }
+
+  @Builder
+  albumCoverMenuBuilder() {
+    Flex({
+      direction: FlexDirection.Column,
+      justifyContent: FlexAlign.Start,
+      alignItems: ItemAlign.Center,
+    }) {
+      Row() {
+        Text('替换')
+          .fontSize(14)
+          .fontColor(Color.Black);
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(() => {
+        this.audioEditVM.selectAlbumCover();
+      });
+
+      Divider()
+        .vertical(false)
+        .strokeWidth(0.5);
+
+      Row() {
+        Text('删除')
+          .fontSize(14)
+          .fontColor(Color.Red);
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 16 })
+      .onClick(() => {
+        this.audioEditVM.deleteAlbumCover();
+      });
+    }
+    .width(100)
+    .padding({ left: 16, right: 16 });
   }
 
   build() {
-    Scroll(this.scroller) {
-      Column({ space: 24 }) {
-        Row() {
-          if (this.audioItem.albumCover) {
-            Image(this.audioItem.albumCover)
-              .width('100%')
-              .height('100%')
-              .borderRadius(12)
-              .draggable(false)
-              .objectFit(ImageFit.Cover);
-          } else {
-            Image($r('app.media.music_fill'))
-              .width('50%')
-              .aspectRatio(1)
-              .draggable(false)
-              .fillColor('#FF007DFF')
-              .objectFit(ImageFit.Contain);
-          }
+    Column() {
+      Row() {
+        Button({ type: ButtonType.Circle, stateEffect: false }) {
+          Image($r('app.media.xmark'))
+            .width(20)
+            .aspectRatio(1)
+            .fillColor(Color.Black);
         }
-        .width('50%')
-        .aspectRatio(1)
-        .layoutWeight(0)
-        .borderRadius(12)
-        .backgroundColor(Color.White)
-        .justifyContent(FlexAlign.Center)
-        .alignItems(VerticalAlign.Center);
+        .padding(8)
+        .backgroundColor('#AADCDCDC')
+        .onClick(() => {
+          this.controller.close();
+        });
 
-        Column() {
-          Text('标题')
-            .fontSize(14)
-            .fontColor(Color.Black)
-            .fontWeight(FontWeight.Bold);
-          TextInput({ text: this.audioItem.title })
-            .fontSize(14)
-            .maxLength(100)
-            .showUnderline(true)
-            .underlineColor(Color.Gray)
-            .placeholderFont({ size: 14 })
-            .padding({ top: 8, bottom: 8 })
-            .backgroundColor(Color.Transparent);
+        Button({ type: ButtonType.Circle, stateEffect: false }) {
+          Image($r('app.media.checkmark'))
+            .width(20)
+            .aspectRatio(1)
+            .fillColor(Color.Black);
         }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Start);
-
-        Column() {
-          Text('专辑')
-            .fontSize(14)
-            .fontColor(Color.Black)
-            .fontWeight(FontWeight.Bold);
-          TextInput({ text: this.audioItem.album })
-            .fontSize(14)
-            .maxLength(100)
-            .showUnderline(true)
-            .underlineColor(Color.Gray)
-            .placeholderFont({ size: 14 })
-            .padding({ top: 8, bottom: 8 })
-            .backgroundColor(Color.Transparent);
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Start);
-
-        Column() {
-          Text('艺术家')
-            .fontSize(14)
-            .fontColor(Color.Black)
-            .fontWeight(FontWeight.Bold);
-          TextInput({ text: this.audioItem.artist })
-            .fontSize(14)
-            .maxLength(100)
-            .showUnderline(true)
-            .underlineColor(Color.Gray)
-            .placeholderFont({ size: 14 })
-            .padding({ top: 8, bottom: 8 })
-            .backgroundColor(Color.Transparent);
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Start);
-
-        Column({ space: 8 }) {
-          Text('歌词')
-            .fontSize(14)
-            .fontColor(Color.Black)
-            .fontWeight(FontWeight.Bold);
-
-          Stack({ alignContent: Alignment.TopEnd }) {
-            TextArea({ text: $$this.audioEditVM.lyrics })
-              .height('100%')
-              .fontSize(14)
-              .borderWidth('1px')
-              .borderColor(Color.Gray)
-              .placeholderFont({ size: 14 })
-              .backgroundColor(Color.Transparent);
-
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.plus'))
-                .width(18)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            }
-            .padding(6)
-            .offset({ x: -8, y: 8 })
-            .backgroundColor('#55F1F3F5')
-            .onClick(() => {
-              const context = this.getUIContext().getHostContext() as Context;
-              this.audioEditVM.selectLyricsFile(context, this.audioItem.audioInfo);
-            });
-          }
-          .width('100%')
-          .height(200);
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Start);
+        .padding(8)
+        .backgroundColor('#AADCDCDC')
+        .onClick(async () => {
+          this.controller.close();
+          const context = this.getUIContext().getHostContext() as Context;
+          this.audioEditVM.submitEdit(context, this.audioItem);
+        });
       }
       .width('100%')
-      .justifyContent(FlexAlign.Start)
-      .alignItems(HorizontalAlign.Center);
+      .layoutWeight(0)
+      .margin({ bottom: 16 })
+      .justifyContent(FlexAlign.SpaceBetween);
+
+      Scroll(this.scroller) {
+        Column({ space: 24 }) {
+          Column({ space: 8 }) {
+            Text('封面')
+              .fontSize(14)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold);
+
+            if (this.audioEditVM.albumCover) {
+              Image(this.audioEditVM.albumCover)
+                .width('50%')
+                .aspectRatio(1)
+                .borderRadius(12)
+                .draggable(false)
+                .objectFit(ImageFit.Cover)
+                .bindMenu(this.albumCoverMenuBuilder());
+            } else {
+              Row() {
+                Image($r('app.media.plus'))
+                  .width('50%')
+                  .aspectRatio(1)
+                  .draggable(false)
+                  .fillColor('#FF007DFF')
+                  .objectFit(ImageFit.Contain);
+              }
+              .width('50%')
+              .aspectRatio(1)
+              .borderRadius(12)
+              .backgroundColor(Color.White)
+              .justifyContent(FlexAlign.Center)
+              .alignItems(VerticalAlign.Center)
+              .onClick(() => {
+                this.audioEditVM.selectAlbumCover();
+              });
+            }
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Start);
+
+          Column() {
+            Text('标题')
+              .fontSize(14)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold);
+            TextInput({ text: $$this.audioEditVM.title })
+              .fontSize(14)
+              .maxLength(100)
+              .showUnderline(true)
+              .underlineColor(Color.Gray)
+              .placeholderFont({ size: 14 })
+              .padding({ top: 8, bottom: 8 })
+              .backgroundColor(Color.Transparent);
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Start);
+
+          Column() {
+            Text('专辑')
+              .fontSize(14)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold);
+            TextInput({ text: $$this.audioEditVM.album })
+              .fontSize(14)
+              .maxLength(100)
+              .showUnderline(true)
+              .underlineColor(Color.Gray)
+              .placeholderFont({ size: 14 })
+              .padding({ top: 8, bottom: 8 })
+              .backgroundColor(Color.Transparent);
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Start);
+
+          Column() {
+            Text('歌手')
+              .fontSize(14)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold);
+            TextInput({ text: $$this.audioEditVM.artist })
+              .fontSize(14)
+              .maxLength(100)
+              .showUnderline(true)
+              .underlineColor(Color.Gray)
+              .placeholderFont({ size: 14 })
+              .padding({ top: 8, bottom: 8 })
+              .backgroundColor(Color.Transparent);
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Start);
+
+          Column({ space: 8 }) {
+            Text('歌词')
+              .fontSize(14)
+              .fontColor(Color.Black)
+              .fontWeight(FontWeight.Bold);
+
+            Stack({ alignContent: Alignment.TopEnd }) {
+              TextArea({ text: $$this.audioEditVM.lyrics })
+                .height('100%')
+                .fontSize(14)
+                .borderWidth('1px')
+                .borderColor(Color.Gray)
+                .placeholderFont({ size: 14 })
+                .backgroundColor(Color.Transparent);
+
+              Button({ type: ButtonType.Circle, stateEffect: false }) {
+                Image($r('app.media.plus'))
+                  .width(18)
+                  .aspectRatio(1)
+                  .fillColor(Color.Black);
+              }
+              .padding(6)
+              .offset({ x: -8, y: 8 })
+              .backgroundColor('#DCDCDC')
+              .onClick(() => {
+                this.audioEditVM.selectLyricsFile();
+              });
+            }
+            .width('100%')
+            .height(200);
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Start);
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+        .alignItems(HorizontalAlign.Center);
+      }
+      .width('100%')
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+      .scrollable(ScrollDirection.Vertical);
     }
     .padding(16)
     .width('100%')
     .height('100%')
-    .backgroundColor('#DCDCDC')
-    .scrollBar(BarState.Off)
-    .scrollable(ScrollDirection.Vertical);
+    .backgroundColor('#F1F3F5');
   }
 }

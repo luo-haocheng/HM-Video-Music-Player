@@ -121,6 +121,71 @@ export class AudioLibraryStore {
     }
   }
 
+  async updateAudioTitle(audioInfo: AudioInfoModel, title: string): Promise<void> {
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('ID', audioInfo.id);
+        const valueBucket: relationalStore.ValuesBucket = {
+          TITLE: title,
+        };
+        await this.store.update(valueBucket, predicate);
+      } catch (error) {
+        console.error(`Failed to update ${JSON.stringify(audioInfo)} title. Cause: ${JSON.stringify(error)}`);
+        throw Error(error);
+      }
+    }
+  }
+
+  async updateAudioAlbum(audioInfo: AudioInfoModel, album: string | null): Promise<void> {
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('ID', audioInfo.id);
+        const valueBucket: relationalStore.ValuesBucket = {
+          ALBUM: album,
+        };
+        await this.store.update(valueBucket, predicate);
+      } catch (error) {
+        console.error(`Failed to update ${JSON.stringify(audioInfo)} album. Cause: ${JSON.stringify(error)}`);
+        throw Error(error);
+      }
+    }
+  }
+
+  async updateAudioArtist(audioInfo: AudioInfoModel, artist: string | null): Promise<void> {
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('ID', audioInfo.id);
+        const valueBucket: relationalStore.ValuesBucket = {
+          ARTIST: artist,
+        };
+        await this.store.update(valueBucket, predicate);
+        console.info(`Update Artist to artist Success.`);
+      } catch (error) {
+        console.error(`Failed to update ${JSON.stringify(audioInfo)} artist . Cause: ${JSON.stringify(error)}`);
+        throw Error(error);
+      }
+    }
+  }
+
+  async updateAudioAlbumCover(audioInfo: AudioInfoModel, coverPath: string | null): Promise<void> {
+    if (this.store !== undefined) {
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('ID', audioInfo.id);
+        const valueBucket: relationalStore.ValuesBucket = {
+          COVER_PATH: coverPath,
+        };
+        await this.store.update(valueBucket, predicate);
+      } catch (error) {
+        console.error(`Failed to update ${JSON.stringify(audioInfo)} favorite. Cause: ${JSON.stringify(error)}`);
+        throw Error(error);
+      }
+    }
+  }
+
   async updateAudioLyrics(audioInfo: AudioInfoModel, lyricsPath: string): Promise<void> {
     if (this.store !== undefined) {
       try {

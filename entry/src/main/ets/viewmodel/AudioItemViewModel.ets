@@ -1,6 +1,5 @@
 import image from '@ohos.multimedia.image';
 import { AudioInfoModel } from '../model/AudioInfoModel';
-import { media } from '@kit.MediaKit';
 
 @Observed
 export class AudioItemViewModel {
@@ -55,13 +54,9 @@ export class AudioItemViewModel {
     this.id = audioInfo.id;
     this.audioInfo = audioInfo;
     this.title = audioInfo.title;
+    this.album = audioInfo.album ?? '未知专辑';
+    this.artist = audioInfo.artist ?? '未知歌手';
     this.isFavorite = audioInfo.favorite === 0 ? false : true;
-
-    if (audioInfo.metadata) {
-      let metadata = JSON.parse(audioInfo.metadata) as media.AVMetadata;
-      this.artist = metadata.artist ? metadata.artist : this.artist;
-      this.album = metadata.album ? metadata.album : this.album;
-    }
 
     if (audioInfo.coverPath) {
       let imageSource: image.ImageSource | undefined;
