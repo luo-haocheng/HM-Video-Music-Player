@@ -241,19 +241,21 @@ export class AudioPlayerViewModel {
   private async loadLyrics(audioInfo: AudioInfoModel): Promise<void> {
     this.currLyrics = '';
     this.currLyricsIdx = 0;
-    this.lyricsInfoArr = [];
     if (!audioInfo.lyricsPath) {
+      this.lyricsInfoArr = [];
       return;
     }
     try {
+      const newLyricsInfoArr: Array<LyricsInfo> = [];
       const lyricsText = await fileIo.readText(audioInfo.lyricsPath);
       const lyricsLines = lyricsText.split('\n');
       for (let i = 0; i < lyricsLines.length; ++i) {
         const lyricsInfo = new LyricsInfo();
         if (lyricsInfo.updateLyrics(lyricsLines[i])) {
-          this.lyricsInfoArr.push(lyricsInfo);
+          newLyricsInfoArr.push(lyricsInfo);
         }
       }
+      this.lyricsInfoArr = newLyricsInfoArr;
     } catch (error) {
       console.error(`Failed to load lyrics from ${audioInfo.lyricsPath}. Cause: ${JSON.stringify(error)}`);
       return;
