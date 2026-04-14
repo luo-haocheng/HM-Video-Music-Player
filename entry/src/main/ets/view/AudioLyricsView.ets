@@ -60,7 +60,11 @@ export struct AudioLyricsView {
         .layoutWeight(1)
         .contentStartOffset(24)
         .scrollBar(BarState.Off)
-        .fadingEdge(true, { fadingEdgeLength: LengthMetrics.vp(48) });
+        .fadingEdge(true, { fadingEdgeLength: LengthMetrics.vp(48) })
+        .onAppear(() => {
+          const currLyricsIdx = this.audioPlayerVM.currLyricsIdx;
+          this.audioPlayerVM.lyricsScroller.scrollToIndex(currLyricsIdx, true, ScrollAlign.CENTER);
+        });
       }
     }
     .width('100%')
