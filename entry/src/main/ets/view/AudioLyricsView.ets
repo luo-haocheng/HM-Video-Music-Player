@@ -41,6 +41,7 @@ export struct AudioLyricsView {
               ListItem() {
                 Row() {
                   Text(lyrics.text)
+                    .textAlign(TextAlign.Center)
                     .fontSize(this.audioPlayerVM.currLyricsIdx === index ? 18 : 14)
                     .fontColor(this.audioPlayerVM.currLyricsIdx === index ? Color.Black : Color.Gray);
                 }
