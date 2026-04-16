@@ -1,0 +1,201 @@
+import { AudioInfoModel } from 'data_storage/src/main/ets/rdbms/AudioInfoModel';
+import { AudioLibraryStore } from 'data_storage/src/main/ets/rdbms/AudioLibraryStore';
+import { AudioListInfo, AudioListType } from '../view/AudioListView';
+import { AudioItemViewModel } from './AudioItemViewModel';
+import { emitter } from '@kit.BasicServicesKit';
+import { fileIo } from '@kit.CoreFileKit';
+import { SettingKey, Settings, SortModeValue, SortRuleValue } from 'data_storage';
+import { i18n } from '@kit.LocalizationKit';
+
+const ALL_AUDIO = '*';
+const FAVORITE_AUDIO = '**';
+const DELETE_AUDIO_EVENT = 'DeleteAudio';
+const DELETE_FROM_PLAYLIST_EVENT = 'DeleteFromPlaylist';
+
+@Observed
+export class AudioItemViewModelList extends Array<AudioItemViewModel> {
+}
+
+@Observed
+export class AudioListViewModel {
+  @Track audioList: AudioItemViewModelList = new AudioItemViewModelList();
+  @Track audioListInfo: AudioListInfo = new AudioListInfo();
+  private settings: Settings = new Settings();
+  private audioStore: AudioLibraryStore = new AudioLibraryStore();
+
+  async init(context: Context): Promise<void> {
+    await this.audioStore.initStore(context);
+    await this.settings.initPreference(context);
+  }
+
+  async updateAudio(audioInfo: AudioInfoModel): Promise<void> {
+    switch (this.audioListInfo.type) {
+      case AudioListType.PLAY_LIST:
+        if (this.audioListInfo.name === ALL_AUDIO) {
+          const audioItem = new AudioItemViewModel();
+          audioItem.updateAudioItem(audioInfo);
+          this.audioList.push(audioItem);
+        }
+        break;
+      case AudioListType.ALNUM_LIST:
+        if (this.audioListInfo.name === audioInfo.album) {
+          const audioItem = new AudioItemViewModel();
+          audioItem.updateAudioItem(audioInfo);
+          this.audioList.push(audioItem);
+        }
+        break;
+      case AudioListType.ARTIST_LIST:
+        if (this.audioListInfo.name === audioInfo.artist) {
+          const audioItem = new AudioItemViewModel();
+          audioItem.updateAudioItem(audioInfo);
+          this.audioList.push(audioItem);
+        }
+        break;
+    }
+    this.sortAudioList();
+  }
+
+  async loadAudioList(): Promise<void> {
+    switch (this.audioListInfo.type) {
+      case AudioListType.PLAY_LIST:
+        await this.loadFromPlayList(this.audioListInfo.name);
+        break;
+      case AudioListType.ALNUM_LIST:
+        await this.loadFromAlbumList(this.audioListInfo.name);
+        break;
+      case AudioListType.ARTIST_LIST:
+        await this.loadFromArtistList(this.audioListInfo.name);
+        break;
+    }
+    this.sortAudioList();
+  }
+
+  async toggleFavorite(audioInfo: AudioInfoModel): Promise<void> {
+    const idx = this.audioList.findIndex((item: AudioItemViewModel) => {
+      return item.audioInfo.id === audioInfo.id;
+    });
+    if (idx !== -1) {
+      this.audioList.splice(idx, 1);
+    }
+  }
+
+  async deleteAudio(audioInfo: AudioInfoModel): Promise<void> {
+    // Delete database record
+    await this.audioStore.deleteAudio(audioInfo);
+    const delIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
+      return item.audioInfo.id === audioInfo.id;
+    });
+    if (delIdx !== -1) {
+      this.audioList.splice(delIdx, 1);
+    }
+    // Delete sandbox file
+    try {
+      await fileIo.unlink(audioInfo.audioPath);
+      if (audioInfo.coverPath) {
+        await fileIo.unlink(audioInfo.coverPath);
+      }
+      if (audioInfo.lyricsPath) {
+        await fileIo.unlink(audioInfo.lyricsPath);
+      }
+    } catch (error) {
+      console.error(`Failed to delete file ${audioInfo.audioPath}, ${audioInfo.coverPath}. Cause: ${JSON.stringify(error)}`);
+      return;
+    }
+    // Notify
+    let eventData: emitter.EventData = {
+      data: {
+        'info': audioInfo
+      }
+    };
+    emitter.emit(DELETE_AUDIO_EVENT, eventData);
+  }
+
+  async deleteFromPlaylist(audioInfo: AudioInfoModel): Promise<void> {
+    const delNum = await this.audioStore.deleteAudioFromPlaylist(audioInfo, this.audioListInfo.name);
+    if (delNum === 0) {
+      return;
+    }
+    const delIdx = this.audioList.findIndex((item: AudioItemViewModel) => {
+      return item.audioInfo.id === audioInfo.id;
+    });
+    if (delIdx !== -1) {
+      this.audioList.splice(delIdx, 1);
+    }
+    // Notify
+    let eventData: emitter.EventData = {
+      data: {
+        'info': audioInfo,
+        'name': this.audioListInfo.name,
+      }
+    };
+    emitter.emit(DELETE_FROM_PLAYLIST_EVENT, eventData);
+  }
+
+  async sortAudioList(): Promise<void> {
+    const sortMode = await this.settings.getSetting(SettingKey.AUDIO_SORT_MODE);
+    const sortRule = await this.settings.getSetting(SettingKey.AUDIO_SORT_RULE);
+    if (sortMode === SortModeValue.DATE_ADD) {
+      this.audioList.sort((audioA: AudioItemViewModel, audioB: AudioItemViewModel) => {
+        const diff = audioA.audioInfo.dateAdd - audioB.audioInfo.dateAdd;
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else if (sortMode === SortModeValue.AUDIO_TITLE) {
+      this.audioList.sort((audioA: AudioItemViewModel, audioB: AudioItemViewModel) => {
+        const diff = this.sortByFileName(audioA.title, audioB.title);
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    } else {
+      this.audioList.sort((audioA: AudioItemViewModel, audioB: AudioItemViewModel) => {
+        const diff = audioA.audioInfo.dateAdd - audioB.audioInfo.dateAdd;
+        return sortRule === SortRuleValue.ASCENDING ? diff : -diff;
+      });
+    }
+  }
+
+  private sortByFileName(nameA: string, nameB: string): number {
+    let transliterator: i18n.Transliterator = i18n.Transliterator.getInstance('Any-Latn;Latin-Ascii');
+    let name1 = transliterator.transform(nameA).toLowerCase();
+    let name2 = transliterator.transform(nameB).toLowerCase();
+    if (name1 === name2) {
+      return 0;
+    }
+    return name1 > name2 ? 1 : -1;
+  }
+
+  private async loadFromPlayList(name: string | null) {
+    let audioInfoList: AudioInfoModel[] = [];
+    switch (name) {
+      case ALL_AUDIO:
+        audioInfoList = await this.audioStore.selectAllAudio();
+        break;
+      case FAVORITE_AUDIO:
+        audioInfoList = await this.audioStore.selectFavoriteAudio();
+        break;
+      default:
+        audioInfoList = await this.audioStore.selectAudioByPlayList(name);
+    }
+    for (let i = 0; i < audioInfoList.length; ++i) {
+      let audioItem = new AudioItemViewModel();
+      audioItem.updateAudioItem(audioInfoList[i]);
+      this.audioList.push(audioItem);
+    }
+  }
+
+  private async loadFromAlbumList(name: string | null) {
+    const audioInfoList = await this.audioStore.selectAudioByAlbum(name);
+    for (let i = 0; i < audioInfoList.length; ++i) {
+      let audioItem = new AudioItemViewModel();
+      audioItem.updateAudioItem(audioInfoList[i]);
+      this.audioList.push(audioItem);
+    }
+  }
+
+  private async loadFromArtistList(name: string | null) {
+    const audioInfoList = await this.audioStore.selectAudioByArtist(name);
+    for (let i = 0; i < audioInfoList.length; ++i) {
+      let audioItem = new AudioItemViewModel();
+      audioItem.updateAudioItem(audioInfoList[i]);
+      this.audioList.push(audioItem);
+    }
+  }
+}

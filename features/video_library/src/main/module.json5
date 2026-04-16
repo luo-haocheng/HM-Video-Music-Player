@@ -1,0 +1,11 @@
+{
+  "module": {
+    "name": "video_library",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet",
+    ],
+    "routerMap": "$profile:router_map"
+  }
+}

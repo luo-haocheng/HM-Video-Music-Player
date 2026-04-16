@@ -41,8 +41,8 @@
   },
   "modules": [
     {
-      "name": "entry",
-      "srcPath": "./entry",
+      "name": "phone",
+      "srcPath": "./products/phone",
       "targets": [
         {
           "name": "default",
@@ -51,6 +51,22 @@
           ]
         }
       ]
+    },
+    {
+      "name": "audio_library",
+      "srcPath": "./features/audio_library",
+    },
+    {
+      "name": "video_library",
+      "srcPath": "./features/video_library",
+    },
+    {
+      "name": "data_storage",
+      "srcPath": "./common/data_storage"
+    },
+    {
+      "name": "player",
+      "srcPath": "./common/player",
     }
   ]
 }

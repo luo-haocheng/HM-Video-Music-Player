@@ -1,0 +1,14 @@
+{
+  "routerMap": [
+    {
+      "name": "AudioList",
+      "pageSourceFile": "src/main/ets/view/AudioListView.ets",
+      "buildFunction": "AudioListBuilder"
+    },
+    {
+      "name": "AudioImmersive",
+      "pageSourceFile": "src/main/ets/view/AudioImmersiveView.ets",
+      "buildFunction": "AudioImmersiveBuilder"
+    }
+  ]
+}

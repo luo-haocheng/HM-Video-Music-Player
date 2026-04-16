@@ -1,0 +1,19 @@
+{
+  "routerMap": [
+    {
+      "name": "VideoPlayer",
+      "pageSourceFile": "src/main/ets/view/VideoPlayerView.ets",
+      "buildFunction": "VideoPlayerBuilder"
+    },
+    {
+      "name": "VideoBrowser",
+      "pageSourceFile": "src/main/ets/components/VideoLibraryView.ets",
+      "buildFunction": "VideoBrowserBuilder"
+    },
+    {
+      "name": "FolderBrowser",
+      "pageSourceFile": "src/main/ets/view/MovingToDialog.ets",
+      "buildFunction": "FolderBrowserBuilder"
+    }
+  ]
+}
