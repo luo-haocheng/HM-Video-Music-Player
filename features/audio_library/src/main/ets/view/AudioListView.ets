@@ -298,13 +298,14 @@ struct ListView {
                   this.selectedItem = item;
                 }
               })
-            .onClick(() => {
+            .onClick(async () => {
               if (this.multiChoice) {
                 item.isChoice = !item.isChoice;
               } else {
                 const context = this.getUIContext().getHostContext() as Context;
-                this.audioPlayerVM.setAudioAsset(item.audioInfo, context);
+                await this.audioPlayerVM.init(context);
                 this.audioPlayerVM.updatePlaylist(this.audioList, item);
+                await this.audioPlayerVM.setAudioAsset(item.audioInfo, context);
               }
             });
           },

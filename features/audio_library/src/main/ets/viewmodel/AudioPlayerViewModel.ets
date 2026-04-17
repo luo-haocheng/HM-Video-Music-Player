@@ -1,7 +1,7 @@
 import { media } from '@kit.MediaKit';
 import { AudioInfoModel } from 'data_storage/src/main/ets/rdbms/AudioInfoModel';
 import { AVPlayerModel } from 'player';
-import { MediaSessionManager } from 'player/src/main/ets/media_session/ModelSession';
+import { MediaSessionManager } from 'player/src/main/ets/media_session/MediaSession';
 import { AudioRepeatMode, SettingKey, Settings } from 'data_storage';
 import { AudioItemViewModel } from './AudioItemViewModel';
 import { AudioItemViewModelList } from './AudioListViewModel';
@@ -30,33 +30,32 @@ export class AudioPlayerViewModel {
   private settings: Settings = new Settings();
   private audioPlayer: AVPlayerModel = new AVPlayerModel();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
-  private mediaSession: MediaSessionManager = new MediaSessionManager();
 
   async init(context: Context): Promise<void> {
-    this.mediaSession.registerCallback('play', () => {
+    MediaSessionManager.getInstance().registerCallback('play', () => {
       this.audioPlayer.play();
     });
-    this.mediaSession.registerCallback('pause', () => {
+    MediaSessionManager.getInstance().registerCallback('pause', () => {
       this.audioPlayer.pause();
     });
-    this.mediaSession.registerCallback('seek', (timeMs: number) => {
+    MediaSessionManager.getInstance().registerCallback('seek', (timeMs: number) => {
       this.seek(timeMs);
     });
-    this.mediaSession.registerCallback('playNext', () => {
+    MediaSessionManager.getInstance().registerCallback('playNext', () => {
       this.switchNext(context);
     });
-    this.mediaSession.registerCallback('playPrevious', () => {
+    MediaSessionManager.getInstance().registerCallback('playPrevious', () => {
       this.switchPrev(context);
     });
-    this.mediaSession.registerCallback('setLoopMode', (loopMode: AVSessionMananger.LoopMode) => {
+    MediaSessionManager.getInstance().registerCallback('setLoopMode', (loopMode: AVSessionMananger.LoopMode) => {
       loopMode;
       this.switchRepeatMode();
     });
-    this.mediaSession.registerCallback('toggleFavorite', (assetId: string) => {
+    MediaSessionManager.getInstance().registerCallback('toggleFavorite', (assetId: string) => {
       assetId;
       this.toggleFavorite();
     });
-    this.mediaSession.initAudioSession(context);
+    await MediaSessionManager.getInstance().initAudioSession(context);
 
     this.audioPlayer.registerCallback('durationUpdate', (duration: number) => {
       this.duration = duration;
@@ -66,7 +65,7 @@ export class AudioPlayerViewModel {
       this.updateLyrics(timeMs);
     });
     this.audioPlayer.registerCallback('seekDone', (timeMs: number) => {
-      this.mediaSession.updatePlayPosition(timeMs);
+      MediaSessionManager.getInstance().updatePlayPosition(timeMs);
     });
     this.audioPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
       this.playerState = state;
@@ -79,7 +78,7 @@ export class AudioPlayerViewModel {
       } else {
         this.isPlaying = (state === 'playing');
       }
-      this.mediaSession.updatePlayState(this.currTime, state);
+      MediaSessionManager.getInstance().updatePlayState(this.currTime, state);
 
       if (state === 'completed') {
         if (this.repeatMode === AudioRepeatMode.SINGLE_REPEAT) {
@@ -100,7 +99,7 @@ export class AudioPlayerViewModel {
     this.repeatMode = (await this.settings.getSetting(SettingKey.AUDIO_REPEAT_MODE)) as AudioRepeatMode;
   }
 
-  async updatePlaylist(audioList: AudioItemViewModelList, currItem: AudioItemViewModel) {
+  updatePlaylist(audioList: AudioItemViewModelList, currItem: AudioItemViewModel) {
     this.audioList = [...audioList];
     this.currAudioItem = this.audioList[audioList.indexOf(currItem)];
   }
@@ -108,10 +107,10 @@ export class AudioPlayerViewModel {
   async setAudioAsset(audioInfo: AudioInfoModel, context: Context) {
     await this.loadLyrics(audioInfo);
     this.isFavorite = audioInfo.favorite === 0 ? false : true;
-    await this.mediaSession.setAudioAsset(audioInfo, context);
+    await MediaSessionManager.getInstance().setAudioAsset(audioInfo, context);
     await this.audioPlayer.setMediaAsset(audioInfo.audioPath);
-    await this.mediaSession.updateLoopMode(this.currTime, this.repeatMode);
-    await this.mediaSession.updateFavorite(this.currTime, audioInfo.favorite === 0 ? false : true);
+    await MediaSessionManager.getInstance().updateLoopMode(this.currTime, this.repeatMode);
+    await MediaSessionManager.getInstance().updateFavorite(this.currTime, audioInfo.favorite === 0 ? false : true);
   }
 
   async toggleFavorite(): Promise<void> {
@@ -123,7 +122,7 @@ export class AudioPlayerViewModel {
         isFavorite = false;
       }
       await this.audioStore.updateAudioFavorite(this.currAudioItem.audioInfo, isFavorite);
-      await this.mediaSession.updateFavorite(this.currTime, isFavorite);
+      await MediaSessionManager.getInstance().updateFavorite(this.currTime, isFavorite);
       this.currAudioItem.updateFavorite(isFavorite);
       this.isFavorite = isFavorite;
       // Notify
@@ -186,7 +185,7 @@ export class AudioPlayerViewModel {
       this.repeatMode = AudioRepeatMode.SINGLE_REPEAT;
       this.settings.putSetting(SettingKey.AUDIO_REPEAT_MODE, AudioRepeatMode.SINGLE_REPEAT);
     }
-    this.mediaSession.updateLoopMode(this.currTime, this.repeatMode);
+    MediaSessionManager.getInstance().updateLoopMode(this.currTime, this.repeatMode);
   }
 
   async play(): Promise<void> {

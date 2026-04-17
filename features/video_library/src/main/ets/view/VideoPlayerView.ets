@@ -22,7 +22,7 @@ export struct VideoPlayerView {
   navPathStack: NavPathStack = new NavPathStack();
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
-  @State videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel(this.context);
+  @State videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
 
   private timeStr(timeMs: number): string {
     let helper = (num: number): string => {
@@ -39,12 +39,12 @@ export struct VideoPlayerView {
     }
   }
 
-  async aboutToAppear(): Promise<void> {
-    this.videoPlayerVM.setStatusBarColor(0xFFFFFF);
+  aboutToAppear(): void {
+    this.videoPlayerVM.setStatusBarColor(this.context, 0xFFFFFF);
   }
 
-  async aboutToDisappear(): Promise<void> {
-    await this.videoPlayerVM.release();
+  aboutToDisappear(): void {
+    this.videoPlayerVM.release();
   }
 
   build() {
@@ -59,7 +59,7 @@ export struct VideoPlayerView {
           .renderFit(RenderFit.RESIZE_CONTAIN)
           .onLoad(() => {
             let surfaceId = this.xComponentCtrl.getXComponentSurfaceId();
-            this.videoPlayerVM.init(surfaceId);
+            this.videoPlayerVM.init(this.context, surfaceId);
           });
 
         AVVolumePanel({
@@ -159,10 +159,10 @@ export struct VideoPlayerView {
             }
             .backgroundColor(Color.Transparent)
             .onClick(() => {
-              this.videoPlayerVM.setDefaultBrightness();
-              this.videoPlayerVM.setStatusBarColor(0x000000);
+              this.videoPlayerVM.setDefaultBrightness(this.context);
+              this.videoPlayerVM.setStatusBarColor(this.context, 0x000000);
               if (this.videoPlayerVM.isLandscape) {
-                this.videoPlayerVM.setWindowOrientation(window.Orientation.PORTRAIT);
+                this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
               }
               this.navPathStack.pop();
             });
@@ -255,9 +255,9 @@ export struct VideoPlayerView {
             .backgroundColor(Color.Transparent)
             .onClick(() => {
               if (this.videoPlayerVM.isLandscape) {
-                this.videoPlayerVM.setWindowOrientation(window.Orientation.PORTRAIT);
+                this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
               } else {
-                this.videoPlayerVM.setWindowOrientation(window.Orientation.LANDSCAPE);
+                this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.LANDSCAPE);
               }
             });
           }
@@ -318,11 +318,11 @@ export struct VideoPlayerView {
             .onActionStart((event: GestureEvent) => {
               let uiContext = this.getUIContext() as UIContext;
               if (event.fingerInfos && event.fingerInfos.length > 0) {
-                this.videoPlayerVM.startVerticalSlide(uiContext, event.fingerInfos[0].globalX);
+                this.videoPlayerVM.startVerticalSlide(this.context, uiContext, event.fingerInfos[0].globalX);
               }
             })
             .onActionUpdate((event: GestureEvent) => {
-              this.videoPlayerVM.updateVerticalSlide(event.offsetY);
+              this.videoPlayerVM.updateVerticalSlide(this.context, event.offsetY);
             })
             .onActionEnd(() => {
               this.videoPlayerVM.isControlVolume = false;
@@ -336,10 +336,10 @@ export struct VideoPlayerView {
       );
     }
     .onBackPressed((): boolean => {
-      this.videoPlayerVM.setDefaultBrightness();
-      this.videoPlayerVM.setStatusBarColor(0x000000);
+      this.videoPlayerVM.setDefaultBrightness(this.context);
+      this.videoPlayerVM.setStatusBarColor(this.context, 0x000000);
       if (this.videoPlayerVM.isLandscape) {
-        this.videoPlayerVM.setWindowOrientation(window.Orientation.PORTRAIT);
+        this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
       }
       return false;
     })

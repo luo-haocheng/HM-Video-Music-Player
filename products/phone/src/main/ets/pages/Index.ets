@@ -15,11 +15,6 @@ struct Index {
   @Provide(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
   @Provide(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
 
-  aboutToAppear(): void {
-    const context = this.getUIContext().getHostContext() as Context;
-    this.audioPlayerVM.init(context);
-  }
-
   @Builder
   tabBarBuilder(icon: ResourceStr, name: ResourceStr, index: number) {
     Column({ space: 2 }) {

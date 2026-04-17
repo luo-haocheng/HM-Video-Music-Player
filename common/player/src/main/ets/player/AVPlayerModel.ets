@@ -75,6 +75,9 @@ export class AVPlayerModel {
   async release(): Promise<void> {
     if (this.avPlayer) {
       try {
+        if (this.avPlayer.state === 'playing') {
+          await this.avPlayer.pause();
+        }
         await this.avPlayer.release();
       } catch (err) {
         console.error(`Failed to invoke avplayer release, error: ${JSON.stringify(err)}`);

@@ -30,17 +30,13 @@ export class VideoPlayerViewModel {
   @Track isControlVolume: boolean = false;
   @Track isControlBrightness: boolean = false;
   public videoInfo: VideoInfoModel = new VideoInfoModel();
-  private context: common.UIAbilityContext;
   private videoPlayer: AVPlayerModel = new AVPlayerModel();
-  private mediaSession: MediaSessionManager = new MediaSessionManager();
   private startSeekTime: number = 0;
   private startBrightness: number = 0;
   private startVolumeLevel: number = 0;
   private slideLeftSide: boolean = false;
 
-  constructor(context: common.UIAbilityContext) {
-    this.context = context;
-
+  constructor() {
     let audioMgr = audio.getAudioManager();
     let audioVolumeMgr = audioMgr.getVolumeManager();
     try {
@@ -50,29 +46,29 @@ export class VideoPlayerViewModel {
     }
   }
 
-  async init(surfaceId: string): Promise<void> {
-    this.mediaSession.registerCallback('play', () => {
+  async init(context: Context, surfaceId: string): Promise<void> {
+    MediaSessionManager.getInstance().registerCallback('play', () => {
       this.videoPlayer.play();
     });
-    this.mediaSession.registerCallback('pause', () => {
+    MediaSessionManager.getInstance().registerCallback('pause', () => {
       this.videoPlayer.pause();
     });
-    this.mediaSession.registerCallback('seek', (timeMs: number) => {
+    MediaSessionManager.getInstance().registerCallback('seek', (timeMs: number) => {
       this.seek(timeMs);
     });
-    this.mediaSession.registerCallback('rewind', (timeS?: number) => {
+    MediaSessionManager.getInstance().registerCallback('rewind', (timeS?: number) => {
       if (timeS) {
         let timeMs = this.currTime - timeS * 1000;
         this.seek(timeMs);
       }
     });
-    this.mediaSession.registerCallback('fastForward', (timeS?: number) => {
+    MediaSessionManager.getInstance().registerCallback('fastForward', (timeS?: number) => {
       if (timeS) {
         let timeMs = this.currTime + timeS * 1000;
         this.seek(timeMs);
       }
     });
-    await this.mediaSession.initVideoSession(this.videoInfo, this.context);
+    await MediaSessionManager.getInstance().initVideoSession(context);
 
     this.videoPlayer.registerCallback('durationUpdate', (duration: number) => {
       this.duration = duration;
@@ -81,14 +77,15 @@ export class VideoPlayerViewModel {
       this.currTime = timeMs;
     });
     this.videoPlayer.registerCallback('seekDone', (timeMs: number) => {
-      this.mediaSession.updatePlayPosition(timeMs);
+      MediaSessionManager.getInstance().updatePlayPosition(timeMs);
     });
     this.videoPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
       this.isPlaying = (state === 'playing');
-      this.mediaSession.updatePlayState(this.currTime, state);
+      MediaSessionManager.getInstance().updatePlayState(this.currTime, state);
     });
     await this.videoPlayer.initPlayer(surfaceId);
     await this.videoPlayer.setMediaAsset(this.videoInfo.videoPath);
+    await MediaSessionManager.getInstance().setVideoAsset(this.videoInfo);
   }
 
   async play(): Promise<void> {
@@ -108,41 +105,41 @@ export class VideoPlayerViewModel {
     this.videoPlayer.setSpeed(speed);
     switch (speed) {
       case media.PlaybackSpeed.SPEED_FORWARD_0_75_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 0.75);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.75);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_1_00_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 1.00);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 1.00);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_1_25_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 1.25);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 1.25);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_1_75_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 1.75);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 1.75);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_2_00_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 2.00);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 2.00);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_0_50_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 0.50);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.50);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_1_50_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 1.50);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 1.50);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_3_00_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 3.00);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 3.00);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_0_25_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 0.25);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.25);
         break;
       case media.PlaybackSpeed.SPEED_FORWARD_0_125_X:
-        this.mediaSession.updatePlaySpeed(this.currTime, 0.125);
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.125);
         break;
     }
   }
 
   async release(): Promise<void> {
+await MediaSessionManager.getInstance().destroySession();
     await this.videoPlayer.release();
-    await this.mediaSession.destroySession();
   }
 
   async startHorizontalSlide(): Promise<void> {
@@ -162,7 +159,7 @@ export class VideoPlayerViewModel {
     await this.seek(this.seekTime);
   }
 
-  async startVerticalSlide(uiContext: UIContext, globalX: number): Promise<void> {
+  async startVerticalSlide(context: common.UIAbilityContext, uiContext: UIContext, globalX: number): Promise<void> {
     console.info(`PanGesture Veritcal Start`);
     let screenWidthVp: number = 0;
     try {
@@ -180,7 +177,7 @@ export class VideoPlayerViewModel {
       this.isControlBrightness = true;
       let windowClass: window.Window | undefined;
       try {
-        windowClass = await this.context.windowStage.getMainWindow();
+        windowClass = await context.windowStage.getMainWindow();
       } catch (error) {
         console.error(`Failed to getMainWindow. Cause: ${JSON.stringify(error)}`);
         return;
@@ -188,7 +185,7 @@ export class VideoPlayerViewModel {
       try {
         this.startBrightness = windowClass.getWindowProperties().brightness;
         if (this.startBrightness === -1) {
-          let brightStr = settings.getValueSync(this.context, settings.display.SCREEN_BRIGHTNESS_STATUS, '100');
+          let brightStr = settings.getValueSync(context, settings.display.SCREEN_BRIGHTNESS_STATUS, '100');
           this.startBrightness = parseInt(brightStr) / MAX_SCREEN_BRIGHTNESS;
         }
       } catch (error) {
@@ -207,12 +204,12 @@ export class VideoPlayerViewModel {
     }
   }
 
-  async updateVerticalSlide(offsetY: number): Promise<void> {
+  async updateVerticalSlide(context: common.UIAbilityContext, offsetY: number): Promise<void> {
     console.info(`PanGesture Vertical Update: ${offsetY}`);
     if (this.slideLeftSide) {
       let windowClass: window.Window | undefined;
       try {
-        windowClass = await this.context.windowStage.getMainWindow();
+        windowClass = await context.windowStage.getMainWindow();
       } catch (error) {
         console.error(`Failed to getMainWindow. Cause: ${JSON.stringify(error)}`);
         return;
@@ -231,8 +228,8 @@ export class VideoPlayerViewModel {
     }
   }
 
-  async setWindowOrientation(orientation: window.Orientation): Promise<void> {
-    await this.context.windowStage.getMainWindow()
+  async setWindowOrientation(context: common.UIAbilityContext, orientation: window.Orientation): Promise<void> {
+    await context.windowStage.getMainWindow()
       .then((windowClass: window.Window) => {
         windowClass.setPreferredOrientation(orientation)
           .then(() => {
@@ -248,8 +245,8 @@ export class VideoPlayerViewModel {
       });
   }
 
-  async setStatusBarColor(color: number) {
-    await this.context.windowStage.getMainWindow()
+  async setStatusBarColor(context: common.UIAbilityContext, color: number) {
+    await context.windowStage.getMainWindow()
       .then((windowClass: window.Window) => {
         windowClass.setStatusBarColor(ColorMetrics.numeric(color))
           .catch((err: BusinessError) => {
@@ -261,10 +258,10 @@ export class VideoPlayerViewModel {
       });
   }
 
-  async setDefaultBrightness(): Promise<void> {
+  async setDefaultBrightness(context: common.UIAbilityContext): Promise<void> {
     let windowClass: window.Window | undefined;
     try {
-      windowClass = await this.context.windowStage.getMainWindow();
+      windowClass = await context.windowStage.getMainWindow();
     } catch (error) {
       console.error(`Failed to getMainWindow. Cause: ${JSON.stringify(error)}`);
       return;
