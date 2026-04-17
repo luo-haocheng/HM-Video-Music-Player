@@ -1,4 +1,4 @@
-import { AVPlayerModel, MediaSessionManager } from 'player';
+import { AVPlayerManager, MediaSessionManager } from 'player';
 import { common } from '@kit.AbilityKit';
 import { media } from '@kit.MediaKit';
 import { ColorMetrics, display, window } from '@kit.ArkUI';
@@ -30,7 +30,7 @@ export class VideoPlayerViewModel {
   @Track isControlVolume: boolean = false;
   @Track isControlBrightness: boolean = false;
   public videoInfo: VideoInfoModel = new VideoInfoModel();
-  private videoPlayer: AVPlayerModel = new AVPlayerModel();
+  private videoPlayer: AVPlayerManager = new AVPlayerManager();
   private startSeekTime: number = 0;
   private startBrightness: number = 0;
   private startVolumeLevel: number = 0;
@@ -138,7 +138,7 @@ export class VideoPlayerViewModel {
   }
 
   async release(): Promise<void> {
-await MediaSessionManager.getInstance().destroySession();
+    await MediaSessionManager.getInstance().destroySession();
     await this.videoPlayer.release();
   }
 

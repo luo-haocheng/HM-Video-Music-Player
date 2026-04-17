@@ -1,6 +1,6 @@
 import { media } from '@kit.MediaKit';
 import { AudioInfoModel } from 'data_storage/src/main/ets/rdbms/AudioInfoModel';
-import { AVPlayerModel } from 'player';
+import { AVPlayerManager } from 'player';
 import { MediaSessionManager } from 'player/src/main/ets/media_session/MediaSession';
 import { AudioRepeatMode, SettingKey, Settings } from 'data_storage';
 import { AudioItemViewModel } from './AudioItemViewModel';
@@ -28,7 +28,7 @@ export class AudioPlayerViewModel {
   @Track lyricsScroller: Scroller = new Scroller();
   private playerState: media.AVPlayerState = 'idle';
   private settings: Settings = new Settings();
-  private audioPlayer: AVPlayerModel = new AVPlayerModel();
+  private audioPlayer: AVPlayerManager = new AVPlayerManager();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 
   async init(context: Context): Promise<void> {

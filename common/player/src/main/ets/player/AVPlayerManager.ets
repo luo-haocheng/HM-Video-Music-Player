@@ -1,8 +1,9 @@
 import { media } from '@kit.MediaKit';
 import { fileIo } from '@kit.CoreFileKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { audio } from '@kit.AudioKit';
 
-export class AVPlayerModel {
+export class AVPlayerManager {
   surfaceId?: string;
   videoFile?: fileIo.File;
   avPlayer?: media.AVPlayer;
@@ -143,6 +144,7 @@ export class AVPlayerModel {
           if (this.avPlayer === undefined) {
             return;
           }
+          this.avPlayer.audioInterruptMode = audio.InterruptMode.INDEPENDENT_MODE;
           try {
             await this.avPlayer.play();
           } catch (err) {
