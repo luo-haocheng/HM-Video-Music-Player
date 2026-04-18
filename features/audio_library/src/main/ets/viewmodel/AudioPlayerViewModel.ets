@@ -105,10 +105,10 @@ export class AudioPlayerViewModel {
   }
 
   async setAudioAsset(audioInfo: AudioInfoModel, context: Context) {
-    await this.loadLyrics(audioInfo);
+    const lyricsText = await this.loadLyrics(audioInfo);
     this.isFavorite = audioInfo.favorite === 0 ? false : true;
-    await MediaSessionManager.getInstance().setAudioAsset(audioInfo, context);
     await this.audioPlayer.setMediaAsset(audioInfo.audioPath);
+    await MediaSessionManager.getInstance().setAudioAsset(context, audioInfo, lyricsText);
     await MediaSessionManager.getInstance().updateLoopMode(this.currTime, this.repeatMode);
     await MediaSessionManager.getInstance().updateFavorite(this.currTime, audioInfo.favorite === 0 ? false : true);
   }
@@ -236,12 +236,12 @@ export class AudioPlayerViewModel {
     }
   }
 
-  private async loadLyrics(audioInfo: AudioInfoModel): Promise<void> {
+  private async loadLyrics(audioInfo: AudioInfoModel): Promise<string | undefined> {
     this.currLyrics = '';
     this.currLyricsIdx = 0;
     if (!audioInfo.lyricsPath) {
       this.lyricsInfoArr = [];
-      return;
+      return undefined;
     }
     try {
       const newLyricsInfoArr: Array<LyricsInfo> = [];
@@ -254,9 +254,10 @@ export class AudioPlayerViewModel {
         }
       }
       this.lyricsInfoArr = newLyricsInfoArr;
+      return lyricsText;
     } catch (error) {
       console.error(`Failed to load lyrics from ${audioInfo.lyricsPath}. Cause: ${JSON.stringify(error)}`);
-      return;
+      return undefined;
     }
   }
 

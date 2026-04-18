@@ -53,7 +53,7 @@ export class MediaSessionManager {
     }
   }
 
-  async setAudioAsset(audioInfo: AudioInfoModel, context: Context) {
+  async setAudioAsset(context: Context, audioInfo: AudioInfoModel, lyricsText?: string) {
     if (this.session) {
       let duration = -1;
       let mediaImg: image.PixelMap | undefined;
@@ -66,13 +66,18 @@ export class MediaSessionManager {
         if (audioInfo.metadata) {
           duration = await this.getMediaDuration(audioInfo.metadata);
         }
-        let metadata: AVSessionMananger.AVMetadata = {
+        const metadata: AVSessionMananger.AVMetadata = {
           assetId: util.generateRandomUUID(),
-          artist: audioInfo.artist ? audioInfo.artist : '',
           title: audioInfo.title,
           mediaImage: mediaImg,
           duration: duration,
         };
+        if (audioInfo.artist) {
+          metadata.artist = audioInfo.artist;
+        }
+        if (lyricsText) {
+          metadata.lyric = lyricsText;
+        }
         await this.session.setAVMetadata(metadata);
       } catch (error) {
         console.error(`Failed to invoke avsession.setAVMetadata. Cause: ${JSON.stringify(error)}`);
