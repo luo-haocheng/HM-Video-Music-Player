@@ -74,6 +74,8 @@ export class MediaSessionManager {
         };
         if (audioInfo.artist) {
           metadata.artist = audioInfo.artist;
+        } else {
+          metadata.artist = '未知歌手';
         }
         if (lyricsText) {
           metadata.lyric = lyricsText;
