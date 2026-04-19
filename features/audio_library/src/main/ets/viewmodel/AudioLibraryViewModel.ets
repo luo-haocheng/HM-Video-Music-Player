@@ -1,7 +1,6 @@
 import { AudioLibraryStore } from 'data_storage/src/main/ets/rdbms/AudioLibraryStore';
 import picker from '@ohos.file.picker';
 import { fileIo, fileUri } from '@kit.CoreFileKit';
-import { util } from '@kit.ArkTS';
 import { media } from '@kit.MediaKit';
 import image from '@ohos.multimedia.image';
 import { AudioInfoModel } from 'data_storage/src/main/ets/rdbms/AudioInfoModel';
@@ -10,10 +9,10 @@ import { PlayListInfoModel } from 'data_storage/src/main/ets/rdbms/PlayListInfoM
 import { emitter } from '@kit.BasicServicesKit';
 import { preferences } from '@kit.ArkData';
 import { SettingKey, Settings, SortModeValue, SortRuleValue, ViewOptionValue } from 'data_storage';
+import { util } from '@kit.ArkTS';
 
-const AUDIO_DIR = '/audios';
-const COVER_DIR = '/covers';
-const DOWNLOAD_AUDIO_DIR = '/Audios';
+const SANDBOX_COVER_DIR = '/covers';
+const DOWNLOAD_AUDIO_DIR = '/audios';
 const SORT_AUDIO_EVENT = 'SortAudio';
 const SORT_PLAYLIST_EVENT = 'SortPlaylist';
 const IMPORT_AUDIO_EVENT = 'ImportAudio';
@@ -96,8 +95,13 @@ export class AudioLibraryViewModel {
     const audioViewPicker = new picker.AudioViewPicker(context);
     audioViewPicker.select()
       .then(async (selectedUris: Array<string>) => {
+        const downloadAudioPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
         for (let i = 0; i < selectedUris.length; ++i) {
-          await this.importAudio(selectedUris[i], context);
+          try {
+            await this.importAudio(selectedUris[i], downloadAudioPath, context);
+          } catch (error) {
+            // todo
+          }
         }
       })
       .catch((err: BusinessError) => {
@@ -111,8 +115,13 @@ export class AudioLibraryViewModel {
     const documentViewPicker = new picker.DocumentViewPicker();
     documentViewPicker.select(documentSelectOptions)
       .then(async (selectedUris: Array<string>) => {
+        const downloadAudioPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
         for (let i = 0; i < selectedUris.length; ++i) {
-          await this.importAudio(selectedUris[i], context);
+          try {
+            await this.importAudio(selectedUris[i], downloadAudioPath, context);
+          } catch (error) {
+            // todo
+          }
         }
       })
       .catch((err: BusinessError) => {
@@ -122,7 +131,7 @@ export class AudioLibraryViewModel {
 
   async importAudioFromDownloadDir(context: Context): Promise<void> {
     try {
-      const downloadVideoPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
+      const downloadAudioPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
       let traverseDir = async (dir: string) => {
         let files = await fileIo.listFile(dir);
         for (let i = 0; i < files.length; ++i) {
@@ -131,11 +140,15 @@ export class AudioLibraryViewModel {
           if (stat.isDirectory()) {
             await traverseDir(path);
           } else {
-            await this.importAudio(path, context);
+            try {
+              await this.importAudio(path, downloadAudioPath, context);
+            } catch (error) {
+              // todo
+            }
           }
         }
       };
-      await traverseDir(downloadVideoPath);
+      await traverseDir(downloadAudioPath);
     } catch (error) {
       console.error(`Failed to import video from download directory`);
     }
@@ -149,32 +162,22 @@ export class AudioLibraryViewModel {
     return await this.settings.getSetting(SettingKey.AUDIO_VIEW_OPTION) as ViewOptionValue;
   }
 
-  private getAudioNameFromFileUri(uri: string): string {
-    const lastSlashIdx = uri.lastIndexOf('/');
-    const audioFullName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
-    const lastDotIdx = audioFullName.lastIndexOf('.');
-    const audioName = audioFullName.slice(0, lastDotIdx);
-    return audioName;
-  }
-
-  private async importAudio(uri: string, context: Context): Promise<void> {
+  private async importAudio(srcUri: string, downloadAudioUri: string, context: Context): Promise<void> {
     // Create audio and cover sandbox directory if not exist
-    const audioDir = context.filesDir + AUDIO_DIR;
-    const coverDir = context.filesDir + COVER_DIR;
     try {
-      await this.createAudioCoverDir(audioDir, coverDir);
+      await this.createCoverSandboxDir(context);
     } catch (error) {
       throw Error(error);
     }
-    // Copy audio file to sandbox
-    let audioPath: string = audioDir + `/${util.generateRandomUUID()}.mp4`;
+    // Copy audio file to download directory
+    let audioPath: string = '';
     try {
-      await this.copyAudio2Sandbox(uri, audioPath);
+      audioPath = await this.copyAudio2DownloadDir(srcUri, downloadAudioUri);
     } catch (error) {
       throw Error(error);
     }
     // Fetch and save album cover to sandbox
-    let coverPath: string | null = coverDir + `/${util.generateRandomUUID()}.jpg`;
+    let coverPath: string | null = context.filesDir + SANDBOX_COVER_DIR + `/${util.generateRandomUUID()}.jpg`;
     try {
       coverPath = await this.fetchSaveAlbumCover(audioPath, coverPath);
     } catch (error) {
@@ -182,7 +185,7 @@ export class AudioLibraryViewModel {
     }
     // Insert audio record to database
     let audioInfo: AudioInfoModel | undefined;
-    const audioName = this.getAudioNameFromFileUri(uri);
+    const audioName = this.getAudioNameFromFileUri(srcUri);
     try {
       audioInfo = await this.insertAudio2DB(audioName, audioPath, coverPath);
     } catch (error) {
@@ -199,34 +202,26 @@ export class AudioLibraryViewModel {
     }
   }
 
-  private async createAudioCoverDir(audioDir: string, coverDir: string) {
-    try {
-      if (!fileIo.accessSync(audioDir)) {
-        await fileIo.mkdir(audioDir);
-      }
-    } catch (error) {
-      console.error(`Failed to create audio directory. Cause: ${JSON.stringify(error)}`);
-      throw Error(error);
-    }
-    try {
-      if (!fileIo.accessSync(coverDir)) {
-        await fileIo.mkdir(coverDir);
-      }
-    } catch (error) {
-      console.error(`Failed to create cover directory. Cause: ${JSON.stringify(error)}`);
-      throw Error(error);
-    }
-  }
-
-  private async copyAudio2Sandbox(srcPath: string, dstPath: string): Promise<void> {
+  private async copyAudio2DownloadDir(srcUri: string, downloadAudioPath: string): Promise<string> {
     let srcFile: fileIo.File | undefined;
     let dstFile: fileIo.File | undefined;
     try {
+      if (srcUri.includes(downloadAudioPath)) {
+        const srcPath = new fileUri.FileUri(srcUri).path;
+        return srcPath;
+      }
+
+      const dstUri: string = downloadAudioPath + '/' + this.getFileNameFromFileUri(srcUri);
+      const srcPath = new fileUri.FileUri(srcUri).path;
+      const dstPath = new fileUri.FileUri(dstUri).path;
+
       srcFile = await fileIo.open(srcPath, fileIo.OpenMode.READ_ONLY);
       dstFile = await fileIo.open(dstPath, fileIo.OpenMode.CREATE | fileIo.OpenMode.WRITE_ONLY);
       await fileIo.copyFile(srcFile.fd, dstFile.fd);
+
+      return dstPath;
     } catch (error) {
-      console.error(`Failed to copy audio file from ${srcPath} to ${dstPath}. Cause: ${JSON.stringify(error)}`);
+      console.error(`Failed to copy audio file ${srcUri} to download directory. Cause: ${JSON.stringify(error)}`);
       throw Error(error);
     } finally {
       if (srcFile) {
@@ -265,12 +260,23 @@ export class AudioLibraryViewModel {
     let imagePacker: image.ImagePacker | undefined;
     let coverFile: fileIo.File | undefined;
     try {
+      const documentViewPicker = new picker.DocumentViewPicker();
+      const documentSaveOptions = new picker.DocumentSaveOptions();
+      documentSaveOptions.pickerMode = picker.DocumentPickerMode.DOWNLOAD;
+
+      const documentSaveResult = await documentViewPicker.save(documentSaveOptions);
+      if (documentSaveResult.length <= 0) {
+        throw Error('Document save result is zero');
+      }
+
       coverFile = await fileIo.open(coverPath, fileIo.OpenMode.CREATE | fileIo.OpenMode.WRITE_ONLY);
 
       imagePacker = image.createImagePacker();
       const packOpts: image.PackingOption = { format: 'image/jpeg', quality: 100 };
 
       await imagePacker.packToFile(coverImg, coverFile.fd, packOpts);
+
+      return coverPath;
     } catch (error) {
       console.error(`Faile to save album cover. Cause: ${JSON.stringify(error)}`);
       throw Error(error);
@@ -285,8 +291,6 @@ export class AudioLibraryViewModel {
         await fileIo.close(coverFile);
       }
     }
-
-    return coverPath;
   }
 
   private async insertAudio2DB(audioName: string, audioPath: string,
@@ -331,6 +335,17 @@ export class AudioLibraryViewModel {
     return audioInfo;
   }
 
+  private async createCoverSandboxDir(context: Context) {
+    const sandboxCoverPath = context.filesDir + SANDBOX_COVER_DIR;
+    try {
+      if (!fileIo.accessSync(sandboxCoverPath, fileIo.AccessModeType.EXIST)) {
+        await fileIo.mkdir(sandboxCoverPath);
+      }
+    } catch (error) {
+      console.error(`Failed to make cover sandbox directory. Cause: ${JSON.stringify(error)}`);
+    }
+  }
+
   private async createAudioDownloadDir(context: Context): Promise<void> {
     const documentSaveOptions = new picker.DocumentSaveOptions();
     documentSaveOptions.pickerMode = picker.DocumentPickerMode.DOWNLOAD;
@@ -341,19 +356,38 @@ export class AudioLibraryViewModel {
           console.error(`Failed to invoke DocumentViewPicker.save, result is empty`);
           return;
         }
-        console.info(`Download Save Result: ${result}`);
         this.downloadPath = new fileUri.FileUri(result[0]).path;
-        const downloadVideoPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
         try {
-          if (!fileIo.accessSync(downloadVideoPath, fileIo.AccessModeType.EXIST)) {
-            await fileIo.mkdir(downloadVideoPath);
+          const downloadAudioPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
+          if (!fileIo.accessSync(downloadAudioPath, fileIo.AccessModeType.EXIST)) {
+            await fileIo.mkdir(downloadAudioPath);
           }
         } catch (error) {
-          console.error(`Failed to make video directory ${downloadVideoPath}. Cause: ${JSON.stringify(error)}`);
+          console.error(`Failed to make audio download directory. Cause: ${JSON.stringify(error)}`);
         }
       })
       .catch((err: BusinessError) => {
         console.error(`Failed to invoke DocumentViewPicker.save. Cause: ${JSON.stringify(err)}`);
       });
+  }
+
+  private getAudioNameFromFileUri(uri: string): string {
+    const lastSlashIdx = uri.lastIndexOf('/');
+    if (lastSlashIdx === -1 || lastSlashIdx === uri.length - 1) {
+      throw Error(`Invalid uri: ${uri}`);
+    }
+    const audioFullName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
+    const lastDotIdx = audioFullName.lastIndexOf('.');
+    const audioName = audioFullName.slice(0, lastDotIdx);
+    return audioName;
+  }
+
+  private getFileNameFromFileUri(uri: string): string {
+    const lastSlashIdx = uri.lastIndexOf('/');
+    if (lastSlashIdx === -1 || lastSlashIdx === uri.length - 1) {
+      throw Error(`Invalid uri: ${uri}`);
+    }
+    const fileName = uri.slice(lastSlashIdx + 1);
+    return fileName;
   }
 }

@@ -7,8 +7,8 @@ import image from '@ohos.multimedia.image';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import { AudioItemViewModel } from './AudioItemViewModel';
 
-const LYRICS_DIR = '/lyrics';
-const COVER_DIR = '/covers';
+const SANDBOX_LYRICS_DIR = '/lyrics';
+const SANDBOX_COVER_DIR = '/covers';
 
 @Observed
 export class AudioEditViewModel {
@@ -122,7 +122,7 @@ export class AudioEditViewModel {
 
   private async updateLyrics(context: Context, audioInfo: AudioInfoModel): Promise<void> {
     // Create lyrics directory if not exist
-    const lyricsDir = context.filesDir + LYRICS_DIR;
+    const lyricsDir = context.filesDir + SANDBOX_LYRICS_DIR;
     try {
       await this.createLyricsDir(lyricsDir);
     } catch (err) {
@@ -158,7 +158,7 @@ export class AudioEditViewModel {
 
   private async updateAlbumCover(context: Context, audioInfo: AudioInfoModel) {
     // Create cover directory if not exist
-    const coverDir = context.filesDir + COVER_DIR;
+    const coverDir = context.filesDir + SANDBOX_COVER_DIR;
     try {
       await this.createLyricsDir(coverDir);
     } catch (err) {
