@@ -1,5 +1,5 @@
 import { AVPlayerManager, MediaSessionManager } from 'player';
-import { common } from '@kit.AbilityKit';
+import { common, Context } from '@kit.AbilityKit';
 import { media } from '@kit.MediaKit';
 import { ColorMetrics, display, window } from '@kit.ArkUI';
 import { settings } from '@kit.BasicServicesKit';
@@ -46,7 +46,24 @@ export class VideoPlayerViewModel {
     }
   }
 
-  async init(context: Context, surfaceId: string): Promise<void> {
+  async initPlayer(surfaceId: string): Promise<void> {
+    this.videoPlayer.registerCallback('durationUpdate', (duration: number) => {
+      this.duration = duration;
+    });
+    this.videoPlayer.registerCallback('timeUpdate', (timeMs: number) => {
+      this.currTime = timeMs;
+    });
+    this.videoPlayer.registerCallback('seekDone', (timeMs: number) => {
+      MediaSessionManager.getInstance().updatePlayPosition(timeMs);
+    });
+    this.videoPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
+      this.isPlaying = (state === 'playing');
+      MediaSessionManager.getInstance().updatePlayState(this.currTime, state);
+    });
+    await this.videoPlayer.initPlayer(surfaceId);
+  }
+
+  async initSession(context: Context) {
     MediaSessionManager.getInstance().registerCallback('play', () => {
       this.videoPlayer.play();
     });
@@ -69,23 +86,15 @@ export class VideoPlayerViewModel {
       }
     });
     await MediaSessionManager.getInstance().initVideoSession(context);
+  }
 
-    this.videoPlayer.registerCallback('durationUpdate', (duration: number) => {
-      this.duration = duration;
-    });
-    this.videoPlayer.registerCallback('timeUpdate', (timeMs: number) => {
-      this.currTime = timeMs;
-    });
-    this.videoPlayer.registerCallback('seekDone', (timeMs: number) => {
-      MediaSessionManager.getInstance().updatePlayPosition(timeMs);
-    });
-    this.videoPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
-      this.isPlaying = (state === 'playing');
-      MediaSessionManager.getInstance().updatePlayState(this.currTime, state);
-    });
-    await this.videoPlayer.initPlayer(surfaceId);
+  async setVideoAsset(context: Context): Promise<void> {
     await this.videoPlayer.setMediaAsset(this.videoInfo.videoPath);
-    await MediaSessionManager.getInstance().setVideoAsset(this.videoInfo);
+    setTimeout(async () => {
+      await this.initSession(context);
+      const currState: media.AVPlayerState = this.videoPlayer.getState() ?? 'released';
+      await MediaSessionManager.getInstance().setVideoAsset(this.videoInfo, this.currTime, currState);
+    }, 500);
   }
 
   async play(): Promise<void> {
@@ -138,7 +147,7 @@ export class VideoPlayerViewModel {
   }
 
   async release(): Promise<void> {
-    await MediaSessionManager.getInstance().destroySession();
+    await MediaSessionManager.getInstance().release();
     await this.videoPlayer.release();
   }
 

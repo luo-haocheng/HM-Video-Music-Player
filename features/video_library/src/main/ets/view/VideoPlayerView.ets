@@ -57,9 +57,10 @@ export struct VideoPlayerView {
           .width('100%')
           .height('100%')
           .renderFit(RenderFit.RESIZE_CONTAIN)
-          .onLoad(() => {
-            let surfaceId = this.xComponentCtrl.getXComponentSurfaceId();
-            this.videoPlayerVM.init(this.context, surfaceId);
+          .onLoad(async () => {
+            const surfaceId = this.xComponentCtrl.getXComponentSurfaceId();
+            await this.videoPlayerVM.initPlayer(surfaceId);
+            await this.videoPlayerVM.setVideoAsset(this.context);
           });
 
         AVVolumePanel({

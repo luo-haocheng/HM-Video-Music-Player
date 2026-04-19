@@ -65,6 +65,10 @@ export class AVPlayerManager {
     this.avPlayer?.setSpeed(speed);
   }
 
+  getState(): media.AVPlayerState | undefined {
+    return this.avPlayer?.state;
+  }
+
   async reset(): Promise<void> {
     try {
       await this.avPlayer?.reset();

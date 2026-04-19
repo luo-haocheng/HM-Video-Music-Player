@@ -24,7 +24,8 @@ export class MediaSessionManager {
   async initAudioSession(context: Context): Promise<void> {
     if (this.session && this.session.sessionType === 'video') {
       try {
-        await this.destroySession();
+        await this.session.destroy();
+        this.session = undefined;
       } catch (error) {
         return;
       }
@@ -95,17 +96,20 @@ export class MediaSessionManager {
   async initVideoSession(context: Context): Promise<void> {
     if (this.session && this.session.sessionType === 'audio') {
       try {
-        await this.destroySession();
+        await this.session.destroy();
+        this.session = undefined;
       } catch (error) {
         return;
       }
     }
-    try {
-      let sessionName = util.generateRandomUUID();
-      this.session = await AVSessionMananger.createAVSession(context, sessionName, 'video');
-    } catch (error) {
-      console.error(`Failed to create avsession. Cause: ${JSON.stringify(error)}`);
-      return;
+    if (!this.session) {
+      try {
+        let sessionName = util.generateRandomUUID();
+        this.session = await AVSessionMananger.createAVSession(context, sessionName, 'video');
+      } catch (error) {
+        console.error(`Failed to create avsession. Cause: ${JSON.stringify(error)}`);
+        return;
+      }
     }
 
     try {
@@ -123,7 +127,7 @@ export class MediaSessionManager {
     }
   }
 
-  async setVideoAsset(info: VideoInfoModel): Promise<void> {
+  async setVideoAsset(info: VideoInfoModel, timeMs: number, state: media.AVPlayerState): Promise<void> {
     if (this.session) {
       let duration = -1;
       let mediaImg: image.PixelMap | undefined;
@@ -132,11 +136,12 @@ export class MediaSessionManager {
         duration = await this.getMediaDuration(info.metadata);
         let metadata: AVSessionMananger.AVMetadata = {
           assetId: util.generateRandomUUID(),
-          title: info.name,
-          duration: duration,
           mediaImage: mediaImg,
+          duration: duration,
+          title: info.name,
         };
         await this.session.setAVMetadata(metadata);
+        await this.updatePlayState(timeMs, state);
       } catch (error) {
         console.error(`Failed to invoke avsession.setAVMetadata. Cause: ${JSON.stringify(error)}`);
         return;
@@ -272,10 +277,13 @@ export class MediaSessionManager {
     }
   }
 
-  async destroySession(): Promise<void> {
+  async release(): Promise<void> {
     try {
-      await this.session?.destroy();
-      this.session = undefined;
+      this.session?.off('play');
+      this.session?.off('pause');
+      this.session?.off('seek');
+      this.session?.off('rewind');
+      this.session?.off('fastForward');
     } catch (error) {
       console.error(`Failed to invoke avsession.destroy. Cause: ${JSON.stringify(error)}`);
     }

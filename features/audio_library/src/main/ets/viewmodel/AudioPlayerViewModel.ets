@@ -108,6 +108,7 @@ export class AudioPlayerViewModel {
     const lyricsText = await this.loadLyrics(audioInfo);
     this.isFavorite = audioInfo.favorite === 0 ? false : true;
     await this.audioPlayer.setMediaAsset(audioInfo.audioPath);
+   
     await MediaSessionManager.getInstance().setAudioAsset(context, audioInfo, lyricsText);
     await MediaSessionManager.getInstance().updateLoopMode(this.currTime, this.repeatMode);
     await MediaSessionManager.getInstance().updateFavorite(this.currTime, audioInfo.favorite === 0 ? false : true);
