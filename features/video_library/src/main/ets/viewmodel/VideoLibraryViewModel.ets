@@ -11,9 +11,8 @@ import { FolderInfoModel } from 'data_storage/src/main/ets/rdbms/FolderInfoModel
 import { emitter } from '@kit.BasicServicesKit';
 import { preferences } from '@kit.ArkData';
 
-const VIDEO_DIR = '/videos';
 const THUMBNAIL_DIR = '/thumbnails';
-const DOWNLOAD_VIDEO_DIR = '/Videos';
+const DOWNLOAD_VIDEO_DIR = '/videos';
 const SORT_VIDEO_FOLDER_EVENT = 'SortVideoFolder';
 const IMPORT_VIDEO_EVENT = 'ImportVideo';
 const CREATE_FOLDER_EVENT = 'CreateFolder';
@@ -31,15 +30,7 @@ export class VideoLibraryViewModel {
     this.context = context;
   }
 
-  private async createVidThumbDir(videoDir: string, thumbnailDir: string) {
-    try {
-      if (!fileIo.accessSync(videoDir)) {
-        await fileIo.mkdir(videoDir);
-      }
-    } catch (error) {
-      console.error(`Failed to create video directory. Cause: ${JSON.stringify(error)}`);
-      throw Error(error);
-    }
+  private async createThumbSandboxDir(thumbnailDir: string) {
     try {
       if (!fileIo.accessSync(thumbnailDir)) {
         await fileIo.mkdir(thumbnailDir);
@@ -50,15 +41,25 @@ export class VideoLibraryViewModel {
     }
   }
 
-  private async copyVideo2Sandbox(srcPath: string, dstPath: string): Promise<void> {
+  private async copyVideo2DownloadDir(srcUri: string, downloadVideoPath: string): Promise<string> {
     let srcFile: fileIo.File | undefined;
     let dstFile: fileIo.File | undefined;
     try {
+      if (srcUri.includes(downloadVideoPath)) {
+        const srcPath = new fileUri.FileUri(srcUri).path;
+        return srcPath;
+      }
+      const dstUri: string = downloadVideoPath + '/' + this.getFileNameFromFileUri(srcUri);
+      const srcPath = new fileUri.FileUri(srcUri).path;
+      const dstPath = new fileUri.FileUri(dstUri).path;
+
       srcFile = await fileIo.open(srcPath, fileIo.OpenMode.READ_ONLY);
       dstFile = await fileIo.open(dstPath, fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE);
       await fileIo.copyFile(srcFile.fd, dstFile.fd);
+
+      return dstPath;
     } catch (error) {
-      console.error(`Failed to copy video file ${srcPath} to ${dstPath}. Cause: ${JSON.stringify(error)}`);
+      console.error(`Failed to copy video file ${srcUri} to download directroy. Cause: ${JSON.stringify(error)}`);
       throw Error(error);
     } finally {
       if (srcFile) {
@@ -150,17 +151,17 @@ export class VideoLibraryViewModel {
 
   private async importVideo(uri: string, folder: string): Promise<void> {
     // Create video and thumbnail directory
-    const videoDir = this.context.filesDir + VIDEO_DIR;
     const thumbnailDir = this.context.filesDir + THUMBNAIL_DIR;
     try {
-      await this.createVidThumbDir(videoDir, thumbnailDir);
+      await this.createThumbSandboxDir(thumbnailDir);
     } catch (error) {
       throw Error(error);
     }
     // Copy video file to sandbox
-    let videoPath: string = videoDir + `/${util.generateRandomUUID()}.mp4`;
+    let videoPath: string = '';
     try {
-      await this.copyVideo2Sandbox(uri, videoPath);
+      const downloadVideoPath = this.downloadPath + DOWNLOAD_VIDEO_DIR;
+      videoPath = await this.copyVideo2DownloadDir(uri, downloadVideoPath);
     } catch (error) {
       throw Error(error);
     }
@@ -317,5 +318,14 @@ export class VideoLibraryViewModel {
     await this.settings.initPreference(this.context);
     this.sortMode = await this.settings.getSetting(SettingKey.VIDEO_SORT_MODE);
     this.sortRule = await this.settings.getSetting(SettingKey.VIDEO_SORT_RULE);
+  }
+
+  private getFileNameFromFileUri(uri: string): string {
+    const lastSlashIdx = uri.lastIndexOf('/');
+    if (lastSlashIdx === -1 || lastSlashIdx === uri.length - 1) {
+      throw Error(`Invalid uri: ${uri}`);
+    }
+    const fileName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
+    return fileName;
   }
 }

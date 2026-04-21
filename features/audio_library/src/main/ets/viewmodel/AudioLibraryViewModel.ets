@@ -95,10 +95,9 @@ export class AudioLibraryViewModel {
     const audioViewPicker = new picker.AudioViewPicker(context);
     audioViewPicker.select()
       .then(async (selectedUris: Array<string>) => {
-        const downloadAudioPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
         for (let i = 0; i < selectedUris.length; ++i) {
           try {
-            await this.importAudio(selectedUris[i], downloadAudioPath, context);
+            await this.importAudio(selectedUris[i], context);
           } catch (error) {
             // todo
           }
@@ -115,10 +114,9 @@ export class AudioLibraryViewModel {
     const documentViewPicker = new picker.DocumentViewPicker();
     documentViewPicker.select(documentSelectOptions)
       .then(async (selectedUris: Array<string>) => {
-        const downloadAudioPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
         for (let i = 0; i < selectedUris.length; ++i) {
           try {
-            await this.importAudio(selectedUris[i], downloadAudioPath, context);
+            await this.importAudio(selectedUris[i], context);
           } catch (error) {
             // todo
           }
@@ -141,7 +139,7 @@ export class AudioLibraryViewModel {
             await traverseDir(path);
           } else {
             try {
-              await this.importAudio(path, downloadAudioPath, context);
+              await this.importAudio(path, context);
             } catch (error) {
               // todo
             }
@@ -162,7 +160,7 @@ export class AudioLibraryViewModel {
     return await this.settings.getSetting(SettingKey.AUDIO_VIEW_OPTION) as ViewOptionValue;
   }
 
-  private async importAudio(srcUri: string, downloadAudioUri: string, context: Context): Promise<void> {
+  private async importAudio(srcUri: string, context: Context): Promise<void> {
     // Create audio and cover sandbox directory if not exist
     try {
       await this.createCoverSandboxDir(context);
@@ -172,7 +170,8 @@ export class AudioLibraryViewModel {
     // Copy audio file to download directory
     let audioPath: string = '';
     try {
-      audioPath = await this.copyAudio2DownloadDir(srcUri, downloadAudioUri);
+      const downloadAudioPath = this.downloadPath + DOWNLOAD_AUDIO_DIR;
+      audioPath = await this.copyAudio2DownloadDir(srcUri, downloadAudioPath);
     } catch (error) {
       throw Error(error);
     }
@@ -185,7 +184,7 @@ export class AudioLibraryViewModel {
     }
     // Insert audio record to database
     let audioInfo: AudioInfoModel | undefined;
-    const audioName = this.getAudioNameFromFileUri(srcUri);
+    const audioName = this.getFileNameFromFileUri(srcUri);
     try {
       audioInfo = await this.insertAudio2DB(audioName, audioPath, coverPath);
     } catch (error) {
@@ -371,23 +370,12 @@ export class AudioLibraryViewModel {
       });
   }
 
-  private getAudioNameFromFileUri(uri: string): string {
-    const lastSlashIdx = uri.lastIndexOf('/');
-    if (lastSlashIdx === -1 || lastSlashIdx === uri.length - 1) {
-      throw Error(`Invalid uri: ${uri}`);
-    }
-    const audioFullName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
-    const lastDotIdx = audioFullName.lastIndexOf('.');
-    const audioName = audioFullName.slice(0, lastDotIdx);
-    return audioName;
-  }
-
   private getFileNameFromFileUri(uri: string): string {
     const lastSlashIdx = uri.lastIndexOf('/');
     if (lastSlashIdx === -1 || lastSlashIdx === uri.length - 1) {
       throw Error(`Invalid uri: ${uri}`);
     }
-    const fileName = uri.slice(lastSlashIdx + 1);
+    const fileName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
     return fileName;
   }
 }
