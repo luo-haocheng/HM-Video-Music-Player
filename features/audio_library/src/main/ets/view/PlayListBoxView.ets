@@ -26,12 +26,12 @@ export struct PlayListBoxView {
               .draggable(false)
               .objectFit(ImageFit.Cover);
           } else {
-            Image($r('app.media.music_fill'))
-              .width('50%')
-              .aspectRatio(1)
+            Image($r('app.media.audio_default'))
+              .width('100%')
+              .height('100%')
+              .borderRadius(12)
               .draggable(false)
-              .fillColor('#FF007DFF')
-              .objectFit(ImageFit.Contain);
+              .objectFit(ImageFit.Cover);
           }
         }
         .height('90%')
@@ -69,9 +69,8 @@ export struct PlayListBoxView {
       .padding(8)
       .height(80)
       .width('100%')
-      .borderRadius(12);
-
-      // .backgroundColor(Color.White);
+      .borderRadius(12)
+      .backgroundColor(Color.White);
     } else {
       Flex({
         direction: FlexDirection.Column,
@@ -85,24 +84,27 @@ export struct PlayListBoxView {
               .width('100%')
               .height('100%')
               .draggable(false)
-              .borderRadius(12)
-              .objectFit(ImageFit.Cover);
+              .objectFit(ImageFit.Cover)
+              .borderRadius({ topLeft: 12, topRight: 12 });
+
           } else {
-            Image($r('app.media.music_fill'))
-              .width('50%')
-              .aspectRatio(1)
+            Image($r('app.media.audio_default'))
+              .width('100%')
+              .height('100%')
               .draggable(false)
-              .fillColor('#FF007DFF')
-              .objectFit(ImageFit.Contain);
+              .objectFit(ImageFit.Cover)
+              .borderRadius({ topLeft: 12, topRight: 12 });
+
           }
         }
         .width('100%')
         .aspectRatio(1)
         .layoutWeight(0)
-        .borderRadius(12)
         .backgroundColor(Color.White)
         .justifyContent(FlexAlign.Center)
-        .alignItems(VerticalAlign.Center);
+        .alignItems(VerticalAlign.Center)
+        .borderRadius({ topLeft: 12, topRight: 12 });
+
 
         Flex({
           direction: FlexDirection.Row,
@@ -121,17 +123,18 @@ export struct PlayListBoxView {
               .fontSize(12)
               .fontColor(Color.Gray);
           }
+          .width('100%')
           .height('100%')
-          .layoutWeight(1)
           .alignItems(HorizontalAlign.Center)
           .justifyContent(FlexAlign.SpaceAround);
         }
         .layoutWeight(1);
       }
-      .padding(8)
-      .height(220)
+      .height(240)
       .width('100%')
-      .borderRadius(12);
+      .borderRadius(12)
+      .padding({ bottom: 8 })
+      .backgroundColor(Color.White);
     }
   }
 }

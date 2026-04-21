@@ -58,12 +58,12 @@ export struct AudioPlayerView {
               .draggable(false)
               .objectFit(ImageFit.Cover);
           } else {
-            Image($r('app.media.music_fill'))
-              .width('50%')
-              .aspectRatio(1)
+            Image($r('app.media.audio_default'))
+              .width('100%')
+              .height('100%')
+              .borderRadius(12)
               .draggable(false)
-              .fillColor('#FF007DFF')
-              .objectFit(ImageFit.Contain);
+              .objectFit(ImageFit.Cover);
           }
         }
         .width('100%')

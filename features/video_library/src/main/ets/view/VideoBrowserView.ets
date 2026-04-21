@@ -225,6 +225,7 @@ export struct VideoBrowserView {
       .width('100%')
       .height('100%');
     }
+    .backgroundColor('#F1F3F5')
     .hideBackButton(true)
     .onReady((navContext: NavDestinationContext) => {
       if (navContext.pathInfo.param !== undefined) {

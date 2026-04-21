@@ -228,8 +228,7 @@ export struct VideoFolderListView {
     .width('100%')
     .height('100%')
     .scrollBar(BarState.Off)
-    .backgroundColor(`rgb(243, 243, 245)`)
-    .divider({ strokeWidth: 8, color: 'rgb(243, 243, 245)' })
+    .divider({ strokeWidth: 8, color: '#F1F3F5' })
     .lanes(this.videoViewOptions === ViewOptionValue.LIST_VIEW ? 1 : 2, 8);
   }
 }

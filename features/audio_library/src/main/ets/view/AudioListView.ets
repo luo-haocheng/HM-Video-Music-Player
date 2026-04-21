@@ -139,6 +139,7 @@ export struct AudioListView {
     NavDestination() {
       ListView({ audioListVM: this.audioListVM, audioList: this.audioListVM.audioList });
     }
+    .backgroundColor('#F1F3F5')
     .hideBackButton(true)
     .onWillDisappear(() => {
       this.currAudioList = undefined;
@@ -316,12 +317,9 @@ struct ListView {
       }
       .width('100%')
       .height('100%')
-      .contentStartOffset(8)
-      .contentEndOffset(60 + 8)
+      .contentEndOffset(60)
       .scrollBar(BarState.Off)
-      .padding({ left: 8, right: 8 })
-      .backgroundColor(`rgb(243, 243, 243)`)
-      .divider({ strokeWidth: 8, color: 'rgb(243, 243, 243)' })
+      .divider({ strokeWidth: 8, color: '#F1F3F5' })
       .lanes(this.audioViewOptions === ViewOptionValue.LIST_VIEW ? 1 : 2, 8);
     }
     .width('100%')

@@ -35,12 +35,12 @@ export struct AudioBoxView {
               .draggable(false)
               .objectFit(ImageFit.Cover);
           } else {
-            Image($r('app.media.music_fill'))
-              .width('50%')
-              .aspectRatio(1)
+            Image($r('app.media.audio_default'))
+              .width('100%')
+              .height('100%')
+              .borderRadius(12)
               .draggable(false)
-              .fillColor('#FF007DFF')
-              .objectFit(ImageFit.Contain);
+              .objectFit(ImageFit.Cover);
           }
         }
         .height('90%')
@@ -109,7 +109,8 @@ export struct AudioBoxView {
       .padding(8)
       .height(80)
       .width('100%')
-      .borderRadius(12);
+      .borderRadius(12)
+      .backgroundColor(Color.White);
     } else {
       Flex({
         direction: FlexDirection.Column,
@@ -123,25 +124,25 @@ export struct AudioBoxView {
               Image(this.audioItem.albumCover)
                 .width('100%')
                 .height('100%')
-                .borderRadius(12)
                 .draggable(false)
-                .objectFit(ImageFit.Cover);
+                .objectFit(ImageFit.Cover)
+                .borderRadius({ topLeft: 12, topRight: 12 });
             } else {
-              Image($r('app.media.music_fill'))
-                .width('50%')
-                .aspectRatio(1)
+              Image($r('app.media.audio_default'))
+                .width('100%')
+                .height('100%')
                 .draggable(false)
-                .fillColor('#FF007DFF')
-                .objectFit(ImageFit.Contain);
+                .objectFit(ImageFit.Cover)
+                .borderRadius({ topLeft: 12, topRight: 12 });
             }
           }
           .width('100%')
           .aspectRatio(1)
           .layoutWeight(1)
-          .borderRadius(12)
           .backgroundColor(Color.White)
           .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center);
+          .alignItems(VerticalAlign.Center)
+          .borderRadius({ topLeft: 12, topRight: 12 });
 
           if (this.multiChoice) {
             Checkbox()
@@ -170,24 +171,27 @@ export struct AudioBoxView {
             Text(this.audioItem.title)
               .maxLines(1)
               .fontSize(14)
+              .textAlign(TextAlign.Center)
               .fontColor(this.audioItem.id === this.audioPlayerVM.currAudioItem?.id ? '#FF007DFF' : Color.Black)
               .textOverflow({ overflow: TextOverflow.Ellipsis });
 
             Text(this.audioItem.artist)
               .fontSize(12)
+              .textAlign(TextAlign.Center)
               .fontColor(this.audioItem.id === this.audioPlayerVM.currAudioItem?.id ? '#FF007DFF' : Color.Gray);
           }
+          .width('100%')
           .height('100%')
-          .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
+          .alignItems(HorizontalAlign.Center)
           .justifyContent(FlexAlign.SpaceAround);
         }
         .layoutWeight(1);
       }
-      .padding(8)
-      .height(220)
+      .height(240)
       .width('100%')
-      .borderRadius(12);
+      .borderRadius(12)
+      .padding({ bottom: 8 })
+      .backgroundColor(Color.White);
     }
   }
 }

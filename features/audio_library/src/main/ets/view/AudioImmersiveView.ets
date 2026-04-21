@@ -84,7 +84,7 @@ export struct AudioImmersiveView {
       top: this.getUIContext().px2vp(this.topRectHeight),
       bottom: this.getUIContext().px2vp(this.bottomRectHeight)
     })
-    .backgroundColor('#DCDCDC')
+    .backgroundColor('#F1F3F5')
     .hideBackButton(true);
   }
 }
