@@ -227,12 +227,9 @@ export struct VideoFolderListView {
     }
     .width('100%')
     .height('100%')
-    .contentEndOffset(8)
-    .contentStartOffset(8)
     .scrollBar(BarState.Off)
-    .padding({ left: 8, right: 8 })
-    .backgroundColor(`rgb(243, 243, 243)`)
-    .divider({ strokeWidth: 8, color: 'rgb(243, 243, 243)' })
+    .backgroundColor(`rgb(243, 243, 245)`)
+    .divider({ strokeWidth: 8, color: 'rgb(243, 243, 245)' })
     .lanes(this.videoViewOptions === ViewOptionValue.LIST_VIEW ? 1 : 2, 8);
   }
 }

@@ -42,6 +42,7 @@ export default class EntryAbility extends UIAbility {
       let windowClass: window.Window | undefined = undefined;
       try {
         windowClass = windowStage.getMainWindowSync();
+        windowClass.setWindowBackgroundColor('#F1F3F5')
       } catch (error) {
         console.error(`Failed to get main window, error: ${JSON.stringify(error)}`);
       }

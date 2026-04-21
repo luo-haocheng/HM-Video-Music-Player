@@ -726,7 +726,7 @@ export struct VideoLibraryView {
         .padding(16)
         .width('100%')
         .alignItems(VerticalAlign.Center)
-        .justifyContent(FlexAlign.SpaceBetween);
+        .justifyContent(FlexAlign.SpaceBetween)
       } else {
         Row() {
           Row({ space: 12 }) {
@@ -774,7 +774,7 @@ export struct VideoLibraryView {
         .padding(16)
         .width('100%')
         .alignItems(VerticalAlign.Center)
-        .justifyContent(FlexAlign.SpaceBetween);
+        .justifyContent(FlexAlign.SpaceBetween)
       }
 
       Navigation(this.videoTabStack) {

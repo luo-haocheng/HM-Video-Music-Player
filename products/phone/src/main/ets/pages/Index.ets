@@ -1,7 +1,5 @@
-import { AudioLibraryView } from 'audio_library';
-import { VideoLibraryView } from 'video_library/src/main/ets/components/VideoLibraryView';
-import { AudioPlayerViewModel } from 'audio_library';
-import { Context } from '@kit.AbilityKit';
+import { AudioLibraryView, AudioPlayerViewModel } from 'audio_library';
+import { VideoLibraryView } from 'video_library';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MAIN_PAGE_STACK = 'MainPageStack';
@@ -31,7 +29,7 @@ struct Index {
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center);
+    .alignItems(HorizontalAlign.Center)
   }
 
   build() {
@@ -59,14 +57,17 @@ struct Index {
           .tabBar(this.tabBarBuilder($r('app.media.gear'), '设置', 2));
         }
         .scrollable(false)
-        .padding({ bottom: this.getUIContext().px2vp(this.bottomRectHeight) })
+        .barBackgroundColor('#F1F3F5')
         .onSelected((index: number) => {
           this.selectIdx = index;
         });
       }
-      .backgroundColor(Color.White);
+      .width('100%')
+      .height('100%')
+      .backgroundColor('#F1F3F5')
+      .padding({ bottom: this.getUIContext().px2vp(this.bottomRectHeight) });
     }
     .hideToolBar(true)
-    .mode(NavigationMode.Stack);
+    .mode(NavigationMode.Stack)
   }
 }
