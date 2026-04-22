@@ -153,6 +153,21 @@ export class MediaSessionManager {
     }
   }
 
+  async updateElapsedTime(timeMs: number) {
+    try {
+      let playbackState: AVSessionMananger.AVPlaybackState = {
+        position: {
+          elapsedTime: timeMs,
+          updateTime: new Date().getTime()
+        }
+      };
+      await this.session?.setAVPlaybackState(playbackState);
+    } catch (error) {
+      console.error(`Failed to update avsession play state. Cause: ${JSON.stringify(error)}`);
+      return;
+    }
+  }
+
   async updatePlayState(timeMs: number, state: media.AVPlayerState): Promise<void> {
     let playState = AVSessionMananger.PlaybackState.PLAYBACK_STATE_ERROR;
     switch (state) {

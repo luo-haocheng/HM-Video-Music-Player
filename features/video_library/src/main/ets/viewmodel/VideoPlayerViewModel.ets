@@ -52,15 +52,13 @@ export class VideoPlayerViewModel {
     });
     this.videoPlayer.registerCallback('timeUpdate', (timeMs: number) => {
       this.currTime = timeMs;
+      MediaSessionManager.getInstance().updateElapsedTime(timeMs);
     });
     this.videoPlayer.registerCallback('seekDone', (timeMs: number) => {
       MediaSessionManager.getInstance().updatePlayPosition(timeMs);
     });
     this.videoPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
       this.isPlaying = (state === 'playing');
-      if (state === 'completed') {
-        this.seek(0);
-      }
       MediaSessionManager.getInstance().updatePlayState(this.currTime, state);
     });
     await this.videoPlayer.initPlayer(surfaceId);

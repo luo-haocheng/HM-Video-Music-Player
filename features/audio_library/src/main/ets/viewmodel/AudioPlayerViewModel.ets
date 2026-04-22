@@ -63,6 +63,7 @@ export class AudioPlayerViewModel {
     this.audioPlayer.registerCallback('timeUpdate', (timeMs: number) => {
       this.currTime = timeMs;
       this.updateLyrics(timeMs);
+      MediaSessionManager.getInstance().updateElapsedTime(timeMs);
     });
     this.audioPlayer.registerCallback('seekDone', (timeMs: number) => {
       MediaSessionManager.getInstance().updatePlayPosition(timeMs);
