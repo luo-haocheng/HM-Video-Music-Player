@@ -175,7 +175,7 @@ export class VideoListViewModel {
     emitter.emit(MOVE_FOLDER_EVENT, eventData);
   }
 
-  private getFolderName(path: string): string {
+  getFolderName(path: string): string {
     let prevSlashIdx = path.lastIndexOf('/', path.length - 2);
     let folderName = path.slice(prevSlashIdx + 1, path.length - 1);
     return folderName;

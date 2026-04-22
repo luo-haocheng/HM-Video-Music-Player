@@ -6,11 +6,25 @@ const INVALID_VALUES = '/\\:*?"<>|';
 
 @CustomDialog
 export struct RenameDialog {
-  @Link videoListVM: VideoListViewModel;
+  @State newName?: string = undefined;
   @State invalidName: boolean = false;
-  public controller: CustomDialogController;
+  @Link videoListVM: VideoListViewModel;
   public info?: VideoInfoModel | FolderInfoModel;
-  private newName?: string = '';
+  public dialogController: CustomDialogController;
+  private textController: TextInputController = new TextInputController();
+
+  aboutToAppear(): void {
+    if (this.info) {
+      if (this.info instanceof VideoInfoModel) {
+        const videoInfo = this.info as VideoInfoModel;
+        this.newName = videoInfo.name;
+      } else {
+        const folderInfo = this.info as FolderInfoModel;
+        const folderName = this.videoListVM.getFolderName(folderInfo.path);
+        this.newName = folderName;
+      }
+    }
+  }
 
   build() {
     Column() {
@@ -23,7 +37,7 @@ export struct RenameDialog {
       .margin({ bottom: 12 })
       .justifyContent(FlexAlign.Center);
 
-      TextInput({ placeholder: '重命名' })
+      TextInput({ placeholder: '重命名', text: this.newName, controller: this.textController })
         .id('renameTextInput')
         .fontSize(14)
         .maxLength(100)
@@ -40,6 +54,15 @@ export struct RenameDialog {
             this.getUIContext().getFocusController().requestFocus('renameTextInput');
           } catch (error) {
             console.error(`Failed to request focus for renameTextInput. Cause: ${JSON.stringify(error)}`);
+          }
+        })
+        .onFocus(() => {
+          // Select video name
+          if (this.newName) {
+            const lastDotIdx = this.newName.lastIndexOf('.')
+            if (lastDotIdx !== -1) {
+              this.textController.setTextSelection(0, lastDotIdx);
+            }
           }
         })
         .onWillInsert((value: InsertValue) => {
@@ -67,7 +90,7 @@ export struct RenameDialog {
         .width('45%')
         .backgroundColor(Color.Transparent)
         .onClick(() => {
-          this.controller.close();
+          this.dialogController.close();
         });
 
         Divider()
@@ -85,7 +108,7 @@ export struct RenameDialog {
         .width('45%')
         .backgroundColor(Color.Transparent)
         .onClick(() => {
-          this.controller.close();
+          this.dialogController.close();
           if (this.newName !== undefined) {
             if (this.info instanceof VideoInfoModel) {
               this.videoListVM.renameVideo(this.newName, this.info as VideoInfoModel);
