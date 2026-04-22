@@ -58,6 +58,9 @@ export class VideoPlayerViewModel {
     });
     this.videoPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
       this.isPlaying = (state === 'playing');
+      if (state === 'completed') {
+        this.seek(0);
+      }
       MediaSessionManager.getInstance().updatePlayState(this.currTime, state);
     });
     await this.videoPlayer.initPlayer(surfaceId);
