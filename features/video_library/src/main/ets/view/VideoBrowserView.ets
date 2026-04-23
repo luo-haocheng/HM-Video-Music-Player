@@ -25,6 +25,11 @@ const CHOICE_ALL_EVENT = 'ChoiceAll';
 const SORT_VIDEO_FOLDER_EVENT = 'SortVideoFolder';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
+@Builder
+export function VideoBrowserBuilder() {
+  VideoBrowserView();
+}
+
 @Component
 export struct VideoBrowserView {
   @Consume(CURRENT_FOLDER) currFolder: string = ROOT_FOLDER;

@@ -7,7 +7,7 @@
     },
     {
       "name": "VideoBrowser",
-      "pageSourceFile": "src/main/ets/components/VideoLibraryView.ets",
+      "pageSourceFile": "src/main/ets/view/VideoBrowserView.ets",
       "buildFunction": "VideoBrowserBuilder"
     },
     {

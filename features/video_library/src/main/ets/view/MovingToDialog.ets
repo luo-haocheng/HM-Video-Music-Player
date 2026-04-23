@@ -116,7 +116,7 @@ export struct MovingToDialog {
   aboutToAppear(): void {
     this.moveToFolder = this.origFolder;
     this.folderBrowserVM.moveFolderList = this.moveFolderList;
-    this.moveNavPath.pushPath({ name: 'FolderBrowser', param: this.origFolder });
+    // this.moveNavPath.pushPath({ name: 'FolderBrowser', param: this.origFolder });
   }
 
   build() {
@@ -174,12 +174,10 @@ export struct MovingToDialog {
       .layoutWeight(0)
       .justifyContent(FlexAlign.SpaceBetween);
 
-      Navigation(this.moveNavPath) {
-        // Nothing, waiting for push
-      }
-      .layoutWeight(1)
-      .hideTitleBar(true)
-      .margin({ top: 16 });
+      Navigation(this.moveNavPath, { name: 'FolderBrowser', param: this.origFolder })
+        .layoutWeight(1)
+        .hideTitleBar(true)
+        .margin({ top: 16 });
     }
     .padding(16)
     .width('100%')

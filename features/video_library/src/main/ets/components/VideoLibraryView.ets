@@ -1,5 +1,4 @@
 import { VideoLibraryViewModel } from '../viewmodel/VideoLibraryViewModel';
-import { VideoBrowserView } from '../view/VideoBrowserView';
 import { emitter } from '@kit.BasicServicesKit';
 import { FolderInfoModel } from 'data_storage/src/main/ets/rdbms/FolderInfoModel';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
@@ -37,11 +36,6 @@ interface ImportOption {
   text: string
 };
 
-@Builder
-export function VideoBrowserBuilder() {
-  VideoBrowserView();
-}
-
 @Component
 export struct VideoLibraryView {
   @Provide(CHOICE_ALL) choiceAll: boolean = true;
@@ -63,7 +57,6 @@ export struct VideoLibraryView {
 
   async aboutToAppear(): Promise<void> {
     await this.videoLibVM.init();
-    this.videoTabStack.pushPath({ name: 'VideoBrowser' });
     this.videoViewOptions = await this.videoLibVM.getViewOptions();
   }
 
@@ -777,11 +770,9 @@ export struct VideoLibraryView {
         .justifyContent(FlexAlign.SpaceBetween)
       }
 
-      Navigation(this.videoTabStack) {
-        // Nothing, waiting from push
-      }
-      .hideToolBar(true)
-      .mode(NavigationMode.Stack);
+      Navigation(this.videoTabStack, { name: 'VideoBrowser' })
+        .hideToolBar(true)
+        .mode(NavigationMode.Stack);
     }
     .width('100%')
     .height('100%')

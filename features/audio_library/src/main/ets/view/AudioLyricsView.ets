@@ -51,12 +51,10 @@ export struct AudioLyricsView {
             }
           );
 
-          ListItem() {
-            // Nothing
-          }
-          .width('100%')
-          .height('50%')
-          .backgroundColor(Color.Transparent);
+          ListItem()
+            .width('100%')
+            .height('50%')
+            .backgroundColor(Color.Transparent);
         }
         .layoutWeight(1)
         .contentStartOffset(24)
