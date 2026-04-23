@@ -10,7 +10,10 @@ import { SettingKey, Settings, SortModeValue, SortRuleValue, VideoInfoModel, Vie
 import { FolderInfoModel } from 'data_storage/src/main/ets/rdbms/FolderInfoModel';
 import { emitter } from '@kit.BasicServicesKit';
 import { preferences } from '@kit.ArkData';
+import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 
+const BUFFER_SIZE = 4096;
+const MD_ALGO_NAME = 'SHA256';
 const THUMBNAIL_DIR = '/thumbnails';
 const DOWNLOAD_VIDEO_DIR = '/videos';
 const SORT_VIDEO_FOLDER_EVENT = 'SortVideoFolder';
@@ -41,6 +44,73 @@ export class VideoLibraryViewModel {
     }
   }
 
+  private async fileSHA256(path: string): Promise<Uint8Array> {
+    let file: fileIo.File | undefined = undefined;
+    try {
+      file = await fileIo.open(path, fileIo.OpenMode.READ_ONLY);
+
+      const buffer = new ArrayBuffer(BUFFER_SIZE);
+      const md = cryptoFramework.createMd(MD_ALGO_NAME);
+      while (await fileIo.read(file.fd, buffer) > 0) {
+        const bufferBlob: cryptoFramework.DataBlob = { data: new Uint8Array(buffer) };
+        await md.update(bufferBlob);
+      }
+      const output = await md.digest();
+      return output.data;
+    } catch (error) {
+      console.error(`Failed to calculate sha256 from file ${path}. Cause: ${JSON.stringify(error)}`);
+      throw Error(error)
+    } finally {
+      if (file !== undefined) {
+        await fileIo.close(file.fd);
+      }
+    }
+  }
+
+  private async isDuplicateFile(srcPath: string, dstPath: string): Promise<boolean> {
+    try {
+      const srcHashVal = await this.fileSHA256(srcPath);
+      const dstHashVal = await this.fileSHA256(dstPath);
+      if (srcHashVal.length === dstHashVal.length) {
+        for (let i = 0; i < srcHashVal.length; ++i) {
+          if (srcHashVal[i] !== dstHashVal[i]) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    } catch (error) {
+      throw Error(error);
+    }
+  }
+
+  private renameDuplicateFile(path: string): string {
+    try {
+      let count = 0;
+      let newPath = path;
+      const lastSlashIdx = path.lastIndexOf('/');
+      if (lastSlashIdx === -1 || lastSlashIdx === path.length - 1) {
+        throw Error(`Invalid file path: ${path}`);
+      }
+      let newFileName = path.slice(lastSlashIdx + 1);
+      while (fileIo.accessSync(newPath, fileIo.AccessModeType.EXIST)) {
+        count++;
+        let lastDotIdx = newFileName.lastIndexOf('.');
+        if (lastDotIdx === -1) {
+          newFileName = newFileName + `(${count})`;
+        } else {
+          newFileName = newFileName.slice(0, lastDotIdx) + `(${count})` + newFileName.slice(lastDotIdx);
+        }
+        newPath = path.slice(0, lastSlashIdx + 1) + newFileName;
+      }
+      return newPath;
+    } catch (error) {
+      console.error(`Failed to rename duplicate file. Cause: ${JSON.stringify(error)}`);
+      throw Error(error);
+    }
+  }
+
   private async copyVideo2DownloadDir(srcUri: string, downloadVideoPath: string): Promise<string> {
     let srcFile: fileIo.File | undefined;
     let dstFile: fileIo.File | undefined;
@@ -49,9 +119,18 @@ export class VideoLibraryViewModel {
         const srcPath = new fileUri.FileUri(srcUri).path;
         return srcPath;
       }
+
       const dstUri: string = downloadVideoPath + '/' + this.getFileNameFromFileUri(srcUri);
       const srcPath = new fileUri.FileUri(srcUri).path;
-      const dstPath = new fileUri.FileUri(dstUri).path;
+      let dstPath = new fileUri.FileUri(dstUri).path;
+      if (fileIo.accessSync(dstPath, fileIo.AccessModeType.EXIST)) {
+        // Already have video file with same name
+        if (await this.isDuplicateFile(srcPath, dstPath)) {
+          throw Error(`Video file ${srcUri} repeated imported. File has imported at ${srcFile}`);
+        } else {
+          dstPath = this.renameDuplicateFile(dstPath);
+        }
+      }
 
       srcFile = await fileIo.open(srcPath, fileIo.OpenMode.READ_ONLY);
       dstFile = await fileIo.open(dstPath, fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE);
@@ -174,8 +253,7 @@ export class VideoLibraryViewModel {
     }
     // Insert video record to database
     let rowId: number = -1;
-    let lastSlashIdx = uri.lastIndexOf('/');
-    let videoName = decodeURIComponent(uri.slice(lastSlashIdx + 1));
+    const videoName = this.getFileNameFromFileUri(videoPath);
     try {
       rowId = await this.insert2DB(folder, videoName, videoPath, thumbnailPath);
     } catch (error) {

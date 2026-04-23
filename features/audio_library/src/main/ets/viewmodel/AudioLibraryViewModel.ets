@@ -10,7 +10,10 @@ import { emitter } from '@kit.BasicServicesKit';
 import { preferences } from '@kit.ArkData';
 import { SettingKey, Settings, SortModeValue, SortRuleValue, ViewOptionValue } from 'data_storage';
 import { util } from '@kit.ArkTS';
+import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 
+const BUFFER_SIZE = 4096;
+const MD_ALGO_NAME = 'SHA256';
 const SANDBOX_COVER_DIR = '/covers';
 const DOWNLOAD_AUDIO_DIR = '/audios';
 const SORT_AUDIO_EVENT = 'SortAudio';
@@ -99,7 +102,7 @@ export class AudioLibraryViewModel {
           try {
             await this.importAudio(selectedUris[i], context);
           } catch (error) {
-            // todo
+            console.error(`Failed to import audio ${selectedUris[i]} from audio library. Cause: ${JSON.stringify(error)}`);
           }
         }
       })
@@ -118,7 +121,7 @@ export class AudioLibraryViewModel {
           try {
             await this.importAudio(selectedUris[i], context);
           } catch (error) {
-            // todo
+            console.error(`Failed to import audio ${selectedUris[i]} from user file. Cause: ${JSON.stringify(error)}`);
           }
         }
       })
@@ -141,7 +144,7 @@ export class AudioLibraryViewModel {
             try {
               await this.importAudio(path, context);
             } catch (error) {
-              // todo
+              console.error(`Failed to import audio ${path} from download directory. Cause: ${JSON.stringify(error)}`)
             }
           }
         }
@@ -158,6 +161,73 @@ export class AudioLibraryViewModel {
 
   async getViewOptions(): Promise<ViewOptionValue> {
     return await this.settings.getSetting(SettingKey.AUDIO_VIEW_OPTION) as ViewOptionValue;
+  }
+
+  private async fileSHA256(path: string): Promise<Uint8Array> {
+    let file: fileIo.File | undefined = undefined;
+    try {
+      file = await fileIo.open(path, fileIo.OpenMode.READ_ONLY);
+
+      const buffer = new ArrayBuffer(BUFFER_SIZE);
+      const md = cryptoFramework.createMd(MD_ALGO_NAME);
+      while (await fileIo.read(file.fd, buffer) > 0) {
+        const bufferBlob: cryptoFramework.DataBlob = { data: new Uint8Array(buffer) };
+        await md.update(bufferBlob);
+      }
+      const output = await md.digest();
+      return output.data;
+    } catch (error) {
+      console.error(`Failed to calculate sha256 from file ${path}. Cause: ${JSON.stringify(error)}`);
+      throw Error(error)
+    } finally {
+      if (file !== undefined) {
+        await fileIo.close(file.fd);
+      }
+    }
+  }
+
+  private async isDuplicateFile(srcPath: string, dstPath: string): Promise<boolean> {
+    try {
+      const srcHashVal = await this.fileSHA256(srcPath);
+      const dstHashVal = await this.fileSHA256(dstPath);
+      if (srcHashVal.length === dstHashVal.length) {
+        for (let i = 0; i < srcHashVal.length; ++i) {
+          if (srcHashVal[i] !== dstHashVal[i]) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    } catch (error) {
+      throw Error(error);
+    }
+  }
+
+  private renameDuplicateFile(path: string): string {
+    try {
+      let count = 0;
+      let newPath = path;
+      const lastSlashIdx = path.lastIndexOf('/');
+      if (lastSlashIdx === -1 || lastSlashIdx === path.length - 1) {
+        throw Error(`Invalid file path: ${path}`);
+      }
+      let newFileName = path.slice(lastSlashIdx + 1);
+      while (fileIo.accessSync(newPath, fileIo.AccessModeType.EXIST)) {
+        count++;
+        let lastDotIdx = newFileName.lastIndexOf('.');
+        if (lastDotIdx === -1) {
+          newFileName = newFileName + `(${count})`;
+        } else {
+          newFileName = newFileName.slice(0, lastDotIdx) + `(${count})` + newFileName.slice(lastDotIdx);
+        }
+        newPath = path.slice(0, lastSlashIdx + 1) + newFileName;
+      }
+      return newPath;
+    } catch (error) {
+      console.error(`Failed to rename duplicate file. Cause: ${JSON.stringify(error)}`);
+      throw Error(error);
+    }
   }
 
   private async importAudio(srcUri: string, context: Context): Promise<void> {
@@ -184,7 +254,7 @@ export class AudioLibraryViewModel {
     }
     // Insert audio record to database
     let audioInfo: AudioInfoModel | undefined;
-    const audioName = this.getFileNameFromFileUri(srcUri);
+    const audioName = this.getFileNameFromFileUri(audioPath);
     try {
       audioInfo = await this.insertAudio2DB(audioName, audioPath, coverPath);
     } catch (error) {
@@ -212,7 +282,15 @@ export class AudioLibraryViewModel {
 
       const dstUri: string = downloadAudioPath + '/' + this.getFileNameFromFileUri(srcUri);
       const srcPath = new fileUri.FileUri(srcUri).path;
-      const dstPath = new fileUri.FileUri(dstUri).path;
+      let dstPath = new fileUri.FileUri(dstUri).path;
+      if (fileIo.accessSync(dstPath, fileIo.AccessModeType.EXIST)) {
+        // Already have audio file with same name in download directory
+        if (await this.isDuplicateFile(srcPath, dstPath)) {
+          throw Error(`Audio file ${srcUri} repeated imported. File has imported at ${srcFile}`);
+        } else {
+          dstPath = this.renameDuplicateFile(dstPath);
+        }
+      }
 
       srcFile = await fileIo.open(srcPath, fileIo.OpenMode.READ_ONLY);
       dstFile = await fileIo.open(dstPath, fileIo.OpenMode.CREATE | fileIo.OpenMode.WRITE_ONLY);
