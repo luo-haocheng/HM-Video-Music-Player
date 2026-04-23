@@ -136,7 +136,9 @@ export struct AudioPlayerView {
             .trackColor('#22000000')
             .blockSize({ width: 12, height: 12 })
             .onChange(async (value: number, mode: SliderChangeMode) => {
-              if (mode === SliderChangeMode.End) {
+              if (mode === SliderChangeMode.Begin) {
+                this.audioPlayerVM.isSeeking = true;
+              } else if (mode === SliderChangeMode.End) {
                 this.audioPlayerVM.seek(value);
               }
             });

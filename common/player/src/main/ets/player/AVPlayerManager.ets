@@ -57,7 +57,7 @@ export class AVPlayerManager {
     }
   }
 
-  async seek(timeMs: number): Promise<void> {
+  seek(timeMs: number): void {
     this.avPlayer?.seek(timeMs, media.SeekMode.SEEK_CLOSEST);
   }
 

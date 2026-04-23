@@ -51,10 +51,14 @@ export class VideoPlayerViewModel {
       this.duration = duration;
     });
     this.videoPlayer.registerCallback('timeUpdate', (timeMs: number) => {
-      this.currTime = timeMs;
-      MediaSessionManager.getInstance().updateElapsedTime(timeMs);
+      if (!this.isSeeking) {
+        this.currTime = timeMs;
+        MediaSessionManager.getInstance().updateElapsedTime(timeMs);
+      }
     });
     this.videoPlayer.registerCallback('seekDone', (timeMs: number) => {
+      this.currTime = timeMs;
+      this.isSeeking = false;
       MediaSessionManager.getInstance().updatePlayPosition(timeMs);
     });
     this.videoPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
@@ -106,9 +110,9 @@ export class VideoPlayerViewModel {
     await this.videoPlayer.pause();
   }
 
-  async seek(timeMs: number): Promise<void> {
+  seek(timeMs: number): void {
     timeMs = Math.min(this.duration, Math.max(0, timeMs));
-    await this.videoPlayer.seek(timeMs);
+    this.videoPlayer.seek(timeMs);
   }
 
   setSpeed(speed: media.PlaybackSpeed): void {

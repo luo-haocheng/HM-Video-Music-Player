@@ -26,8 +26,9 @@ export class AudioPlayerViewModel {
   @Track audioList: AudioItemViewModelList = new AudioItemViewModelList();
   @Track repeatMode: AudioRepeatMode = AudioRepeatMode.SINGLE_REPEAT;
   @Track lyricsScroller: Scroller = new Scroller();
-  private playerState: media.AVPlayerState = 'idle';
+  public isSeeking: boolean = false;
   private settings: Settings = new Settings();
+  private playerState: media.AVPlayerState = 'idle';
   private audioPlayer: AVPlayerManager = new AVPlayerManager();
   private audioStore: AudioLibraryStore = new AudioLibraryStore();
 
@@ -61,11 +62,15 @@ export class AudioPlayerViewModel {
       this.duration = duration;
     });
     this.audioPlayer.registerCallback('timeUpdate', (timeMs: number) => {
-      this.currTime = timeMs;
+      if (!this.isSeeking) {
+        this.currTime = timeMs;
+        MediaSessionManager.getInstance().updateElapsedTime(timeMs);
+      }
       this.updateLyrics(timeMs);
-      MediaSessionManager.getInstance().updateElapsedTime(timeMs);
     });
     this.audioPlayer.registerCallback('seekDone', (timeMs: number) => {
+      this.currTime = timeMs;
+      this.isSeeking = false;
       MediaSessionManager.getInstance().updatePlayPosition(timeMs);
     });
     this.audioPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
@@ -109,7 +114,7 @@ export class AudioPlayerViewModel {
     const lyricsText = await this.loadLyrics(audioInfo);
     this.isFavorite = audioInfo.favorite === 0 ? false : true;
     await this.audioPlayer.setMediaAsset(audioInfo.audioPath);
-   
+
     await MediaSessionManager.getInstance().setAudioAsset(context, audioInfo, lyricsText);
     await MediaSessionManager.getInstance().updateLoopMode(this.currTime, this.repeatMode);
     await MediaSessionManager.getInstance().updateFavorite(this.currTime, audioInfo.favorite === 0 ? false : true);
@@ -198,9 +203,9 @@ export class AudioPlayerViewModel {
     await this.audioPlayer.pause();
   }
 
-  async seek(timeMs: number): Promise<void> {
+  seek(timeMs: number): void {
     timeMs = Math.min(this.duration, Math.max(0, timeMs));
-    await this.audioPlayer.seek(timeMs);
+    this.audioPlayer.seek(timeMs);
   }
 
   async deleteAudio(audioInfo: AudioInfoModel, context: Context) {

@@ -222,14 +222,13 @@ export struct VideoPlayerView {
                 .layoutWeight(1)
                 .trackColor('#22FFFFFF')
                 .blockSize({ width: 12, height: 12 })
-                .onChange(async (value: number, mode: SliderChangeMode) => {
+                .onChange((value: number, mode: SliderChangeMode) => {
                   if (mode === SliderChangeMode.Begin) {
                     this.videoPlayerVM.isSeeking = true;
                   } else if (mode === SliderChangeMode.Moving) {
                     this.videoPlayerVM.seekTime = value;
                   } else {
-                    await this.videoPlayerVM.seek(value);
-                    this.videoPlayerVM.isSeeking = false;
+                    this.videoPlayerVM.seek(value);
                   }
                 });
 
