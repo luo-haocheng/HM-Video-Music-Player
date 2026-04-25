@@ -73,13 +73,13 @@ export struct VideoPlayerView {
         Column() {
           if (this.videoPlayerVM.isSeeking) {
             Row() {
-              Text(`${this.timeStr(this.videoPlayerVM.seekTime)} / ${this.timeStr(this.videoPlayerVM.duration)}`)
+              Text(`${this.timeStr(this.videoPlayerVM.currTime)} / ${this.timeStr(this.videoPlayerVM.duration)}`)
                 .fontSize(12)
                 .fontColor(Color.White);
             }
             .padding(8)
             .borderRadius(8)
-            .backgroundColor('#22FFFFFF')
+            .backgroundColor('#88000000')
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center);
           } else if (this.videoPlayerVM.isControlVolume) {
@@ -98,11 +98,12 @@ export struct VideoPlayerView {
               })
                 .width(100)
                 .height(24)
-                .trackThickness(2);
+                .trackThickness(2)
+                .selectedColor(Color.White);
             }
             .padding(8)
             .borderRadius(8)
-            .backgroundColor('#22FFFFFF')
+            .backgroundColor('#88000000')
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center);
           } else if (this.videoPlayerVM.isControlBrightness) {
@@ -120,11 +121,12 @@ export struct VideoPlayerView {
               })
                 .width(100)
                 .height(24)
-                .trackThickness(2);
+                .trackThickness(2)
+                .selectedColor(Color.White);
             }
             .padding(8)
             .borderRadius(8)
-            .backgroundColor('#22FFFFFF')
+            .backgroundColor('#88000000')
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center);
           } else if (this.videoPlayerVM.isPlaying && this.videoPlayerVM.isSpeeding) {
@@ -139,7 +141,7 @@ export struct VideoPlayerView {
             }
             .padding(8)
             .borderRadius(8)
-            .backgroundColor('#22FFFFFF')
+            .backgroundColor('#88000000')
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center)
             .margin({ top: this.videoPlayerVM.isLandscape ? 16 : this.getUIContext().px2vp(this.topRectHeight) });
@@ -150,6 +152,7 @@ export struct VideoPlayerView {
         .alignItems(HorizontalAlign.Center)
         .justifyContent(this.videoPlayerVM.isSpeeding ? FlexAlign.Start : FlexAlign.Center);
 
+        /*------------------------------------------------------------------------------------------------------*/
         Column() {
           Row() {
             Button({ type: ButtonType.Circle, stateEffect: false }) {
@@ -180,105 +183,129 @@ export struct VideoPlayerView {
             });
           }
           .width('100%')
-          .padding(16)
           .alignItems(VerticalAlign.Center)
-          .justifyContent(FlexAlign.SpaceBetween);
+          .justifyContent(FlexAlign.SpaceBetween)
+          .padding({ left: 16, right: 16, top: this.videoPlayerVM.isLandscape ? 0 : 8 });
 
-          Blank();
-
-          Flex({
-            direction: FlexDirection.Row,
-            alignItems: ItemAlign.Center,
-            justifyContent: FlexAlign.SpaceBetween,
-          }) {
+          Column({ space: 12 }) {
             Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image(this.videoPlayerVM.isPlaying ? $r('app.media.pause') : $r('app.media.play'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.White);
-            }
-            .width(24)
-            .aspectRatio(1)
-            .backgroundColor(Color.Transparent)
-            .onClick(async () => {
-              if (this.videoPlayerVM.isPlaying) {
-                await this.videoPlayerVM.pause();
-              } else {
-                await this.videoPlayerVM.play();
-              }
-            });
-
-            Flex({
-              direction: FlexDirection.Row,
-              alignItems: ItemAlign.Center,
-              justifyContent: FlexAlign.SpaceBetween,
-            }) {
-              Slider({
-                min: 0,
-                max: this.videoPlayerVM.duration,
-                value: this.videoPlayerVM.currTime,
-              })
-                .height(24)
-                .layoutWeight(1)
-                .trackColor('#22FFFFFF')
-                .blockSize({ width: 12, height: 12 })
-                .onChange((value: number, mode: SliderChangeMode) => {
-                  if (mode === SliderChangeMode.Begin) {
-                    this.videoPlayerVM.isSeeking = true;
-                  } else if (mode === SliderChangeMode.Moving) {
-                    this.videoPlayerVM.seekTime = value;
-                  } else {
-                    this.videoPlayerVM.seek(value);
-                  }
-                });
-
-              Row() {
-                Text(`${this.timeStr(this.videoPlayerVM.currTime)}/${this.timeStr(this.videoPlayerVM.duration)}`)
-                  .margin({ left: 3 })
-                  .fontSize(10)
-                  .fontColor(Color.White);
-              }
-              .height(24)
-              .alignItems(VerticalAlign.Center)
-              .justifyContent(FlexAlign.Center);
-            }
-            .padding({ right: 6 });
-
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image(this.videoPlayerVM.isLandscape ? $r('app.media.portrait') : $r('app.media.landscape'))
+              Image($r('app.media.lock_open'))
                 .width(20)
                 .aspectRatio(1)
                 .fillColor(Color.White);
             }
-            .width(24)
-            .aspectRatio(1)
-            .backgroundColor(Color.Transparent)
+            .padding(8)
+            .backgroundColor('#22FFFFFF')
+            .onClick(() => {
+              // todo
+            })
+
+            Button({ type: ButtonType.Circle, stateEffect: false }) {
+              Image(
+                this.videoPlayerVM.isLandscape ?
+                  $r('app.media.rectangle_rotate') :
+                  $r('app.media.rectangle_portrait_rotate')
+              )
+                .width(20)
+                .aspectRatio(1)
+                .fillColor(Color.White);
+            }
+            .padding(8)
+            .backgroundColor('#22FFFFFF')
             .onClick(() => {
               if (this.videoPlayerVM.isLandscape) {
                 this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
               } else {
                 this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.LANDSCAPE);
               }
-            });
+            })
           }
           .width('100%')
-          .height(40)
-          .padding(16);
+          .padding({ left: 16, right: 16 })
+          .alignItems(HorizontalAlign.End)
+          .justifyContent(FlexAlign.Center);
+
+          Column({ space: 8 }) {
+            Row() {
+              Button({ type: ButtonType.Circle, stateEffect: false }) {
+                Image(this.videoPlayerVM.isPlaying ? $r('app.media.pause') : $r('app.media.play'))
+                  .width(28)
+                  .aspectRatio(1)
+                  .fillColor(Color.White);
+              }
+              .backgroundColor(Color.Transparent)
+              .onClick(async () => {
+                if (this.videoPlayerVM.isPlaying) {
+                  await this.videoPlayerVM.pause();
+                } else {
+                  await this.videoPlayerVM.play();
+                }
+              });
+
+              Text(`${this.timeStr(this.videoPlayerVM.currTime)} / ${this.timeStr(this.videoPlayerVM.duration)}`)
+                .fontSize(10)
+                .fontColor(this.videoPlayerVM.isSeeking ? Color.White : Color.Gray);
+            }
+            .width('100%')
+            .alignItems(VerticalAlign.Bottom)
+            .justifyContent(FlexAlign.SpaceBetween);
+
+            Slider({
+              min: 0,
+              max: this.videoPlayerVM.duration,
+              value: this.videoPlayerVM.currTime,
+              style: SliderStyle.NONE,
+            })
+              .height(8)
+              .width('100%')
+              .trackColor('#22FFFFFF')
+              .trackThickness(this.videoPlayerVM.isSeeking ? 8 : 4)
+              .selectedColor(this.videoPlayerVM.isSeeking ? Color.White : Color.Gray)
+              .onChange((value: number, mode: SliderChangeMode) => {
+                if (mode === SliderChangeMode.Begin) {
+                  this.videoPlayerVM.isSeeking = true;
+                } else if (mode === SliderChangeMode.Moving) {
+                  this.videoPlayerVM.currTime = value;
+                } else {
+                  this.videoPlayerVM.seek(value);
+                }
+              });
+
+            // Button({ type: ButtonType.Circle, stateEffect: false }) {
+            //   Image(this.videoPlayerVM.isLandscape ? $r('app.media.portrait') : $r('app.media.landscape'))
+            //     .width(20)
+            //     .aspectRatio(1)
+            //     .fillColor(Color.White);
+            // }
+            // .width(24)
+            // .aspectRatio(1)
+            // .backgroundColor(Color.Transparent)
+            // .onClick(() => {
+            //   if (this.videoPlayerVM.isLandscape) {
+            //     this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
+            //   } else {
+            //     this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.LANDSCAPE);
+            //   }
+            // });
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Start)
+          .padding({ left: 16, right: 16 })
+          .alignItems(HorizontalAlign.Start);
         }
         .width('100%')
         .height('100%')
-        .justifyContent(FlexAlign.Start)
         .alignItems(HorizontalAlign.Start)
-        .backgroundColor(Color.Transparent)
-        .visibility(this.videoPlayerVM.isCtrlPanelShow ? Visibility.Visible : Visibility.Hidden);
+        .justifyContent(FlexAlign.SpaceBetween)
+        .visibility(this.videoPlayerVM.isCtrlPanelShow ? Visibility.Visible : Visibility.Hidden)
+        .padding({
+          top: this.videoPlayerVM.isLandscape ? 16 : this.getUIContext().px2vp(this.topRectHeight),
+          bottom: this.videoPlayerVM.isLandscape ? 16 : this.getUIContext().px2vp(this.bottomRectHeight),
+        })
       }
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Black)
-      .padding({
-        top: this.videoPlayerVM.isLandscape ? 16 : this.getUIContext().px2vp(this.topRectHeight),
-        bottom: this.videoPlayerVM.isLandscape ? 16 : this.getUIContext().px2vp(this.bottomRectHeight),
-      })
       .onClick(() => {
         this.videoPlayerVM.setControlPanelShow();
       })
@@ -335,6 +362,7 @@ export struct VideoPlayerView {
         )
       );
     }
+    .hideBackButton(true)
     .onBackPressed((): boolean => {
       this.videoPlayerVM.setDefaultBrightness(this.context);
       this.videoPlayerVM.setStatusBarColor(this.context, 0x000000);
@@ -343,7 +371,6 @@ export struct VideoPlayerView {
       }
       return false;
     })
-    .hideBackButton(true)
     .onReady((navContext: NavDestinationContext) => {
       this.navPathStack = navContext.pathStack;
       this.videoPlayerVM.videoInfo = navContext.pathInfo.param as VideoInfoModel;

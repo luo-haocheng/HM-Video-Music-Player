@@ -19,7 +19,6 @@ export class VideoPlayerViewModel {
   @Track name: string = '';
   @Track duration: number = 0;
   @Track currTime: number = 0;
-  @Track seekTime: number = 0;
   @Track brightness: number = 0;
   @Track volumeLevel: number = 0;
   @Track isPlaying: boolean = false;
@@ -158,19 +157,18 @@ export class VideoPlayerViewModel {
 
   async startHorizontalSlide(): Promise<void> {
     console.info(`PanGesture Horizontal Start`);
-    this.seekTime = this.currTime;
     this.startSeekTime = this.currTime;
   }
 
   async updateHorizontalSlide(offsetX: number): Promise<void> {
     console.info(`PanGesture Horizontal Update: ${offsetX}`);
     let seekTime = this.startSeekTime + (offsetX / ONE_HUNDRED_VP) * SEEK_TIME;
-    this.seekTime = Math.max(0, Math.min(seekTime, this.duration));
+    this.currTime = Math.max(0, Math.min(seekTime, this.duration));
   }
 
   async endHorizontalSlide(): Promise<void> {
     console.info(`PanGesture Horizontal End`);
-    await this.seek(this.seekTime);
+    this.seek(this.currTime);
   }
 
   async startVerticalSlide(context: common.UIAbilityContext, uiContext: UIContext, globalX: number): Promise<void> {

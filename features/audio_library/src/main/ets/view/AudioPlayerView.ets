@@ -129,8 +129,7 @@ export struct AudioPlayerView {
             .width('100%')
             .trackColor('#22000000')
             .selectedColor(Color.Black)
-            .trackThickness(this.audioPlayerVM.isSeeking ? 8 : 5)
-            .blockSize({ width: 12, height: 12 })
+            .trackThickness(this.audioPlayerVM.isSeeking ? 8 : 4)
             .onChange(async (value: number, mode: SliderChangeMode) => {
               if (mode === SliderChangeMode.Begin) {
                 this.audioPlayerVM.isSeeking = true;
