@@ -1,6 +1,5 @@
 import { AudioRepeatMode } from 'data_storage';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
-import { AVCastPicker } from '@kit.AVSessionKit';
 import { CurrentPlaylistView } from './CurrentPlaylistView';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
@@ -81,7 +80,7 @@ export struct AudioPlayerView {
               .fontWeight(FontWeight.Bold);
             Text(this.audioPlayerVM.currAudioItem?.artist)
               .fontSize(14)
-              .fontColor(Color.Black);
+              .fontColor(Color.Gray);
           }
           .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Start);
@@ -89,7 +88,8 @@ export struct AudioPlayerView {
           Button({ type: ButtonType.Circle, stateEffect: false }) {
             Image(this.audioPlayerVM.isFavorite ? $r('app.media.heart_fill') : $r('app.media.heart'))
               .width(28)
-              .aspectRatio(1);
+              .aspectRatio(1)
+              .fillColor(this.audioPlayerVM.isFavorite ? Color.Black : Color.Gray)
           }
           .backgroundColor(Color.Transparent)
           .onClick(async () => {
@@ -104,7 +104,7 @@ export struct AudioPlayerView {
           Text(this.audioPlayerVM.currLyrics)
             .maxLines(1)
             .fontSize(14)
-            .fontColor(Color.Black)
+            .fontColor(Color.Gray)
             .textOverflow({ overflow: TextOverflow.MARQUEE });
         }
         .width('100%')
@@ -118,12 +118,7 @@ export struct AudioPlayerView {
 
 
       Column({ space: 32 }) {
-        Row({ space: 8 }) {
-          Text(this.timeStr(this.audioPlayerVM.currTime))
-            .fontSize(12)
-            .fontColor(Color.Black)
-            .layoutWeight(0);
-
+        Column({ space: 8 }) {
           Slider({
             min: 0,
             max: this.audioPlayerVM.duration,
@@ -131,28 +126,61 @@ export struct AudioPlayerView {
             style: SliderStyle.NONE,
           })
             .height(24)
-            .layoutWeight(1)
-            .trackThickness(8)
+            .width('100%')
             .trackColor('#22000000')
+            .selectedColor(Color.Black)
+            .trackThickness(this.audioPlayerVM.isSeeking ? 8 : 5)
             .blockSize({ width: 12, height: 12 })
             .onChange(async (value: number, mode: SliderChangeMode) => {
               if (mode === SliderChangeMode.Begin) {
                 this.audioPlayerVM.isSeeking = true;
+              } else if (mode === SliderChangeMode.Moving) {
+                this.audioPlayerVM.currTime = value;
               } else if (mode === SliderChangeMode.End) {
                 this.audioPlayerVM.seek(value);
               }
             });
 
-          Text(this.timeStr(this.audioPlayerVM.duration))
-            .fontSize(12)
-            .fontColor(Color.Black)
-            .layoutWeight(0);
+          Row() {
+            Text(this.timeStr(this.audioPlayerVM.currTime))
+              .fontSize(12)
+              .fontColor(Color.Gray)
+
+            Text(this.timeStr(this.audioPlayerVM.duration))
+              .fontSize(12)
+              .fontColor(Color.Gray)
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.SpaceBetween)
         }
         .width('100%')
-        .alignItems(VerticalAlign.Center)
         .justifyContent(FlexAlign.SpaceBetween);
 
         Row() {
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            if (this.audioPlayerVM.repeatMode === AudioRepeatMode.SINGLE_REPEAT) {
+              Image($r('app.media.repeat_1'))
+                .width(28)
+                .aspectRatio(1)
+                .fillColor(Color.Gray);
+            } else if (this.audioPlayerVM.repeatMode === AudioRepeatMode.LIST_REPEAT) {
+              Image($r('app.media.repeat'))
+                .width(28)
+                .aspectRatio(1)
+                .fillColor(Color.Gray);
+            } else {
+              Image($r('app.media.shuffle'))
+                .width(28)
+                .aspectRatio(1)
+                .fillColor(Color.Gray);
+            }
+          }
+
+          .backgroundColor(Color.Transparent)
+          .onClick(async () => {
+            this.audioPlayerVM.switchRepeatMode();
+          });
+
           Button({ type: ButtonType.Circle, stateEffect: false }) {
             Image($r('app.media.backward_end_fill'))
               .width(36)
@@ -191,51 +219,12 @@ export struct AudioPlayerView {
             const context = this.getUIContext().getHostContext() as Context;
             this.audioPlayerVM.switchNext(context);
           });
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .justifyContent(FlexAlign.SpaceAround);
-
-        Row() {
-          Button({ type: ButtonType.Circle, stateEffect: false }) {
-            Image($r('app.media.dot_grid_1x2'))
-              .width(24)
-              .aspectRatio(1)
-              .fillColor(Color.Black);
-          }
-          .backgroundColor(Color.Transparent)
-          .onClick(async () => {
-            // todo
-          });
-
-          Button({ type: ButtonType.Circle, stateEffect: false }) {
-            if (this.audioPlayerVM.repeatMode === AudioRepeatMode.SINGLE_REPEAT) {
-              Image($r('app.media.repeat_1'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            } else if (this.audioPlayerVM.repeatMode === AudioRepeatMode.LIST_REPEAT) {
-              Image($r('app.media.repeat'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            } else {
-              Image($r('app.media.shuffle'))
-                .width(24)
-                .aspectRatio(1)
-                .fillColor(Color.Black);
-            }
-          }
-          .backgroundColor(Color.Transparent)
-          .onClick(async () => {
-            this.audioPlayerVM.switchRepeatMode();
-          });
 
           Button({ type: ButtonType.Circle, stateEffect: false }) {
             Image($r('app.media.music_note_list'))
-              .width(24)
+              .width(28)
               .aspectRatio(1)
-              .fillColor(Color.Black);
+              .fillColor(Color.Gray);
           }
           .backgroundColor(Color.Transparent)
           .onClick(async () => {
@@ -250,16 +239,8 @@ export struct AudioPlayerView {
               this.currPlaylistDialogController.open();
             }
           });
-
-          AVCastPicker({
-            customPicker: () => {
-              this.pickerBuilder();
-            }
-          })
-            .width(24)
-            .aspectRatio(1);
         }
-        .width('90%')
+        .width('100%')
         .alignItems(VerticalAlign.Center)
         .justifyContent(FlexAlign.SpaceBetween);
       }

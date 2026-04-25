@@ -18,6 +18,7 @@ export class AudioPlayerViewModel {
   @Track duration: number = 0;
   @Track currTime: number = 0;
   @Track isPlaying: boolean = false;
+  @Track isSeeking: boolean = false;
   @Track isFavorite: boolean = false;
   @Track currLyrics: string = '';
   @Track currLyricsIdx: number = 0;
@@ -26,7 +27,6 @@ export class AudioPlayerViewModel {
   @Track audioList: AudioItemViewModelList = new AudioItemViewModelList();
   @Track repeatMode: AudioRepeatMode = AudioRepeatMode.SINGLE_REPEAT;
   @Track lyricsScroller: Scroller = new Scroller();
-  public isSeeking: boolean = false;
   private settings: Settings = new Settings();
   private playerState: media.AVPlayerState = 'idle';
   private audioPlayer: AVPlayerManager = new AVPlayerManager();

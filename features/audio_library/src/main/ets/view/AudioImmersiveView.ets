@@ -64,27 +64,58 @@ export struct AudioImmersiveView {
 
   build() {
     NavDestination() {
-      Tabs({ barPosition: BarPosition.Start }) {
-        TabContent() {
-          AudioPlayerView();
-        }
-        .tabBar(this.playerTabBarBuilder());
+      Stack({ alignContent: Alignment.TopStart }) {
+        Tabs({ barPosition: BarPosition.Start }) {
+          TabContent() {
+            AudioPlayerView();
+          }
+          .tabBar(this.playerTabBarBuilder());
 
-        TabContent() {
-          AudioLyricsView();
+          TabContent() {
+            AudioLyricsView();
+          }
+          .tabBar(this.lyricsTabBarBuilder());
         }
-        .tabBar(this.lyricsTabBarBuilder());
+        .barHeight(32)
+        .onSelected((index: number) => {
+          this.selectedIdx = index;
+        });
+
+        Row() {
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            Image($r('app.media.chevron_down'))
+              .width(28)
+              .aspectRatio(1)
+              .fillColor(Color.Gray);
+          }
+          .backgroundColor(Color.Transparent)
+          .onClick(() => {
+            // todo
+          })
+
+          Button({ type: ButtonType.Circle, stateEffect: false }) {
+            Image($r('app.media.dot_grid_1x2'))
+              .width(28)
+              .aspectRatio(1)
+              .fillColor(Color.Gray);
+          }
+          .backgroundColor(Color.Transparent)
+          .onClick(() => {
+            // todo
+          })
+        }
+        .height(32)
+        .width('100%')
+        .padding({ left: 16, right: 16 })
+        .alignItems(VerticalAlign.Center)
+        .justifyContent(FlexAlign.SpaceBetween);
       }
-      .barHeight(32)
-      .onSelected((index: number) => {
-        this.selectedIdx = index;
-      });
     }
     .padding({
       top: this.getUIContext().px2vp(this.topRectHeight),
       bottom: this.getUIContext().px2vp(this.bottomRectHeight)
     })
-    .backgroundColor('#F1F3F5')
-    .hideBackButton(true);
+    .hideBackButton(true)
+    .backgroundColor('#F1F3F5');
   }
 }
