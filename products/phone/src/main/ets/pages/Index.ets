@@ -43,12 +43,12 @@ struct Index {
           TabContent() {
             VideoLibraryView();
           }
-          .tabBar(this.tabBarBuilder($r('app.media.video'), '视频库', 0));
+          .tabBar(this.tabBarBuilder($r('app.media.video'), '视频', 0));
 
           TabContent() {
             AudioLibraryView();
           }
-          .tabBar(this.tabBarBuilder($r('app.media.music'), '音频库', 1));
+          .tabBar(this.tabBarBuilder($r('app.media.music'), '音频', 1));
 
           TabContent() {
             Text('设置')
