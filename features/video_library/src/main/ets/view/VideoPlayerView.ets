@@ -156,9 +156,9 @@ export struct VideoPlayerView {
           Row() {
             Button({ type: ButtonType.Circle, stateEffect: false }) {
               Image($r('app.media.back'))
-                .width(18)
+                .width(20)
                 .aspectRatio(1)
-                .fillColor(Color.White);
+                .fillColor(Color.Gray);
             }
             .backgroundColor(Color.Transparent)
             .onClick(() => {
@@ -167,9 +167,9 @@ export struct VideoPlayerView {
 
             Button({ type: ButtonType.Circle, stateEffect: false }) {
               Image($r('app.media.dot_grid_2x2'))
-                .width(24)
+                .width(28)
                 .aspectRatio(1)
-                .fillColor(Color.White);
+                .fillColor(Color.Gray);
             }
             .backgroundColor(Color.Transparent)
             .onClick(() => {
@@ -187,10 +187,10 @@ export struct VideoPlayerView {
               Image(this.videoPlayerVM.isLocking ? $r('app.media.lock') : $r('app.media.lock_open'))
                 .width(20)
                 .aspectRatio(1)
-                .fillColor(Color.White);
+                .fillColor(Color.Gray);
             }
             .padding(8)
-            .backgroundColor('#33FFFFFF')
+            .backgroundColor('#22FFFFFF')
             .onClick(() => {
               this.videoPlayerVM.isLocking = !this.videoPlayerVM.isLocking;
             })
@@ -239,7 +239,7 @@ export struct VideoPlayerView {
                 Image(this.videoPlayerVM.isPlaying ? $r('app.media.pause') : $r('app.media.play'))
                   .width(30)
                   .aspectRatio(1)
-                  .fillColor(Color.White);
+                  .fillColor(Color.Gray);
               }
               .backgroundColor(Color.Transparent)
               .onClick(async () => {
@@ -259,7 +259,7 @@ export struct VideoPlayerView {
                 )
                   .width(24)
                   .aspectRatio(1)
-                  .fillColor(Color.White);
+                  .fillColor(Color.Gray);
               }
               .backgroundColor(Color.Transparent)
               .onClick(() => {
@@ -315,19 +315,27 @@ export struct VideoPlayerView {
             }),
           PanGesture({ direction: PanDirection.Horizontal, distance: 20 })
             .onActionStart(() => {
-              this.videoPlayerVM.isSeeking = true;
-              this.videoPlayerVM.startHorizontalSlide();
+              if (!this.videoPlayerVM.isLocking) {
+                this.videoPlayerVM.isSeeking = true;
+                this.videoPlayerVM.startHorizontalSlide();
+              }
             })
             .onActionUpdate((event: GestureEvent) => {
-              this.videoPlayerVM.updateHorizontalSlide(event.offsetX);
+              if (!this.videoPlayerVM.isLocking) {
+                this.videoPlayerVM.updateHorizontalSlide(event.offsetX);
+              }
             })
             .onActionEnd(() => {
-              this.videoPlayerVM.isSeeking = false;
-              this.videoPlayerVM.endHorizontalSlide();
+              if (!this.videoPlayerVM.isLocking) {
+                this.videoPlayerVM.isSeeking = false;
+                this.videoPlayerVM.endHorizontalSlide();
+              }
             })
             .onActionCancel(() => {
-              this.videoPlayerVM.isSeeking = false;
-              this.videoPlayerVM.endHorizontalSlide();
+              if (!this.videoPlayerVM.isLocking) {
+                this.videoPlayerVM.isSeeking = false;
+                this.videoPlayerVM.endHorizontalSlide();
+              }
             }),
           PanGesture({ direction: PanDirection.Vertical, distance: 20 })
             .onActionStart((event: GestureEvent) => {
