@@ -79,7 +79,7 @@ export struct VideoPlayerView {
             }
             .padding(8)
             .borderRadius(8)
-            .backgroundColor('#88000000')
+            .backgroundColor('#66000000')
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center);
           } else if (this.videoPlayerVM.isControlVolume) {
@@ -103,7 +103,7 @@ export struct VideoPlayerView {
             }
             .padding(8)
             .borderRadius(8)
-            .backgroundColor('#88000000')
+            .backgroundColor('#66000000')
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center);
           } else if (this.videoPlayerVM.isControlBrightness) {
@@ -126,7 +126,7 @@ export struct VideoPlayerView {
             }
             .padding(8)
             .borderRadius(8)
-            .backgroundColor('#88000000')
+            .backgroundColor('#66000000')
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center);
           } else if (this.videoPlayerVM.isPlaying && this.videoPlayerVM.isSpeeding) {
@@ -141,7 +141,7 @@ export struct VideoPlayerView {
             }
             .padding(8)
             .borderRadius(8)
-            .backgroundColor('#88000000')
+            .backgroundColor('#66000000')
             .justifyContent(FlexAlign.Center)
             .alignItems(VerticalAlign.Center)
             .margin({ top: this.videoPlayerVM.isLandscape ? 16 : this.getUIContext().px2vp(this.topRectHeight) });
@@ -152,7 +152,6 @@ export struct VideoPlayerView {
         .alignItems(HorizontalAlign.Center)
         .justifyContent(this.videoPlayerVM.isSpeeding ? FlexAlign.Start : FlexAlign.Center);
 
-        /*------------------------------------------------------------------------------------------------------*/
         Column() {
           Row() {
             Button({ type: ButtonType.Circle, stateEffect: false }) {
@@ -163,11 +162,6 @@ export struct VideoPlayerView {
             }
             .backgroundColor(Color.Transparent)
             .onClick(() => {
-              this.videoPlayerVM.setDefaultBrightness(this.context);
-              this.videoPlayerVM.setStatusBarColor(this.context, 0x000000);
-              if (this.videoPlayerVM.isLandscape) {
-                this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
-              }
               this.navPathStack.pop();
             });
 
@@ -185,39 +179,20 @@ export struct VideoPlayerView {
           .width('100%')
           .alignItems(VerticalAlign.Center)
           .justifyContent(FlexAlign.SpaceBetween)
-          .padding({ left: 16, right: 16, top: this.videoPlayerVM.isLandscape ? 0 : 8 });
+          .padding({ left: 16, right: 16, top: this.videoPlayerVM.isLandscape ? 0 : 8 })
+          .visibility(this.videoPlayerVM.isLocking ? Visibility.Hidden : Visibility.Visible);
 
-          Column({ space: 12 }) {
+          Column() {
             Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image($r('app.media.lock_open'))
+              Image(this.videoPlayerVM.isLocking ? $r('app.media.lock') : $r('app.media.lock_open'))
                 .width(20)
                 .aspectRatio(1)
                 .fillColor(Color.White);
             }
             .padding(8)
-            .backgroundColor('#22FFFFFF')
+            .backgroundColor('#33FFFFFF')
             .onClick(() => {
-              // todo
-            })
-
-            Button({ type: ButtonType.Circle, stateEffect: false }) {
-              Image(
-                this.videoPlayerVM.isLandscape ?
-                  $r('app.media.rectangle_rotate') :
-                  $r('app.media.rectangle_portrait_rotate')
-              )
-                .width(20)
-                .aspectRatio(1)
-                .fillColor(Color.White);
-            }
-            .padding(8)
-            .backgroundColor('#22FFFFFF')
-            .onClick(() => {
-              if (this.videoPlayerVM.isLandscape) {
-                this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
-              } else {
-                this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.LANDSCAPE);
-              }
+              this.videoPlayerVM.isLocking = !this.videoPlayerVM.isLocking;
             })
           }
           .width('100%')
@@ -225,11 +200,44 @@ export struct VideoPlayerView {
           .alignItems(HorizontalAlign.End)
           .justifyContent(FlexAlign.Center);
 
-          Column({ space: 8 }) {
+          Column({ space: 12 }) {
+            Column({ space: 3 }) {
+              Row() {
+                Text(`${this.timeStr(this.videoPlayerVM.currTime)} / ${this.timeStr(this.videoPlayerVM.duration)}`)
+                  .fontSize(10)
+                  .fontColor(this.videoPlayerVM.isSeeking ? Color.White : Color.Gray);
+              }
+              .width('100%')
+              .justifyContent(FlexAlign.End);
+
+              Slider({
+                min: 0,
+                max: this.videoPlayerVM.duration,
+                value: this.videoPlayerVM.currTime,
+                style: SliderStyle.NONE,
+              })
+                .height(8)
+                .width('100%')
+                .trackColor('#22FFFFFF')
+                .trackThickness(this.videoPlayerVM.isSeeking ? 8 : 5)
+                .selectedColor(this.videoPlayerVM.isSeeking ? Color.White : Color.Gray)
+                .onChange((value: number, mode: SliderChangeMode) => {
+                  if (mode === SliderChangeMode.Begin) {
+                    this.videoPlayerVM.isSeeking = true;
+                  } else if (mode === SliderChangeMode.Moving) {
+                    this.videoPlayerVM.currTime = value;
+                  } else {
+                    this.videoPlayerVM.seek(value);
+                  }
+                });
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start);
+
             Row() {
               Button({ type: ButtonType.Circle, stateEffect: false }) {
                 Image(this.videoPlayerVM.isPlaying ? $r('app.media.pause') : $r('app.media.play'))
-                  .width(28)
+                  .width(30)
                   .aspectRatio(1)
                   .fillColor(Color.White);
               }
@@ -242,56 +250,36 @@ export struct VideoPlayerView {
                 }
               });
 
-              Text(`${this.timeStr(this.videoPlayerVM.currTime)} / ${this.timeStr(this.videoPlayerVM.duration)}`)
-                .fontSize(10)
-                .fontColor(this.videoPlayerVM.isSeeking ? Color.White : Color.Gray);
+
+              Button({ type: ButtonType.Circle, stateEffect: false }) {
+                Image(
+                  this.videoPlayerVM.isLandscape ?
+                    $r('app.media.rectangle_rotate') :
+                    $r('app.media.rectangle_portrait_rotate')
+                )
+                  .width(24)
+                  .aspectRatio(1)
+                  .fillColor(Color.White);
+              }
+              .backgroundColor(Color.Transparent)
+              .onClick(() => {
+                if (this.videoPlayerVM.isLandscape) {
+                  this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
+                } else {
+                  this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.LANDSCAPE);
+                }
+              })
             }
             .width('100%')
-            .alignItems(VerticalAlign.Bottom)
+            .alignItems(VerticalAlign.Center)
             .justifyContent(FlexAlign.SpaceBetween);
 
-            Slider({
-              min: 0,
-              max: this.videoPlayerVM.duration,
-              value: this.videoPlayerVM.currTime,
-              style: SliderStyle.NONE,
-            })
-              .height(8)
-              .width('100%')
-              .trackColor('#22FFFFFF')
-              .trackThickness(this.videoPlayerVM.isSeeking ? 8 : 4)
-              .selectedColor(this.videoPlayerVM.isSeeking ? Color.White : Color.Gray)
-              .onChange((value: number, mode: SliderChangeMode) => {
-                if (mode === SliderChangeMode.Begin) {
-                  this.videoPlayerVM.isSeeking = true;
-                } else if (mode === SliderChangeMode.Moving) {
-                  this.videoPlayerVM.currTime = value;
-                } else {
-                  this.videoPlayerVM.seek(value);
-                }
-              });
-
-            // Button({ type: ButtonType.Circle, stateEffect: false }) {
-            //   Image(this.videoPlayerVM.isLandscape ? $r('app.media.portrait') : $r('app.media.landscape'))
-            //     .width(20)
-            //     .aspectRatio(1)
-            //     .fillColor(Color.White);
-            // }
-            // .width(24)
-            // .aspectRatio(1)
-            // .backgroundColor(Color.Transparent)
-            // .onClick(() => {
-            //   if (this.videoPlayerVM.isLandscape) {
-            //     this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
-            //   } else {
-            //     this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.LANDSCAPE);
-            //   }
-            // });
           }
           .width('100%')
           .justifyContent(FlexAlign.Start)
           .padding({ left: 16, right: 16 })
-          .alignItems(HorizontalAlign.Start);
+          .alignItems(HorizontalAlign.Start)
+          .visibility(this.videoPlayerVM.isLocking ? Visibility.Hidden : Visibility.Visible);
         }
         .width('100%')
         .height('100%')
@@ -363,13 +351,10 @@ export struct VideoPlayerView {
       );
     }
     .hideBackButton(true)
-    .onBackPressed((): boolean => {
+    .onWillDisappear(() => {
       this.videoPlayerVM.setDefaultBrightness(this.context);
       this.videoPlayerVM.setStatusBarColor(this.context, 0x000000);
-      if (this.videoPlayerVM.isLandscape) {
-        this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
-      }
-      return false;
+      this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
     })
     .onReady((navContext: NavDestinationContext) => {
       this.navPathStack = navContext.pathStack;

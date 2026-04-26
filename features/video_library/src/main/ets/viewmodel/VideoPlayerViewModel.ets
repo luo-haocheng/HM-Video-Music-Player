@@ -22,6 +22,7 @@ export class VideoPlayerViewModel {
   @Track brightness: number = 0;
   @Track volumeLevel: number = 0;
   @Track isPlaying: boolean = false;
+  @Track isLocking: boolean = false;
   @Track isLandscape: boolean = false;
   @Track isCtrlPanelShow: boolean = false;
   @Track isSeeking: boolean = false;
