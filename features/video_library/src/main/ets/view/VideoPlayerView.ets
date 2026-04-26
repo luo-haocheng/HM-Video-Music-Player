@@ -39,14 +39,6 @@ export struct VideoPlayerView {
     }
   }
 
-  aboutToAppear(): void {
-    this.videoPlayerVM.setStatusBarColor(this.context, 0xFFFFFF);
-  }
-
-  aboutToDisappear(): void {
-    this.videoPlayerVM.release();
-  }
-
   build() {
     NavDestination() {
       Stack() {
@@ -163,6 +155,7 @@ export struct VideoPlayerView {
             .backgroundColor(Color.Transparent)
             .onClick(() => {
               this.navPathStack.pop();
+              this.videoPlayerVM.release();
             });
 
             Button({ type: ButtonType.Circle, stateEffect: false }) {
@@ -177,9 +170,9 @@ export struct VideoPlayerView {
             });
           }
           .width('100%')
+          .padding({ left: 16, right: 16 })
           .alignItems(VerticalAlign.Center)
           .justifyContent(FlexAlign.SpaceBetween)
-          .padding({ left: 16, right: 16, top: this.videoPlayerVM.isLandscape ? 0 : 8 })
           .visibility(this.videoPlayerVM.isLocking ? Visibility.Hidden : Visibility.Visible);
 
           Column() {
@@ -313,7 +306,7 @@ export struct VideoPlayerView {
               this.videoPlayerVM.isSpeeding = false;
               this.videoPlayerVM.setSpeed(media.PlaybackSpeed.SPEED_FORWARD_1_00_X);
             }),
-          PanGesture({ direction: PanDirection.Horizontal, distance: 20 })
+          PanGesture({ direction: PanDirection.Horizontal, distance: 50 })
             .onActionStart(() => {
               if (!this.videoPlayerVM.isLocking) {
                 this.videoPlayerVM.isSeeking = true;
@@ -321,8 +314,13 @@ export struct VideoPlayerView {
               }
             })
             .onActionUpdate((event: GestureEvent) => {
+              if (event.offsetX > -50 && event.offsetX < 50) {
+                console.error(`Error offsetX value when horizontal pan gesture: ${event.offsetX}`);
+                return;
+              }
               if (!this.videoPlayerVM.isLocking) {
-                this.videoPlayerVM.updateHorizontalSlide(event.offsetX);
+                const offsetX = event.offsetX > 0 ? event.offsetX - 50 : event.offsetX + 50;
+                this.videoPlayerVM.updateHorizontalSlide(offsetX);
               }
             })
             .onActionEnd(() => {
@@ -337,15 +335,20 @@ export struct VideoPlayerView {
                 this.videoPlayerVM.endHorizontalSlide();
               }
             }),
-          PanGesture({ direction: PanDirection.Vertical, distance: 20 })
+          PanGesture({ direction: PanDirection.Vertical, distance: 100 })
             .onActionStart((event: GestureEvent) => {
-              let uiContext = this.getUIContext() as UIContext;
               if (event.fingerInfos && event.fingerInfos.length > 0) {
+                let uiContext = this.getUIContext() as UIContext;
                 this.videoPlayerVM.startVerticalSlide(this.context, uiContext, event.fingerInfos[0].globalX);
               }
             })
             .onActionUpdate((event: GestureEvent) => {
-              this.videoPlayerVM.updateVerticalSlide(this.context, event.offsetY);
+              if (event.offsetY > -100 && event.offsetY < 100) {
+                console.error(`Error offsetY value when vertical pan gesture: ${event.offsetY}`);
+                return;
+              }
+              const offsetY = event.offsetY > 0 ? event.offsetY - 100 : event.offsetY + 100;
+              this.videoPlayerVM.updateVerticalSlide(this.context, offsetY);
             })
             .onActionEnd(() => {
               this.videoPlayerVM.isControlVolume = false;
@@ -359,9 +362,16 @@ export struct VideoPlayerView {
       );
     }
     .hideBackButton(true)
+    .onBackPressed(() => {
+      this.videoPlayerVM.release();
+      return false;
+    })
+    .onWillAppear(() => {
+      this.videoPlayerVM.setStatusBarEnable(this.context, false);
+    })
     .onWillDisappear(() => {
       this.videoPlayerVM.setDefaultBrightness(this.context);
-      this.videoPlayerVM.setStatusBarColor(this.context, 0x000000);
+      this.videoPlayerVM.setStatusBarEnable(this.context, true);
       this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
     })
     .onReady((navContext: NavDestinationContext) => {

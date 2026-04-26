@@ -1,14 +1,14 @@
 import { AVPlayerManager, MediaSessionManager } from 'player';
 import { common, Context } from '@kit.AbilityKit';
 import { media } from '@kit.MediaKit';
-import { ColorMetrics, display, window } from '@kit.ArkUI';
+import { display, window } from '@kit.ArkUI';
 import { settings } from '@kit.BasicServicesKit';
 import { audio } from '@kit.AudioKit';
 import { VideoInfoModel } from 'data_storage';
 
 const SEEK_TIME = 10000;
-const BRIGHT_VALUE = 0.1;
 const VOLUME_VALUE = 1.0;
+const BRIGHT_VALUE = 0.067;
 const ONE_HUNDRED_VP = 100;
 const MAX_VOLUME_LEVEL = 15;
 const MAX_WINDOW_BRIGHTNESS = 1.0;
@@ -42,7 +42,7 @@ export class VideoPlayerViewModel {
     try {
       this.volumeLevel = audioVolumeMgr.getVolumeByStream(audio.StreamUsage.STREAM_USAGE_MUSIC);
     } catch (error) {
-      console.info(`Failed to getVolumeByStream. Cause: ${JSON.stringify(error)}`);
+      console.error(`Failed to getVolumeByStream. Cause: ${JSON.stringify(error)}`);
     }
   }
 
@@ -95,11 +95,9 @@ export class VideoPlayerViewModel {
 
   async setVideoAsset(context: Context): Promise<void> {
     await this.videoPlayer.setMediaAsset(this.videoInfo.videoPath);
-    setTimeout(async () => {
-      await this.initSession(context);
-      const currState: media.AVPlayerState = this.videoPlayer.getState() ?? 'released';
-      await MediaSessionManager.getInstance().setVideoAsset(this.videoInfo, this.currTime, currState);
-    }, 500);
+    await this.initSession(context);
+    const currState: media.AVPlayerState = this.videoPlayer.getState() ?? 'released';
+    await MediaSessionManager.getInstance().setVideoAsset(this.videoInfo, this.currTime, currState);
   }
 
   async play(): Promise<void> {
@@ -157,23 +155,19 @@ export class VideoPlayerViewModel {
   }
 
   async startHorizontalSlide(): Promise<void> {
-    console.info(`PanGesture Horizontal Start`);
     this.startSeekTime = this.currTime;
   }
 
   async updateHorizontalSlide(offsetX: number): Promise<void> {
-    console.info(`PanGesture Horizontal Update: ${offsetX}`);
     let seekTime = this.startSeekTime + (offsetX / ONE_HUNDRED_VP) * SEEK_TIME;
     this.currTime = Math.max(0, Math.min(seekTime, this.duration));
   }
 
   async endHorizontalSlide(): Promise<void> {
-    console.info(`PanGesture Horizontal End`);
     this.seek(this.currTime);
   }
 
   async startVerticalSlide(context: common.UIAbilityContext, uiContext: UIContext, globalX: number): Promise<void> {
-    console.info(`PanGesture Veritcal Start`);
     let screenWidthVp: number = 0;
     try {
       screenWidthVp = uiContext.px2vp(display.getDefaultDisplaySync().width);
@@ -212,13 +206,12 @@ export class VideoPlayerViewModel {
       try {
         this.startVolumeLevel = audioVolumeMgr.getVolumeByStream(audio.StreamUsage.STREAM_USAGE_MUSIC);
       } catch (error) {
-        console.info(`Failed to getVolumeByStream. Cause: ${JSON.stringify(error)}`);
+        console.error(`Failed to getVolumeByStream. Cause: ${JSON.stringify(error)}`);
       }
     }
   }
 
   async updateVerticalSlide(context: common.UIAbilityContext, offsetY: number): Promise<void> {
-    console.info(`PanGesture Vertical Update: ${offsetY}`);
     if (this.slideLeftSide) {
       let windowClass: window.Window | undefined;
       try {
@@ -247,7 +240,6 @@ export class VideoPlayerViewModel {
         windowClass.setPreferredOrientation(orientation)
           .then(() => {
             this.isLandscape = orientation === window.Orientation.LANDSCAPE;
-            console.info(`Set window orientation to ${orientation} successfully`);
           })
           .catch((error: BusinessError) => {
             console.error(`Failed to set window orientation to ${orientation}, Cause: ${JSON.stringify(error)}`);
@@ -258,12 +250,12 @@ export class VideoPlayerViewModel {
       });
   }
 
-  async setStatusBarColor(context: common.UIAbilityContext, color: number) {
-    await context.windowStage.getMainWindow()
+  async setStatusBarEnable(context: common.UIAbilityContext, enable: boolean) {
+    context.windowStage.getMainWindow()
       .then((windowClass: window.Window) => {
-        windowClass.setStatusBarColor(ColorMetrics.numeric(color))
+        windowClass.setSpecificSystemBarEnabled('status', enable)
           .catch((err: BusinessError) => {
-            console.error(`Failed to set status bar color to 0x000000, error: ${JSON.stringify(err)}`);
+            console.error(`Failed to set system status bar enable to ${enable}. Cause: ${JSON.stringify(err)}`);
           });
       })
       .catch((error: BusinessError) => {
