@@ -12,8 +12,8 @@ import { SettingKey, Settings, SortModeValue, SortRuleValue, ViewOptionValue } f
 import { util } from '@kit.ArkTS';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 
-const BUFFER_SIZE = 4096;
 const MD_ALGO_NAME = 'SHA256';
+const BUFFER_SIZE = 1024 * 1024;
 const SANDBOX_COVER_DIR = '/covers';
 const DOWNLOAD_AUDIO_DIR = '/audios';
 const SORT_AUDIO_EVENT = 'SortAudio';
@@ -284,10 +284,17 @@ export class AudioLibraryViewModel {
       const srcPath = new fileUri.FileUri(srcUri).path;
       let dstPath = new fileUri.FileUri(dstUri).path;
       if (fileIo.accessSync(dstPath, fileIo.AccessModeType.EXIST)) {
-        // Already have audio file with same name in download directory
         if (await this.isDuplicateFile(srcPath, dstPath)) {
-          throw Error(`Audio file ${srcUri} repeated imported. File has imported at ${srcFile}`);
+          // Audio file has exist already
+          if (await this.audioStore.isAudioImported(dstPath)) {
+            // Audio file has imported already
+            throw Error(`Audio file ${srcUri} repeated imported. File has imported at ${srcFile}`);
+          } else {
+            // No need to copy
+            return dstPath;
+          }
         } else {
+          // Rename
           dstPath = this.renameDuplicateFile(dstPath);
         }
       }

@@ -317,4 +317,27 @@ export class VideoLibraryStore {
     }
     return folderInfoList;
   }
+
+  async isVideoImported(videoPath: string): Promise<boolean> {
+    if (this.store !== undefined) {
+      let isImported: boolean = false;
+      let resultSet: relationalStore.ResultSet | undefined;
+      try {
+        let predicate = new relationalStore.RdbPredicates(VIDEO_TABLE_NAME);
+        predicate.equalTo('VIDEO_PATH', videoPath);
+        resultSet = await this.store.query(predicate);
+        if (resultSet.rowCount > 0) {
+          isImported = true;
+        }
+      } catch (error) {
+        console.error(`Failed to execute query video of ${videoPath} by path. Cause: ${JSON.stringify(error)}`);
+        throw Error(error);
+      } finally {
+        resultSet?.close();
+      }
+      return isImported;
+    } else {
+      throw Error('Audio database is undefined.');
+    }
+  }
 }

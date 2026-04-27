@@ -4,6 +4,7 @@ import { window } from '@kit.ArkUI';
 import { media } from '@kit.MediaKit';
 import { AVVolumePanel } from '@kit.AudioKit';
 import { VideoInfoModel } from 'data_storage';
+import { VideoOptionsDialog } from './VideoOptionsDialog';
 
 @Builder
 export function VideoPlayerBuilder() {
@@ -17,12 +18,13 @@ const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
 export struct VideoPlayerView {
-  context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
-  xComponentCtrl: XComponentController = new XComponentController();
-  navPathStack: NavPathStack = new NavPathStack();
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @State videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
+  private navPathStack: NavPathStack = new NavPathStack();
+  private videoOptionsDialogCtrl?: CustomDialogController;
+  private xComponentCtrl: XComponentController = new XComponentController();
+  private context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
 
   private timeStr(timeMs: number): string {
     let helper = (num: number): string => {
@@ -166,7 +168,14 @@ export struct VideoPlayerView {
             }
             .backgroundColor(Color.Transparent)
             .onClick(() => {
-              // todo
+              this.videoOptionsDialogCtrl = new CustomDialogController({
+                width: '100%',
+                height: '50%',
+                builder: VideoOptionsDialog(),
+                alignment: DialogAlignment.Bottom,
+                offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+              });
+              this.videoOptionsDialogCtrl.open();
             });
           }
           .width('100%')

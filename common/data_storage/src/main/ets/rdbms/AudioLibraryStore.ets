@@ -435,6 +435,29 @@ export class AudioLibraryStore {
     return audioIDList;
   }
 
+  async isAudioImported(audioPath: string): Promise<boolean> {
+    if (this.store !== undefined) {
+      let isImported: boolean = false;
+      let resultSet: relationalStore.ResultSet | undefined;
+      try {
+        let predicate = new relationalStore.RdbPredicates(AUDIO_TABLE_NAME);
+        predicate.equalTo('AUDIO_PATH', audioPath);
+        resultSet = await this.store.query(predicate);
+        if (resultSet.rowCount > 0) {
+          isImported = true;
+        }
+      } catch (error) {
+        console.error(`Failed to execute query audio ${audioPath} by path. Cause: ${JSON.stringify(error)}`);
+        throw Error(error);
+      } finally {
+        resultSet?.close();
+      }
+      return isImported;
+    } else {
+      throw Error('Audio database is undefined.');
+    }
+  }
+
   private fetchAudioInfoFromResult(resultSet: relationalStore.ResultSet): AudioInfoModel {
     const audioInfo = new AudioInfoModel();
     try {

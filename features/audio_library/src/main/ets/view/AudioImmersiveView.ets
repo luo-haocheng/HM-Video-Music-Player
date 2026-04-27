@@ -1,7 +1,9 @@
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 import { AudioLyricsView } from './AudioLyricsView';
+import { AudioOptionsDialog } from './AudioOptionsDialog';
 import { AudioPlayerView } from './AudioPlayerView';
 
+const MAIN_PAGE_STACK = 'MainPageStack';
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
@@ -16,7 +18,9 @@ export struct AudioImmersiveView {
   @State selectedIdx: number = 0;
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
+  @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
+  private audioOptionsDialogCtrl?: CustomDialogController;
 
   @Builder
   playerTabBarBuilder() {
@@ -90,7 +94,7 @@ export struct AudioImmersiveView {
           }
           .backgroundColor(Color.Transparent)
           .onClick(() => {
-            // todo
+            this.mainPageStack.pop();
           })
 
           Button({ type: ButtonType.Circle, stateEffect: false }) {
@@ -101,7 +105,16 @@ export struct AudioImmersiveView {
           }
           .backgroundColor(Color.Transparent)
           .onClick(() => {
-            // todo
+            if (this.audioPlayerVM.currAudioItem) {
+              this.audioOptionsDialogCtrl = new CustomDialogController({
+                width: '100%',
+                height: '50%',
+                builder: AudioOptionsDialog(),
+                alignment: DialogAlignment.Bottom,
+                offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+              });
+              this.audioOptionsDialogCtrl.open();
+            }
           })
         }
         .height(32)

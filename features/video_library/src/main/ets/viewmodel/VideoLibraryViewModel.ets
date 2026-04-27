@@ -12,8 +12,8 @@ import { emitter } from '@kit.BasicServicesKit';
 import { preferences } from '@kit.ArkData';
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 
-const BUFFER_SIZE = 4096;
 const MD_ALGO_NAME = 'SHA256';
+const BUFFER_SIZE = 1024 * 1024;
 const THUMBNAIL_DIR = '/thumbnails';
 const DOWNLOAD_VIDEO_DIR = '/videos';
 const SORT_VIDEO_FOLDER_EVENT = 'SortVideoFolder';
@@ -124,10 +124,17 @@ export class VideoLibraryViewModel {
       const srcPath = new fileUri.FileUri(srcUri).path;
       let dstPath = new fileUri.FileUri(dstUri).path;
       if (fileIo.accessSync(dstPath, fileIo.AccessModeType.EXIST)) {
-        // Already have video file with same name
         if (await this.isDuplicateFile(srcPath, dstPath)) {
-          throw Error(`Video file ${srcUri} repeated imported. File has imported at ${srcFile}`);
+          // Video file has copy to download directory
+          if (await this.videoStore.isVideoImported(dstPath)) {
+            // Video file has imported
+            throw Error(`Video file ${srcUri} repeated imported. File has imported at ${srcFile}`);
+          } else {
+            // No need to copy
+            return dstPath;
+          }
         } else {
+          // Rename for copy
           dstPath = this.renameDuplicateFile(dstPath);
         }
       }
@@ -302,7 +309,11 @@ export class VideoLibraryViewModel {
     documentViewPicker.select(documentSelectOptions)
       .then(async (selectedUri: string[]) => {
         for (let i = 0; i < selectedUri.length; ++i) {
-          await this.importVideo(selectedUri[i], folder);
+          try {
+            await this.importVideo(selectedUri[i], folder);
+          } catch (error) {
+            console.error(`Failed to import video ${selectedUri[i]}. Cause: ${JSON.stringify(error)}`);
+          }
         }
       })
       .catch((err: BusinessError) => {
@@ -319,7 +330,11 @@ export class VideoLibraryViewModel {
       .then(async (result: photoAccessHelper.PhotoSelectResult) => {
         let selectedUri = result.photoUris;
         for (let i = 0; i < selectedUri.length; ++i) {
-          await this.importVideo(selectedUri[i], folder);
+          try {
+            await this.importVideo(selectedUri[i], folder);
+          } catch (error) {
+            console.error(`Failed to import video ${selectedUri[i]}. Cause: ${JSON.stringify(error)}`);
+          }
         }
       })
       .catch((err: BusinessError) => {
@@ -338,7 +353,11 @@ export class VideoLibraryViewModel {
           if (stat.isDirectory()) {
             await traverseDir(path);
           } else {
-            await this.importVideo(path, folder);
+            try {
+              await this.importVideo(path, folder);
+            } catch (error) {
+              console.error(`Failed to import video ${path}. Cause: ${JSON.stringify(error)}`);
+            }
           }
         }
       };
