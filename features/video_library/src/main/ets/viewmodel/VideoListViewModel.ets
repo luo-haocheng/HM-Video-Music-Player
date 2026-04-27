@@ -143,7 +143,6 @@ export class VideoListViewModel {
   }
 
   async moveFolder(folderInfo: FolderInfoModel, moveFolder: string): Promise<void> {
-    // todo
     let origFolder = folderInfo.parent;
     let updateVideoList: VideoInfoModel[] = [];
     let updateFolderList: FolderInfoModel[] = [];
@@ -229,6 +228,7 @@ export class VideoListViewModel {
     });
     if (idx !== -1) {
       this.videoList[idx].videoName = newName;
+      this.videoList[idx].videoInfo.name = newName;
     }
   }
 
