@@ -6,6 +6,7 @@ export {
   SortRuleValue,
   ViewOptionValue,
   AudioRepeatMode,
+  VideoRepeatMode,
   DEFAULT_SETTING,
 } from './src/main/ets/preference/SettingsModel';
 

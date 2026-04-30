@@ -1,17 +1,233 @@
+import { media } from '@kit.MediaKit';
+import { VideoRepeatMode } from 'data_storage';
+
+const PLAYBACK_SPEED_MAP: Map<media.PlaybackSpeed, string> = new Map([
+  [media.PlaybackSpeed.SPEED_FORWARD_0_50_X, '0.5'],
+  [media.PlaybackSpeed.SPEED_FORWARD_0_75_X, '0.75'],
+  [media.PlaybackSpeed.SPEED_FORWARD_1_00_X, '1'],
+  [media.PlaybackSpeed.SPEED_FORWARD_1_25_X, '1.25'],
+  [media.PlaybackSpeed.SPEED_FORWARD_1_50_X, '1.50'],
+  [media.PlaybackSpeed.SPEED_FORWARD_2_00_X, '2'],
+]);
+
+const REPEAT_MODE_MAP: Map<VideoRepeatMode, string> = new Map([
+  [VideoRepeatMode.SINGLE_NON_REPEAT, '播完暂停'],
+  [VideoRepeatMode.LIST_NON_REPEAT, '自动连播'],
+  [VideoRepeatMode.SINGLE_REPEAT, '单集循环'],
+  [VideoRepeatMode.LIST_REPEAT, '列表循环'],
+]);
+
 @CustomDialog
 export struct VideoOptionsDialog {
   controller: CustomDialogController;
 
-  build() {
+  @Builder
+  optionIconBuilder(icon: Resource, text: string) {
     Column() {
-      Text('Video Options')
-        .fontSize(30)
-        .fontColor(Color.Black)
+      Image(icon)
+        .padding(8)
+        .width('100%')
+        .aspectRatio(1)
+        .borderRadius(8)
+        .layoutWeight(0)
+        .fillColor(Color.Black)
+        .backgroundColor(Color.White);
+
+      Row() {
+        Text(text)
+          .fontSize(10)
+          .fontColor(Color.Gray);
+      }
+      .width('100%')
+      .layoutWeight(1)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(VerticalAlign.Center);
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F1F3F5')
     .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
+    .backgroundColor(Color.Transparent);
+  }
+
+  @Builder
+  optionListItemBuilder(icon: Resource, text: string) {
+    Row({ space: 16 }) {
+      Image(icon)
+        .width(20)
+        .aspectRatio(1)
+        .fillColor(Color.Black);
+
+      Text(text)
+        .fontSize(14)
+        .fontColor(Color.Black);
+    }
+    .justifyContent(FlexAlign.Start)
+    .alignItems(VerticalAlign.Center);
+  }
+
+  @Builder
+  speedOptionsBuilder() {
+    List() {
+      ForEach(
+        Array.from(PLAYBACK_SPEED_MAP.entries()),
+        (entry: [media.PlaybackSpeed, string]) => {
+          ListItem() {
+            Text(entry[1])
+              .fontSize(10)
+              .fontColor(Color.Gray)
+              .textAlign(TextAlign.Center);
+          }
+          .width(40);
+        },
+      );
+    }
+    .width('50%')
+    .scrollBar(BarState.Off)
+    .listDirection(Axis.Horizontal)
+    .divider({ strokeWidth: 0.5, color: Color.Gray });
+  }
+
+  @Builder
+  repeatOptionBuilder() {
+    List() {
+      ForEach(
+        Array.from(REPEAT_MODE_MAP.entries()),
+        (entry: [VideoRepeatMode, string]) => {
+          ListItem() {
+            Text(entry[1])
+              .fontSize(10)
+              .fontColor(Color.Gray)
+              .textAlign(TextAlign.Center);
+          }
+          .width(60);
+        },
+      );
+    }
+    .width('50%')
+    .scrollBar(BarState.Off)
+    .listDirection(Axis.Horizontal)
+    .divider({ strokeWidth: 0.5, color: Color.Gray });
+  }
+
+  build() {
+    Column({ space: 16 }) {
+      Row({ space: 16 }) {
+        Column() {
+          this.optionIconBuilder($r('app.media.share'), '系统分享');
+        }
+        .width(40)
+        .height(65);
+
+        Column() {
+          this.optionIconBuilder($r('app.media.arrow_right_up_and_square'), '小窗播放');
+        }
+        .width(40)
+        .height(65);
+
+        Column() {
+          this.optionIconBuilder($r('app.media.rectangle_and_arrowshape_turn_up_right'), '投播');
+        }
+        .width(40)
+        .height(65);
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Start)
+      .alignItems(VerticalAlign.Center);
+
+      List() {
+        ListItem() {
+          Row() {
+            this.optionListItemBuilder($r('app.media.fast_forward'), '播放倍速');
+
+            this.speedOptionsBuilder();
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
+        }
+        .padding(12)
+        .width('100%');
+
+        ListItem() {
+          Row() {
+            this.optionListItemBuilder($r('app.media.repeat'), '播放模式');
+
+            this.repeatOptionBuilder();
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween)
+        }
+        .padding(12)
+        .width('100%');
+
+        ListItem() {
+          Row() {
+            this.optionListItemBuilder($r('app.media.timer'), '定时关闭');
+
+            Button({ type: ButtonType.Circle, stateEffect: false }) {
+              Image($r('app.media.chevron_right'))
+                .width(10)
+                .aspectRatio(1)
+                .fillColor(Color.Gray);
+            }
+            .backgroundColor(Color.Transparent);
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
+        }
+        .padding(12)
+        .width('100%');
+
+        ListItem() {
+          Row() {
+            this.optionListItemBuilder($r('app.media.doc_plaintext'), '字幕设置');
+
+            Button({ type: ButtonType.Circle, stateEffect: false }) {
+              Image($r('app.media.chevron_right'))
+                .width(10)
+                .aspectRatio(1)
+                .fillColor(Color.Gray);
+            }
+            .backgroundColor(Color.Transparent);
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
+        }
+        .padding(12)
+        .width('100%');
+
+        ListItem() {
+          Row() {
+            this.optionListItemBuilder($r('app.media.headphones_fill'), '后台听视频');
+
+            Toggle({ type: ToggleType.Switch, isOn: true })
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
+        }
+        .padding(12)
+        .width('100%');
+      }
+      .width('100%')
+      .borderRadius(8)
+      .scrollBar(BarState.Off)
+      .backgroundColor(Color.White)
+      .divider({
+        startMargin: 48,
+        strokeWidth: 0.5,
+        color: '#DCDCDC',
+      });
+    }
+    .padding(16)
+    .width('100%')
+    .height('100%')
+    .backgroundColor('#F1F3F5')
+    .justifyContent(FlexAlign.Start)
     .alignItems(HorizontalAlign.Center);
   }
 }

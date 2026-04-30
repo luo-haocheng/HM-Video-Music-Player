@@ -168,13 +168,22 @@ export struct VideoPlayerView {
             }
             .backgroundColor(Color.Transparent)
             .onClick(() => {
-              this.videoOptionsDialogCtrl = new CustomDialogController({
-                width: '100%',
-                height: '50%',
-                builder: VideoOptionsDialog(),
-                alignment: DialogAlignment.Bottom,
-                offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
-              });
+              if (this.videoPlayerVM.isLandscape) {
+                this.videoOptionsDialogCtrl = new CustomDialogController({
+                  width: '45%',
+                  height: '100%',
+                  builder: VideoOptionsDialog(),
+                  alignment: DialogAlignment.TopEnd,
+                });
+              } else {
+                this.videoOptionsDialogCtrl = new CustomDialogController({
+                  width: '100%',
+                  height: '45%',
+                  builder: VideoOptionsDialog(),
+                  alignment: DialogAlignment.Bottom,
+                  cornerRadius: { topLeft: 24, topRight: 24 },
+                });
+              }
               this.videoOptionsDialogCtrl.open();
             });
           }
@@ -192,7 +201,7 @@ export struct VideoPlayerView {
                 .fillColor(Color.Gray);
             }
             .padding(8)
-            .backgroundColor('#22FFFFFF')
+            .backgroundColor('#33FFFFFF')
             .onClick(() => {
               this.videoPlayerVM.isLocking = !this.videoPlayerVM.isLocking;
             })
@@ -220,7 +229,7 @@ export struct VideoPlayerView {
               })
                 .height(8)
                 .width('100%')
-                .trackColor('#22FFFFFF')
+                .trackColor('#33FFFFFF')
                 .trackThickness(this.videoPlayerVM.isSeeking ? 8 : 5)
                 .selectedColor(this.videoPlayerVM.isSeeking ? Color.White : Color.Gray)
                 .onChange((value: number, mode: SliderChangeMode) => {
@@ -376,11 +385,11 @@ export struct VideoPlayerView {
       return false;
     })
     .onWillAppear(() => {
-      this.videoPlayerVM.setStatusBarEnable(this.context, false);
+      this.videoPlayerVM.setSystemBarEnable(this.context, false);
     })
     .onWillDisappear(() => {
       this.videoPlayerVM.setDefaultBrightness(this.context);
-      this.videoPlayerVM.setStatusBarEnable(this.context, true);
+      this.videoPlayerVM.setSystemBarEnable(this.context, true);
       this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
     })
     .onReady((navContext: NavDestinationContext) => {

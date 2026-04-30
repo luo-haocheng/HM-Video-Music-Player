@@ -36,6 +36,13 @@ export enum AudioRepeatMode {
   SHUFFLE = 'Shuffle',
 }
 
+export enum VideoRepeatMode {
+  SINGLE_NON_REPEAT = 'SingleNonRepeat',
+  LIST_NON_REPEAT = 'ListNonRepeat',
+  SINGLE_REPEAT = 'SingleRepeat',
+  LIST_REPEAT = 'ListRepeat',
+}
+
 export const DEFAULT_SETTING = new Map<SettingKey, preferences.ValueType>([
   [SettingKey.VIDEO_SORT_MODE, SortModeValue.DATE_ADD],
   [SettingKey.VIDEO_SORT_RULE, SortRuleValue.ASCENDING],

@@ -250,10 +250,14 @@ export class VideoPlayerViewModel {
       });
   }
 
-  async setStatusBarEnable(context: common.UIAbilityContext, enable: boolean) {
+  async setSystemBarEnable(context: common.UIAbilityContext, enable: boolean) {
     context.windowStage.getMainWindow()
-      .then((windowClass: window.Window) => {
-        windowClass.setSpecificSystemBarEnabled('status', enable)
+      .then(async (windowClass: window.Window) => {
+        await windowClass.setSpecificSystemBarEnabled('navigationIndicator', enable)
+          .catch((err: BusinessError) => {
+            console.error(`Failed to set system status bar enable to ${enable}. Cause: ${JSON.stringify(err)}`);
+          });
+        await windowClass.setSpecificSystemBarEnabled('status', enable)
           .catch((err: BusinessError) => {
             console.error(`Failed to set system status bar enable to ${enable}. Cause: ${JSON.stringify(err)}`);
           });
