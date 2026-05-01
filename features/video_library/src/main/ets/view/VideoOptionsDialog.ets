@@ -54,7 +54,7 @@ export struct VideoOptionsDialog {
   optionListItemBuilder(icon: Resource, text: string) {
     Row({ space: 16 }) {
       Image(icon)
-        .width(20)
+        .width(22)
         .aspectRatio(1)
         .fillColor(Color.Black);
 
@@ -117,19 +117,28 @@ export struct VideoOptionsDialog {
           this.optionIconBuilder($r('app.media.share'), '系统分享');
         }
         .width(40)
-        .height(65);
+        .height(65)
+        .onClick(() => {
+          // todo
+        });
 
         Column() {
           this.optionIconBuilder($r('app.media.arrow_right_up_and_square'), '小窗播放');
         }
         .width(40)
-        .height(65);
+        .height(65)
+        .onClick(() => {
+          // todo
+        });
 
         Column() {
-          this.optionIconBuilder($r('app.media.rectangle_and_arrowshape_turn_up_right'), '投播');
+          this.optionIconBuilder($r('app.media.rectangle_and_arrowshape_turn_up_right'), '系统投播');
         }
         .width(40)
-        .height(65);
+        .height(65)
+        .onClick(() => {
+          // todo
+        });
       }
       .width('100%')
       .justifyContent(FlexAlign.Start)
@@ -147,7 +156,10 @@ export struct VideoOptionsDialog {
           .justifyContent(FlexAlign.SpaceBetween);
         }
         .padding(12)
-        .width('100%');
+        .width('100%')
+        .onClick(() => {
+          // todo
+        });
 
         ListItem() {
           Row() {
@@ -160,7 +172,10 @@ export struct VideoOptionsDialog {
           .justifyContent(FlexAlign.SpaceBetween)
         }
         .padding(12)
-        .width('100%');
+        .width('100%')
+        .onClick(() => {
+          // todo
+        });
 
         ListItem() {
           Row() {
@@ -179,7 +194,10 @@ export struct VideoOptionsDialog {
           .justifyContent(FlexAlign.SpaceBetween);
         }
         .padding(12)
-        .width('100%');
+        .width('100%')
+        .onClick(() => {
+          // todo
+        });
 
         ListItem() {
           Row() {
@@ -198,7 +216,10 @@ export struct VideoOptionsDialog {
           .justifyContent(FlexAlign.SpaceBetween);
         }
         .padding(12)
-        .width('100%');
+        .width('100%')
+        .onClick(() => {
+          // todo
+        });
 
         ListItem() {
           Row() {
@@ -211,14 +232,17 @@ export struct VideoOptionsDialog {
           .justifyContent(FlexAlign.SpaceBetween);
         }
         .padding(12)
-        .width('100%');
+        .width('100%')
+        .onClick(() => {
+          // todo
+        });
       }
       .width('100%')
       .borderRadius(8)
       .scrollBar(BarState.Off)
       .backgroundColor(Color.White)
       .divider({
-        startMargin: 48,
+        startMargin: 50,
         strokeWidth: 0.5,
         color: '#DCDCDC',
       });

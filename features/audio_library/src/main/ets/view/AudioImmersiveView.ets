@@ -108,9 +108,10 @@ export struct AudioImmersiveView {
             if (this.audioPlayerVM.currAudioItem) {
               this.audioOptionsDialogCtrl = new CustomDialogController({
                 width: '100%',
-                height: '50%',
-                builder: AudioOptionsDialog(),
+                height: '60%',
                 alignment: DialogAlignment.Bottom,
+                cornerRadius: { topLeft: 24, topRight: 24 },
+                builder: AudioOptionsDialog({ currAudioItem: this.audioPlayerVM.currAudioItem }),
                 offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
               });
               this.audioOptionsDialogCtrl.open();
