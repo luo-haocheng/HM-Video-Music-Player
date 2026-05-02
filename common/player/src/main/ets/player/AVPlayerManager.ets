@@ -45,7 +45,7 @@ export class AVPlayerManager {
     try {
       await this.avPlayer?.play();
     } catch (err) {
-      console.error(`Failed to invoke avplayer player, error: ${JSON.stringify(err)}`);
+      console.error(`Failed to invoke avplayer play, error: ${JSON.stringify(err)}`);
     }
   }
 
@@ -87,6 +87,7 @@ export class AVPlayerManager {
       } catch (err) {
         console.error(`Failed to invoke avplayer release, error: ${JSON.stringify(err)}`);
       }
+      this.avPlayer = undefined;
     }
     if (this.videoFile) {
       try {
@@ -94,6 +95,7 @@ export class AVPlayerManager {
       } catch (error) {
         console.error(`Failed to close file ${this.videoFile.path}. Cause: ${JSON.stringify(error)}`);
       }
+      this.videoFile = undefined;
     }
   }
 

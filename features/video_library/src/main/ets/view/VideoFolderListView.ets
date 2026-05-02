@@ -7,16 +7,23 @@ import { FolderBoxView } from './FolderBoxView';
 import { MovingToDialog } from './MovingToDialog';
 import { RenameDialog } from './RenameDialog';
 import { VideoBoxView } from './VideoBoxView';
+import { VideoPlayerViewModel } from '../viewmodel/VideoPlayerViewModel';
 
 const CHOICE_ALL = 'ChoiceAll';
+const MULTI_CHOICE = 'MultiChoice';
+const VIDEO_PLAYER_VM = 'VideoPlayerVM';
+const MAIN_PAGE_STACK = 'MainPageStack';
 const VIDEO_VIEW_OPTION = 'VideoViewOption';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @Component
 export struct VideoFolderListView {
-  @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Consume(CHOICE_ALL) choiceAll: boolean = false;
+  @Consume(MULTI_CHOICE) multiChoice: boolean = false;
+  @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack;
   @Consume(VIDEO_VIEW_OPTION) videoViewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
+  @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
+  @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
   @State invalidName: boolean = false;
@@ -216,6 +223,19 @@ export struct VideoFolderListView {
                   this.videoSwipeEnd(item.videoInfo);
                 }
               }
+            }
+          })
+          .onClick(() => {
+            if (this.multiChoice) {
+              item.isChoice = !item.isChoice;
+            } else {
+              this.videoPlayerVM.release();
+
+              this.videoPlayerVM = new VideoPlayerViewModel();
+              this.videoPlayerVM.videoList = this.videoList;
+              this.videoPlayerVM.currVideoItem = item;
+
+              this.mainPageStack.pushPath({ name: 'VideoPlayer' });
             }
           });
         },

@@ -4,7 +4,12 @@ import { media } from '@kit.MediaKit';
 import { display, window } from '@kit.ArkUI';
 import { settings } from '@kit.BasicServicesKit';
 import { audio } from '@kit.AudioKit';
-import { VideoInfoModel } from 'data_storage';
+import { VideoRepeatMode } from 'data_storage';
+import { uniformTypeDescriptor as utd } from '@kit.ArkData';
+import { systemShare } from '@kit.ShareKit';
+import { fileUri } from '@kit.CoreFileKit';
+import { VideoItemViewModelList } from './VideoListViewModel';
+import { VideoItemViewModel } from './VideoItemViewModel';
 
 const SEEK_TIME = 10000;
 const VOLUME_VALUE = 1.0;
@@ -29,7 +34,10 @@ export class VideoPlayerViewModel {
   @Track isSpeeding: boolean = false;
   @Track isControlVolume: boolean = false;
   @Track isControlBrightness: boolean = false;
-  public videoInfo: VideoInfoModel = new VideoInfoModel();
+  @Track videoRepeatMode: VideoRepeatMode = VideoRepeatMode.SINGLE_NON_REPEAT;
+  @Track playbackSpeed: media.PlaybackSpeed = media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
+  @Track currVideoItem?: VideoItemViewModel;
+  @Track videoList?: VideoItemViewModelList;
   private videoPlayer: AVPlayerManager = new AVPlayerManager();
   private startSeekTime: number = 0;
   private startBrightness: number = 0;
@@ -90,14 +98,67 @@ export class VideoPlayerViewModel {
         this.seek(timeMs);
       }
     });
+    if (this.videoList && this.videoList.length > 1) {
+      MediaSessionManager.getInstance().registerCallback('playPrevious', () => {
+        this.switchPrev(context);
+      });
+      MediaSessionManager.getInstance().registerCallback('playNext', () => {
+        this.switchNext(context);
+      });
+    }
     await MediaSessionManager.getInstance().initVideoSession(context);
   }
 
   async setVideoAsset(context: Context): Promise<void> {
-    await this.videoPlayer.setMediaAsset(this.videoInfo.videoPath);
+    if (!this.currVideoItem) {
+      return;
+    }
+
+    await this.videoPlayer.setMediaAsset(this.currVideoItem.videoInfo.videoPath);
+
     await this.initSession(context);
     const currState: media.AVPlayerState = this.videoPlayer.getState() ?? 'released';
-    await MediaSessionManager.getInstance().setVideoAsset(this.videoInfo, this.currTime, currState);
+    await MediaSessionManager.getInstance().setVideoAsset(this.currVideoItem.videoInfo, this.currTime, currState);
+  }
+
+  async switchNext(context: Context): Promise<void> {
+    if (!this.currVideoItem) {
+      return;
+    }
+    if (!this.videoList || this.videoList.length <= 1) {
+      return;
+    }
+
+    const currVideoId = this.currVideoItem.videoInfo.id;
+    const currIdx = this.videoList.findIndex((item: VideoItemViewModel) => {
+      return currVideoId === item.videoInfo.id;
+    });
+    if (currIdx === -1) {
+      return;
+    }
+    const nextIdx = (currIdx + 1) % this.videoList.length;
+    this.currVideoItem = this.videoList[nextIdx];
+    await this.setVideoAsset(context);
+  }
+
+  async switchPrev(context: Context): Promise<void> {
+    if (!this.currVideoItem) {
+      return;
+    }
+    if (!this.videoList || this.videoList.length <= 1) {
+      return;
+    }
+
+    const currVideoId = this.currVideoItem.videoInfo.id;
+    const currIdx = this.videoList.findIndex((item: VideoItemViewModel) => {
+      return currVideoId === item.videoInfo.id;
+    });
+    if (currIdx === -1) {
+      return;
+    }
+    const prevIdx = currIdx === 0 ? this.videoList.length - 1 : (currIdx - 1) % this.videoList.length;
+    this.currVideoItem = this.videoList[prevIdx];
+    this.setVideoAsset(context);
   }
 
   async play(): Promise<void> {
@@ -152,6 +213,32 @@ export class VideoPlayerViewModel {
   async release(): Promise<void> {
     await MediaSessionManager.getInstance().release();
     await this.videoPlayer.release();
+  }
+
+  async shareVideo(context: common.UIAbilityContext) {
+    if (!this.currVideoItem) {
+      return;
+    }
+
+    let utdTypeId = utd.getUniformDataTypeByFilenameExtension('.mp4', utd.UniformDataType.VIDEO);
+    let shareData: systemShare.SharedData | undefined = undefined;
+    shareData = new systemShare.SharedData({
+      utd: utdTypeId,
+      title: this.currVideoItem.videoName,
+      uri: fileUri.getUriFromPath(this.currVideoItem.videoInfo.videoPath),
+      thumbnailUri: fileUri.getUriFromPath(this.currVideoItem.videoInfo.thumbnailPath),
+    });
+    let controller: systemShare.ShareController = new systemShare.ShareController(shareData);
+    await controller.show(context, ({
+      selectionMode: systemShare.SelectionMode.SINGLE,
+      previewMode: systemShare.SharePreviewMode.DETAIL,
+    }))
+      .then(() => {
+        console.info(`ShareController show success.`);
+      })
+      .catch((err: BusinessError<void>) => {
+        console.error(`ShareController show error. Cause: ${JSON.stringify(err)}`);
+      });
   }
 
   async startHorizontalSlide(): Promise<void> {

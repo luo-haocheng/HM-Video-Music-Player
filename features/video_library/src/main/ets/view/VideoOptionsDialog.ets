@@ -1,5 +1,7 @@
 import { media } from '@kit.MediaKit';
 import { VideoRepeatMode } from 'data_storage';
+import { common } from '@kit.AbilityKit';
+import { VideoPlayerViewModel } from '../viewmodel/VideoPlayerViewModel';
 
 const PLAYBACK_SPEED_MAP: Map<media.PlaybackSpeed, string> = new Map([
   [media.PlaybackSpeed.SPEED_FORWARD_0_50_X, '0.5'],
@@ -17,8 +19,11 @@ const REPEAT_MODE_MAP: Map<VideoRepeatMode, string> = new Map([
   [VideoRepeatMode.LIST_REPEAT, '列表循环'],
 ]);
 
+const VIDEO_PLAYER_VM = 'VideoPlayerVM';
+
 @CustomDialog
 export struct VideoOptionsDialog {
+  @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
   controller: CustomDialogController;
 
   @Builder
@@ -75,10 +80,14 @@ export struct VideoOptionsDialog {
           ListItem() {
             Text(entry[1])
               .fontSize(10)
-              .fontColor(Color.Gray)
-              .textAlign(TextAlign.Center);
+              .textAlign(TextAlign.Center)
+              .fontColor(this.videoPlayerVM.playbackSpeed === entry[0] ? '#FF007DFF' : Color.Gray);
           }
-          .width(40);
+          .width(40)
+          .onClick(() => {
+            this.videoPlayerVM.setSpeed(entry[0]);
+            this.videoPlayerVM.playbackSpeed = entry[0];
+          });
         },
       );
     }
@@ -97,10 +106,13 @@ export struct VideoOptionsDialog {
           ListItem() {
             Text(entry[1])
               .fontSize(10)
-              .fontColor(Color.Gray)
-              .textAlign(TextAlign.Center);
+              .textAlign(TextAlign.Center)
+              .fontColor(this.videoPlayerVM.videoRepeatMode === entry[0] ? '#FF007DFF' : Color.Gray);
           }
-          .width(60);
+          .width(60)
+          .onClick(() => {
+            this.videoPlayerVM.videoRepeatMode = entry[0];
+          });
         },
       );
     }
@@ -119,7 +131,9 @@ export struct VideoOptionsDialog {
         .width(40)
         .height(65)
         .onClick(() => {
-          // todo
+          const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+          this.videoPlayerVM.shareVideo(context);
+          this.controller.close();
         });
 
         Column() {
@@ -156,10 +170,7 @@ export struct VideoOptionsDialog {
           .justifyContent(FlexAlign.SpaceBetween);
         }
         .padding(12)
-        .width('100%')
-        .onClick(() => {
-          // todo
-        });
+        .width('100%');
 
         ListItem() {
           Row() {
@@ -169,13 +180,10 @@ export struct VideoOptionsDialog {
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)
-          .justifyContent(FlexAlign.SpaceBetween)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .padding(12)
-        .width('100%')
-        .onClick(() => {
-          // todo
-        });
+        .width('100%');
 
         ListItem() {
           Row() {
@@ -197,6 +205,7 @@ export struct VideoOptionsDialog {
         .width('100%')
         .onClick(() => {
           // todo
+          this.controller.close();
         });
 
         ListItem() {
@@ -219,6 +228,7 @@ export struct VideoOptionsDialog {
         .width('100%')
         .onClick(() => {
           // todo
+          this.controller.close();
         });
 
         ListItem() {
@@ -226,6 +236,8 @@ export struct VideoOptionsDialog {
             this.optionListItemBuilder($r('app.media.headphones_fill'), '后台听视频');
 
             Toggle({ type: ToggleType.Switch, isOn: true })
+              .selectedColor('#FF007DFF')
+              .switchPointColor(Color.White);
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)

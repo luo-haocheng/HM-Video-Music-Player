@@ -1,3 +1,3 @@
-export { VideoLibraryView } from './src/main/ets/components/VideoLibraryView'
+export { VideoPlayerViewModel } from './src/main/ets/viewmodel/VideoPlayerViewModel';
 
-export { VideoInfoModel } from 'data_storage'
+export { VideoLibraryView } from './src/main/ets/components/VideoLibraryView';

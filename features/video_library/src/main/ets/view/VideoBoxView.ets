@@ -7,7 +7,6 @@ import { RenameDialog } from './RenameDialog';
 
 const MULTI_CHOICE = 'MultiChoice';
 const CHOICE_COUNT = 'ChoiceCount';
-const MAIN_PAGE_STACK = 'MainPageStack';
 const VIDEO_VIEW_OPTION = 'VideoViewOption';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
@@ -17,7 +16,6 @@ export struct VideoBoxView {
   @ObjectLink videoItem: VideoItemViewModel;
   @Consume(CHOICE_COUNT) choiceCount: number = 0;
   @Consume(MULTI_CHOICE) multiChoice: boolean = false;
-  @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack;
   @Consume(VIDEO_VIEW_OPTION) videoViewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
   public isAllChoice: Callback<void> = () => {
   };
@@ -143,14 +141,7 @@ export struct VideoBoxView {
       .height(100)
       .width('100%')
       .borderRadius(12)
-      .backgroundColor(Color.White)
-      .onClick(() => {
-        if (this.multiChoice) {
-          this.videoItem.isChoice = !this.videoItem.isChoice;
-        } else {
-          this.mainPageStack.pushPath({ name: "VideoPlayer", param: this.videoItem.videoInfo });
-        }
-      });
+      .backgroundColor(Color.White);
     } else {
       Flex({
         direction: FlexDirection.Column,
@@ -229,14 +220,7 @@ export struct VideoBoxView {
       .height(160)
       .width('100%')
       .borderRadius(12)
-      .backgroundColor(Color.White)
-      .onClick(() => {
-        if (this.multiChoice) {
-          this.videoItem.isChoice = !this.videoItem.isChoice;
-        } else {
-          this.mainPageStack.pushPath({ name: "VideoPlayer", param: this.videoItem.videoInfo });
-        }
-      });
+      .backgroundColor(Color.White);
     }
   }
 }

@@ -3,7 +3,6 @@ import { common } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { media } from '@kit.MediaKit';
 import { AVVolumePanel } from '@kit.AudioKit';
-import { VideoInfoModel } from 'data_storage';
 import { VideoOptionsDialog } from './VideoOptionsDialog';
 
 @Builder
@@ -13,6 +12,7 @@ export function VideoPlayerBuilder() {
 
 const MAX_VOLUME_LEVEL = 15;
 const MAX_WINDOW_BRIGHTNESS = 1.0;
+const VIDEO_PLAYER_VM = 'VideoPlayerVM';
 const TOP_RECT_HEIGHT = 'TopRectHeight';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
@@ -20,11 +20,10 @@ const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 export struct VideoPlayerView {
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
-  @State videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
+  @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
   private navPathStack: NavPathStack = new NavPathStack();
   private videoOptionsDialogCtrl?: CustomDialogController;
   private xComponentCtrl: XComponentController = new XComponentController();
-  private context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
 
   private timeStr(timeMs: number): string {
     let helper = (num: number): string => {
@@ -52,9 +51,10 @@ export struct VideoPlayerView {
           .height('100%')
           .renderFit(RenderFit.RESIZE_CONTAIN)
           .onLoad(async () => {
+            const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
             const surfaceId = this.xComponentCtrl.getXComponentSurfaceId();
             await this.videoPlayerVM.initPlayer(surfaceId);
-            await this.videoPlayerVM.setVideoAsset(this.context);
+            await this.videoPlayerVM.setVideoAsset(context);
           });
 
         AVVolumePanel({
@@ -172,16 +172,17 @@ export struct VideoPlayerView {
                 this.videoOptionsDialogCtrl = new CustomDialogController({
                   width: '45%',
                   height: '100%',
-                  builder: VideoOptionsDialog(),
                   alignment: DialogAlignment.TopEnd,
+                  cornerRadius: { topLeft: 24, bottomLeft: 24 },
+                  builder: VideoOptionsDialog(),
                 });
               } else {
                 this.videoOptionsDialogCtrl = new CustomDialogController({
                   width: '100%',
                   height: '45%',
-                  builder: VideoOptionsDialog(),
                   alignment: DialogAlignment.Bottom,
                   cornerRadius: { topLeft: 24, topRight: 24 },
+                  builder: VideoOptionsDialog(),
                 });
               }
               this.videoOptionsDialogCtrl.open();
@@ -204,7 +205,7 @@ export struct VideoPlayerView {
             .backgroundColor('#33FFFFFF')
             .onClick(() => {
               this.videoPlayerVM.isLocking = !this.videoPlayerVM.isLocking;
-            })
+            });
           }
           .width('100%')
           .padding({ left: 16, right: 16 })
@@ -246,21 +247,36 @@ export struct VideoPlayerView {
             .alignItems(HorizontalAlign.Start);
 
             Row() {
-              Button({ type: ButtonType.Circle, stateEffect: false }) {
-                Image(this.videoPlayerVM.isPlaying ? $r('app.media.pause') : $r('app.media.play'))
-                  .width(30)
-                  .aspectRatio(1)
-                  .fillColor(Color.Gray);
-              }
-              .backgroundColor(Color.Transparent)
-              .onClick(async () => {
-                if (this.videoPlayerVM.isPlaying) {
-                  await this.videoPlayerVM.pause();
-                } else {
-                  await this.videoPlayerVM.play();
+              Row({ space: 12 }) {
+                Button({ type: ButtonType.Circle, stateEffect: false }) {
+                  Image(this.videoPlayerVM.isPlaying ? $r('app.media.pause') : $r('app.media.play'))
+                    .width(30)
+                    .aspectRatio(1)
+                    .fillColor(Color.Gray);
                 }
-              });
+                .backgroundColor(Color.Transparent)
+                .onClick(async () => {
+                  if (this.videoPlayerVM.isPlaying) {
+                    await this.videoPlayerVM.pause();
+                  } else {
+                    await this.videoPlayerVM.play();
+                  }
+                });
 
+                if (this.videoPlayerVM.videoList && this.videoPlayerVM.videoList.length > 1) {
+                  Button({ type: ButtonType.Circle, stateEffect: false }) {
+                    Image($r('app.media.forward_end_fill'))
+                      .width(30)
+                      .aspectRatio(1)
+                      .fillColor(Color.Gray);
+                  }
+                  .backgroundColor(Color.Transparent)
+                  .onClick(async () => {
+                    const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+                    this.videoPlayerVM.switchNext(context);
+                  });
+                }
+              };
 
               Button({ type: ButtonType.Circle, stateEffect: false }) {
                 Image(
@@ -274,12 +290,13 @@ export struct VideoPlayerView {
               }
               .backgroundColor(Color.Transparent)
               .onClick(() => {
+                const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
                 if (this.videoPlayerVM.isLandscape) {
-                  this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
+                  this.videoPlayerVM.setWindowOrientation(context, window.Orientation.PORTRAIT);
                 } else {
-                  this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.LANDSCAPE);
+                  this.videoPlayerVM.setWindowOrientation(context, window.Orientation.LANDSCAPE);
                 }
-              })
+              });
             }
             .width('100%')
             .alignItems(VerticalAlign.Center)
@@ -300,7 +317,7 @@ export struct VideoPlayerView {
         .padding({
           top: this.videoPlayerVM.isLandscape ? 16 : this.getUIContext().px2vp(this.topRectHeight),
           bottom: this.videoPlayerVM.isLandscape ? 16 : this.getUIContext().px2vp(this.bottomRectHeight),
-        })
+        });
       }
       .width('100%')
       .height('100%')
@@ -356,8 +373,9 @@ export struct VideoPlayerView {
           PanGesture({ direction: PanDirection.Vertical, distance: 100 })
             .onActionStart((event: GestureEvent) => {
               if (event.fingerInfos && event.fingerInfos.length > 0) {
-                let uiContext = this.getUIContext() as UIContext;
-                this.videoPlayerVM.startVerticalSlide(this.context, uiContext, event.fingerInfos[0].globalX);
+                const uiContext = this.getUIContext() as UIContext;
+                const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+                this.videoPlayerVM.startVerticalSlide(context, uiContext, event.fingerInfos[0].globalX);
               }
             })
             .onActionUpdate((event: GestureEvent) => {
@@ -365,8 +383,9 @@ export struct VideoPlayerView {
                 console.error(`Error offsetY value when vertical pan gesture: ${event.offsetY}`);
                 return;
               }
+              const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
               const offsetY = event.offsetY > 0 ? event.offsetY - 100 : event.offsetY + 100;
-              this.videoPlayerVM.updateVerticalSlide(this.context, offsetY);
+              this.videoPlayerVM.updateVerticalSlide(context, offsetY);
             })
             .onActionEnd(() => {
               this.videoPlayerVM.isControlVolume = false;
@@ -385,16 +404,17 @@ export struct VideoPlayerView {
       return false;
     })
     .onWillAppear(() => {
-      this.videoPlayerVM.setSystemBarEnable(this.context, false);
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      this.videoPlayerVM.setSystemBarEnable(context, false);
     })
     .onWillDisappear(() => {
-      this.videoPlayerVM.setDefaultBrightness(this.context);
-      this.videoPlayerVM.setSystemBarEnable(this.context, true);
-      this.videoPlayerVM.setWindowOrientation(this.context, window.Orientation.PORTRAIT);
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      this.videoPlayerVM.setDefaultBrightness(context);
+      this.videoPlayerVM.setSystemBarEnable(context, true);
+      this.videoPlayerVM.setWindowOrientation(context, window.Orientation.PORTRAIT);
     })
     .onReady((navContext: NavDestinationContext) => {
       this.navPathStack = navContext.pathStack;
-      this.videoPlayerVM.videoInfo = navContext.pathInfo.param as VideoInfoModel;
     });
   }
 }

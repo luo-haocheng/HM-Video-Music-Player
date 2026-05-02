@@ -110,20 +110,19 @@ export class MediaSessionManager {
         console.error(`Failed to create avsession. Cause: ${JSON.stringify(error)}`);
         return;
       }
-    }
+      try {
+        this.registerVideoCtrlCmd();
+      } catch (error) {
+        console.error(`Failed to register avsession control command. Cuase: ${JSON.stringify(error)}`);
+        return;
+      }
 
-    try {
-      this.registerVideoCtrlCmd();
-    } catch (error) {
-      console.error(`Failed to register avsession control command. Cuase: ${JSON.stringify(error)}`);
-      return;
-    }
-
-    try {
-      await this.session.activate();
-    } catch (error) {
-      console.error(`Failed to invoke avsession.activate. Cause: ${JSON.stringify(error)}`);
-      return;
+      try {
+        await this.session.activate();
+      } catch (error) {
+        console.error(`Failed to invoke avsession.activate. Cause: ${JSON.stringify(error)}`);
+        return;
+      }
     }
   }
 
@@ -294,11 +293,10 @@ export class MediaSessionManager {
 
   async release(): Promise<void> {
     try {
-      this.session?.off('play');
-      this.session?.off('pause');
-      this.session?.off('seek');
-      this.session?.off('rewind');
-      this.session?.off('fastForward');
+      if (this.session) {
+        await this.session.destroy();
+        this.session = undefined;
+      }
     } catch (error) {
       console.error(`Failed to invoke avsession.destroy. Cause: ${JSON.stringify(error)}`);
     }
@@ -389,6 +387,22 @@ export class MediaSessionManager {
           callback(timeS);
         }
       });
+      if (this.callbacks.has('playPrevious')) {
+        this.session?.on('playPrevious', () => {
+          if (this.callbacks.has('playPrevious')) {
+            const callback = this.callbacks.get('playPrevious') as () => void;
+            callback();
+          }
+        });
+      }
+      if (this.callbacks.has('playNext')) {
+        this.session?.on('playNext', () => {
+          if (this.callbacks.has('playNext')) {
+            const callback = this.callbacks.get('playNext') as () => void;
+            callback();
+          }
+        });
+      }
     } catch (error) {
       throw Error(error);
     }

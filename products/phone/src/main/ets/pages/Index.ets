@@ -1,6 +1,7 @@
 import { AudioLibraryView, AudioPlayerViewModel } from 'audio_library';
-import { VideoLibraryView } from 'video_library';
+import { VideoLibraryView, VideoPlayerViewModel } from 'video_library';
 
+const VIDEO_PLAYER_VM = 'VideoPlayerVM';
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MAIN_PAGE_STACK = 'MainPageStack';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
@@ -12,6 +13,7 @@ struct Index {
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Provide(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
   @Provide(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
+  @Provide(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
 
   @Builder
   tabBarBuilder(icon: ResourceStr, name: ResourceStr, index: number) {
@@ -29,7 +31,7 @@ struct Index {
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+    .alignItems(HorizontalAlign.Center);
   }
 
   build() {
@@ -68,6 +70,6 @@ struct Index {
       .padding({ bottom: this.getUIContext().px2vp(this.bottomRectHeight) });
     }
     .hideToolBar(true)
-    .mode(NavigationMode.Stack)
+    .mode(NavigationMode.Stack);
   }
 }
