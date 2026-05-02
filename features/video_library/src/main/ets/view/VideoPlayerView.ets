@@ -53,7 +53,7 @@ export struct VideoPlayerView {
           .onLoad(async () => {
             const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
             const surfaceId = this.xComponentCtrl.getXComponentSurfaceId();
-            await this.videoPlayerVM.initPlayer(surfaceId);
+            await this.videoPlayerVM.initPlayer(surfaceId, context);
             await this.videoPlayerVM.setVideoAsset(context);
           });
 

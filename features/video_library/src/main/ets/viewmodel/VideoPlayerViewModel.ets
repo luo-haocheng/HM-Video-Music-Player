@@ -4,7 +4,7 @@ import { media } from '@kit.MediaKit';
 import { display, window } from '@kit.ArkUI';
 import { settings } from '@kit.BasicServicesKit';
 import { audio } from '@kit.AudioKit';
-import { VideoRepeatMode } from 'data_storage';
+import { SettingKey, Settings, VideoRepeatMode } from 'data_storage';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
 import { fileUri } from '@kit.CoreFileKit';
@@ -39,6 +39,7 @@ export class VideoPlayerViewModel {
   @Track currVideoItem?: VideoItemViewModel;
   @Track videoList?: VideoItemViewModelList;
   private videoPlayer: AVPlayerManager = new AVPlayerManager();
+  private settings: Settings = new Settings();
   private startSeekTime: number = 0;
   private startBrightness: number = 0;
   private startVolumeLevel: number = 0;
@@ -54,7 +55,7 @@ export class VideoPlayerViewModel {
     }
   }
 
-  async initPlayer(surfaceId: string): Promise<void> {
+  async initPlayer(surfaceId: string, context: Context): Promise<void> {
     this.videoPlayer.registerCallback('durationUpdate', (duration: number) => {
       this.duration = duration;
     });
@@ -72,8 +73,38 @@ export class VideoPlayerViewModel {
     this.videoPlayer.registerCallback('stateChange', (state: media.AVPlayerState) => {
       this.isPlaying = (state === 'playing');
       MediaSessionManager.getInstance().updatePlayState(this.currTime, state);
+
+      if (state === 'completed') {
+        switch (this.videoRepeatMode) {
+          case VideoRepeatMode.LIST_REPEAT:
+            if (this.videoList) {
+              if (this.videoList.length > 1) {
+                this.switchNext(context);
+              } else {
+                this.setVideoAsset(context);
+              }
+            }
+            break;
+          case VideoRepeatMode.SINGLE_REPEAT:
+            this.setVideoAsset(context);
+            break;
+          case VideoRepeatMode.LIST_NON_REPEAT:
+            if (this.currVideoItem && this.videoList && this.videoList.length > 0) {
+              const lastVideoItem = this.videoList[this.videoList.length - 1];
+              if (this.currVideoItem !== lastVideoItem) {
+                this.switchNext(context);
+              }
+            }
+            break;
+          default:
+            break;
+        }
+      }
     });
     await this.videoPlayer.initPlayer(surfaceId);
+
+    await this.settings.initPreference(context);
+    this.videoRepeatMode = (await this.settings.getSetting(SettingKey.VIDEO_REPEAT_MODE)) as VideoRepeatMode;
   }
 
   async initSession(context: Context) {
@@ -208,6 +239,11 @@ export class VideoPlayerViewModel {
         MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.125);
         break;
     }
+  }
+
+  async setRepeatMode(repeatMode: VideoRepeatMode): Promise<void> {
+    this.videoRepeatMode = repeatMode;
+    this.settings.putSetting(SettingKey.VIDEO_REPEAT_MODE, repeatMode);
   }
 
   async release(): Promise<void> {

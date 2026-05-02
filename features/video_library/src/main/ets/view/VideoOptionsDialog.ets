@@ -24,6 +24,8 @@ const VIDEO_PLAYER_VM = 'VideoPlayerVM';
 @CustomDialog
 export struct VideoOptionsDialog {
   @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
+  repeatListScroller: Scroller = new Scroller();
+  speedListScroller: Scroller = new Scroller();
   controller: CustomDialogController;
 
   @Builder
@@ -73,7 +75,7 @@ export struct VideoOptionsDialog {
 
   @Builder
   speedOptionsBuilder() {
-    List() {
+    List({ scroller: this.speedListScroller }) {
       ForEach(
         Array.from(PLAYBACK_SPEED_MAP.entries()),
         (entry: [media.PlaybackSpeed, string]) => {
@@ -94,12 +96,20 @@ export struct VideoOptionsDialog {
     .width('50%')
     .scrollBar(BarState.Off)
     .listDirection(Axis.Horizontal)
-    .divider({ strokeWidth: 0.5, color: Color.Gray });
+    .divider({ strokeWidth: 0.5, color: Color.Gray })
+    .onAppear(() => {
+      const speedIdx = Array.from(PLAYBACK_SPEED_MAP.keys()).findIndex((playbackSpeed: media.PlaybackSpeed) => {
+        return this.videoPlayerVM.playbackSpeed === playbackSpeed;
+      });
+      if (speedIdx !== -1) {
+        this.speedListScroller.scrollToIndex(speedIdx, false, ScrollAlign.CENTER);
+      }
+    });
   }
 
   @Builder
   repeatOptionBuilder() {
-    List() {
+    List({ scroller: this.repeatListScroller }) {
       ForEach(
         Array.from(REPEAT_MODE_MAP.entries()),
         (entry: [VideoRepeatMode, string]) => {
@@ -111,7 +121,7 @@ export struct VideoOptionsDialog {
           }
           .width(60)
           .onClick(() => {
-            this.videoPlayerVM.videoRepeatMode = entry[0];
+            this.videoPlayerVM.setRepeatMode(entry[0]);
           });
         },
       );
@@ -119,7 +129,15 @@ export struct VideoOptionsDialog {
     .width('50%')
     .scrollBar(BarState.Off)
     .listDirection(Axis.Horizontal)
-    .divider({ strokeWidth: 0.5, color: Color.Gray });
+    .divider({ strokeWidth: 0.5, color: Color.Gray })
+    .onAppear(() => {
+      const repeatIdx = Array.from(REPEAT_MODE_MAP.keys()).findIndex((repeatMode: VideoRepeatMode) => {
+        return this.videoPlayerVM.videoRepeatMode === repeatMode;
+      });
+      if (repeatIdx !== -1) {
+        this.repeatListScroller.scrollToIndex(repeatIdx, false, ScrollAlign.CENTER);
+      }
+    });
   }
 
   build() {

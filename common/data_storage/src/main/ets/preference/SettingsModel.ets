@@ -10,6 +10,7 @@ export enum SettingKey {
   VIDEO_VIEW_OPTION = 'VideoViewOption',
   AUDIO_VIEW_OPTION = 'AudioViewOption',
   AUDIO_REPEAT_MODE = 'AudioRepeatMode',
+  VIDEO_REPEAT_MODE = 'VideoRepeatMode',
 }
 
 export enum SortModeValue {
@@ -53,4 +54,5 @@ export const DEFAULT_SETTING = new Map<SettingKey, preferences.ValueType>([
   [SettingKey.VIDEO_VIEW_OPTION, ViewOptionValue.LIST_VIEW],
   [SettingKey.AUDIO_VIEW_OPTION, ViewOptionValue.LIST_VIEW],
   [SettingKey.AUDIO_REPEAT_MODE, AudioRepeatMode.SINGLE_REPEAT],
+  [SettingKey.VIDEO_REPEAT_MODE, VideoRepeatMode.SINGLE_NON_REPEAT],
 ]);
