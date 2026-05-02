@@ -83,7 +83,8 @@ export struct AudioBottomBar {
           if (this.audioPlayerVM.isPlaying) {
             await this.audioPlayerVM.pause();
           } else {
-            await this.audioPlayerVM.play();
+            const context = this.getUIContext().getHostContext() as Context;
+            await this.audioPlayerVM.play(context);
           }
         });
 

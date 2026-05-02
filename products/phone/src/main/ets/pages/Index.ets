@@ -1,5 +1,7 @@
 import { AudioLibraryView, AudioPlayerViewModel } from 'audio_library';
 import { VideoLibraryView, VideoPlayerViewModel } from 'video_library';
+import { ApplicationStateChangeCallback, common } from '@kit.AbilityKit';
+import { ContinuousTaskManager } from 'util';
 
 const VIDEO_PLAYER_VM = 'VideoPlayerVM';
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
@@ -14,6 +16,28 @@ struct Index {
   @Provide(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
   @Provide(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
   @Provide(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
+  private context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+
+  async aboutToAppear(): Promise<void> {
+    const applicationContext = this.context.getApplicationContext();
+    const applicationStageChangeCallback: ApplicationStateChangeCallback = {
+      onApplicationForeground: async (): Promise<void> => {
+        if (await ContinuousTaskManager.hasContinuousTasks(this.context)) {
+          await ContinuousTaskManager.stopContinuousTask(this.context);
+        }
+        this.videoPlayerVM.onForeground();
+        this.audioPlayerVM.onForeground();
+      },
+      onApplicationBackground: async (): Promise<void> => {
+        if (await ContinuousTaskManager.hasContinuousTasks(this.context)) {
+          await ContinuousTaskManager.stopContinuousTask(this.context);
+        }
+        this.videoPlayerVM.onBackground(this.context);
+        this.audioPlayerVM.onBackground(this.context);
+      }
+    };
+    applicationContext.on('applicationStateChange', applicationStageChangeCallback);
+  }
 
   @Builder
   tabBarBuilder(icon: ResourceStr, name: ResourceStr, index: number) {

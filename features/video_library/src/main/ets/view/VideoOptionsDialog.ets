@@ -253,9 +253,12 @@ export struct VideoOptionsDialog {
           Row() {
             this.optionListItemBuilder($r('app.media.headphones_fill'), '后台听视频');
 
-            Toggle({ type: ToggleType.Switch, isOn: true })
+            Toggle({ type: ToggleType.Switch, isOn: $$this.videoPlayerVM.isListenVideoBackground })
               .selectedColor('#FF007DFF')
-              .switchPointColor(Color.White);
+              .switchPointColor(Color.White)
+              .onChange((isOn: boolean) => {
+                this.videoPlayerVM.setListenVideoBG(isOn);
+              });
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)

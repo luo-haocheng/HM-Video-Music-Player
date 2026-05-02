@@ -1,0 +1,1 @@
+export { ContinuousTaskManager } from './src/main/ets/background_task/ContinuousTaskManager';

@@ -10,6 +10,7 @@ import { systemShare } from '@kit.ShareKit';
 import { fileUri } from '@kit.CoreFileKit';
 import { VideoItemViewModelList } from './VideoListViewModel';
 import { VideoItemViewModel } from './VideoItemViewModel';
+import { ContinuousTaskManager } from 'util';
 
 const SEEK_TIME = 10000;
 const VOLUME_VALUE = 1.0;
@@ -34,6 +35,7 @@ export class VideoPlayerViewModel {
   @Track isSpeeding: boolean = false;
   @Track isControlVolume: boolean = false;
   @Track isControlBrightness: boolean = false;
+  @Track isListenVideoBackground: boolean = true;
   @Track videoRepeatMode: VideoRepeatMode = VideoRepeatMode.SINGLE_NON_REPEAT;
   @Track playbackSpeed: media.PlaybackSpeed = media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
   @Track currVideoItem?: VideoItemViewModel;
@@ -43,6 +45,7 @@ export class VideoPlayerViewModel {
   private startSeekTime: number = 0;
   private startBrightness: number = 0;
   private startVolumeLevel: number = 0;
+  private isBackground: boolean = false;
   private slideLeftSide: boolean = false;
 
   constructor() {
@@ -105,14 +108,15 @@ export class VideoPlayerViewModel {
 
     await this.settings.initPreference(context);
     this.videoRepeatMode = (await this.settings.getSetting(SettingKey.VIDEO_REPEAT_MODE)) as VideoRepeatMode;
+    this.isListenVideoBackground = (await this.settings.getSetting(SettingKey.LISTEN_VIDEO_BACKGROUND)) as boolean;
   }
 
   async initSession(context: Context) {
     MediaSessionManager.getInstance().registerCallback('play', () => {
-      this.videoPlayer.play();
+      this.play(context);
     });
     MediaSessionManager.getInstance().registerCallback('pause', () => {
-      this.videoPlayer.pause();
+      this.pause();
     });
     MediaSessionManager.getInstance().registerCallback('seek', (timeMs: number) => {
       this.seek(timeMs);
@@ -131,9 +135,15 @@ export class VideoPlayerViewModel {
     });
     if (this.videoList && this.videoList.length > 1) {
       MediaSessionManager.getInstance().registerCallback('playPrevious', () => {
+        if (this.isBackground && !this.isListenVideoBackground) {
+          return;
+        }
         this.switchPrev(context);
       });
       MediaSessionManager.getInstance().registerCallback('playNext', () => {
+        if (this.isBackground && !this.isListenVideoBackground) {
+          return;
+        }
         this.switchNext(context);
       });
     }
@@ -192,8 +202,17 @@ export class VideoPlayerViewModel {
     this.setVideoAsset(context);
   }
 
-  async play(): Promise<void> {
-    await this.videoPlayer.play();
+  async play(context: Context): Promise<void> {
+    if (this.isBackground) {
+      if (this.isListenVideoBackground) {
+        if (!(await ContinuousTaskManager.hasContinuousTasks(context))) {
+          await ContinuousTaskManager.startContinuousTask(context);
+        }
+        await this.videoPlayer.play();
+      }
+    } else {
+      await this.videoPlayer.play();
+    }
   }
 
   async pause(): Promise<void> {
@@ -244,6 +263,26 @@ export class VideoPlayerViewModel {
   async setRepeatMode(repeatMode: VideoRepeatMode): Promise<void> {
     this.videoRepeatMode = repeatMode;
     this.settings.putSetting(SettingKey.VIDEO_REPEAT_MODE, repeatMode);
+  }
+
+  async setListenVideoBG(isOn: boolean): Promise<void> {
+    this.isListenVideoBackground = isOn;
+    this.settings.putSetting(SettingKey.LISTEN_VIDEO_BACKGROUND, isOn);
+  }
+
+  onForeground() {
+    this.isBackground = false;
+  }
+
+  onBackground(context: Context) {
+    this.isBackground = true;
+    if (this.isPlaying) {
+      if (this.isListenVideoBackground) {
+        ContinuousTaskManager.startContinuousTask(context);
+      } else {
+        this.pause();
+      }
+    }
   }
 
   async release(): Promise<void> {

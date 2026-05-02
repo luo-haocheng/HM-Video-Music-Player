@@ -67,6 +67,10 @@
     {
       "name": "player",
       "srcPath": "./common/player",
+    },
+    {
+      "name": "util",
+      "srcPath": "./common/util",
     }
   ]
 }

@@ -6,6 +6,8 @@
   "author": "",
   "license": "",
   "dependencies": {
+    "util": "file:../../common/util",
+    "player": "file:../../common/player",
     "video_library": "file:../../features/video_library",
     "audio_library": "file:../../features/audio_library",
   }

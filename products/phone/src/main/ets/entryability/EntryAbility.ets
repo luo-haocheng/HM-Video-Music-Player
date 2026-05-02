@@ -2,7 +2,6 @@ import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.Ab
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { ContinuousTaskManager } from '../model/ContinuousTaskManager';
 
 const DOMAIN = 0x0000;
 const TOP_RECT_HEIGHT = 'TopRectHeight';
@@ -42,7 +41,7 @@ export default class EntryAbility extends UIAbility {
       let windowClass: window.Window | undefined = undefined;
       try {
         windowClass = windowStage.getMainWindowSync();
-        windowClass.setWindowBackgroundColor('#F1F3F5')
+        windowClass.setWindowBackgroundColor('#F1F3F5');
       } catch (error) {
         console.error(`Failed to get main window, error: ${JSON.stringify(error)}`);
       }
@@ -94,13 +93,11 @@ export default class EntryAbility extends UIAbility {
 
   onForeground(): void {
     // Ability has brought to foreground
-    ContinuousTaskManager.stopContinuousTask(this.context);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onForeground');
   }
 
   onBackground(): void {
     // Ability has back to background
-    ContinuousTaskManager.startContinuousTask(this.context);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onBackground');
   }
 };

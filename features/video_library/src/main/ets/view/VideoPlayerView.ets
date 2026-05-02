@@ -1,5 +1,5 @@
 import { VideoPlayerViewModel } from '../viewmodel/VideoPlayerViewModel';
-import { common } from '@kit.AbilityKit';
+import { common, Context } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { media } from '@kit.MediaKit';
 import { AVVolumePanel } from '@kit.AudioKit';
@@ -259,7 +259,8 @@ export struct VideoPlayerView {
                   if (this.videoPlayerVM.isPlaying) {
                     await this.videoPlayerVM.pause();
                   } else {
-                    await this.videoPlayerVM.play();
+                    const context = this.getUIContext().getHostContext() as Context;
+                    await this.videoPlayerVM.play(context);
                   }
                 });
 

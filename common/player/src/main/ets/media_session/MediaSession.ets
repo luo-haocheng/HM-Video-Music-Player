@@ -11,14 +11,18 @@ export class MediaSessionManager {
   private static sessionMgr?: MediaSessionManager;
   private callbacks: Map<string, Function> = new Map();
 
-  private constructor() {
-  }
-
   static getInstance(): MediaSessionManager {
     if (!MediaSessionManager.sessionMgr) {
       MediaSessionManager.sessionMgr = new MediaSessionManager();
     }
     return MediaSessionManager.sessionMgr;
+  }
+
+  getSessionType(): AVSessionMananger.AVSessionType | undefined {
+    if (this.session) {
+      return this.session.sessionType;
+    }
+    return undefined;
   }
 
   async initAudioSession(context: Context): Promise<void> {

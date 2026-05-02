@@ -10,6 +10,7 @@ import { AudioLibraryStore } from 'data_storage/src/main/ets/rdbms/AudioLibraryS
 import { fileIo } from '@kit.CoreFileKit';
 import { LyricsInfo } from '../model/LyricsInfoModel';
 import { emitter } from '@kit.BasicServicesKit';
+import { ContinuousTaskManager } from 'util';
 
 const TOGGLE_FAVORITE_EVENT = 'ToggleFavorite';
 
@@ -27,6 +28,7 @@ export class AudioPlayerViewModel {
   @Track audioList: AudioItemViewModelList = new AudioItemViewModelList();
   @Track repeatMode: AudioRepeatMode = AudioRepeatMode.SINGLE_REPEAT;
   @Track lyricsScroller: Scroller = new Scroller();
+  private isBackground: boolean = false;
   private settings: Settings = new Settings();
   private playerState: media.AVPlayerState = 'idle';
   private audioPlayer: AVPlayerManager = new AVPlayerManager();
@@ -34,10 +36,10 @@ export class AudioPlayerViewModel {
 
   async init(context: Context): Promise<void> {
     MediaSessionManager.getInstance().registerCallback('play', () => {
-      this.audioPlayer.play();
+      this.play(context);
     });
     MediaSessionManager.getInstance().registerCallback('pause', () => {
-      this.audioPlayer.pause();
+      this.pause();
     });
     MediaSessionManager.getInstance().registerCallback('seek', (timeMs: number) => {
       this.seek(timeMs);
@@ -195,7 +197,12 @@ export class AudioPlayerViewModel {
     MediaSessionManager.getInstance().updateLoopMode(this.currTime, this.repeatMode);
   }
 
-  async play(): Promise<void> {
+  async play(context: Context): Promise<void> {
+    if (this.isBackground) {
+      if (!(await ContinuousTaskManager.hasContinuousTasks(context))) {
+        await ContinuousTaskManager.startContinuousTask(context);
+      }
+    }
     await this.audioPlayer.play();
   }
 
@@ -206,6 +213,17 @@ export class AudioPlayerViewModel {
   seek(timeMs: number): void {
     timeMs = Math.min(this.duration, Math.max(0, timeMs));
     this.audioPlayer.seek(timeMs);
+  }
+
+  onForeground() {
+    this.isBackground = false;
+  }
+
+  onBackground(context: Context) {
+    this.isBackground = true;
+    if (this.isPlaying) {
+      ContinuousTaskManager.startContinuousTask(context);
+    }
   }
 
   async deleteAudio(audioInfo: AudioInfoModel, context: Context) {

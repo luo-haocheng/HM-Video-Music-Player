@@ -89,7 +89,7 @@ export struct AudioPlayerView {
             Image(this.audioPlayerVM.isFavorite ? $r('app.media.heart_fill') : $r('app.media.heart'))
               .width(28)
               .aspectRatio(1)
-              .fillColor(this.audioPlayerVM.isFavorite ? Color.Black : Color.Gray)
+              .fillColor(this.audioPlayerVM.isFavorite ? Color.Black : Color.Gray);
           }
           .backgroundColor(Color.Transparent)
           .onClick(async () => {
@@ -143,14 +143,14 @@ export struct AudioPlayerView {
           Row() {
             Text(this.timeStr(this.audioPlayerVM.currTime))
               .fontSize(12)
-              .fontColor(Color.Gray)
+              .fontColor(Color.Gray);
 
             Text(this.timeStr(this.audioPlayerVM.duration))
               .fontSize(12)
-              .fontColor(Color.Gray)
+              .fontColor(Color.Gray);
           }
           .width('100%')
-          .justifyContent(FlexAlign.SpaceBetween)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .width('100%')
         .justifyContent(FlexAlign.SpaceBetween);
@@ -203,7 +203,8 @@ export struct AudioPlayerView {
             if (this.audioPlayerVM.isPlaying) {
               await this.audioPlayerVM.pause();
             } else {
-              await this.audioPlayerVM.play();
+              const context = this.getUIContext().getHostContext() as Context;
+              await this.audioPlayerVM.play(context);
             }
           });
 
