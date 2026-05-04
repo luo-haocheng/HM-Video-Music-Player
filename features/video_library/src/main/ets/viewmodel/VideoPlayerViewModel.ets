@@ -54,6 +54,7 @@ export class VideoPlayerViewModel {
   private isBackground: boolean = false;
   private slideLeftSide: boolean = false;
   private pipController?: PiPWindow.PiPController;
+  private pipState: PiPWindow.PiPState = PiPWindow.PiPState.ERROR;
 
   constructor() {
     let audioMgr = audio.getAudioManager();
@@ -309,6 +310,7 @@ export class VideoPlayerViewModel {
     };
     try {
       this.pipController = await PiPWindow.create(config);
+      this.initPipController(this.pipController);
       await this.pipController.startPiP();
     } catch (error) {
       console.error(`Failed to start picture in picture`);
@@ -522,6 +524,49 @@ export class VideoPlayerViewModel {
 
   clearShutdownDate() {
     this.shutdownDate = undefined;
+  }
+
+  private initPipController(pipController: PiPWindow.PiPController) {
+    pipController.on('stateChange', (state: PiPWindow.PiPState) => {
+      this.onStateChange(state);
+    });
+    pipController.on('controlPanelActionEvent', (event: PiPWindow.PiPActionEventType, status?: number) => {
+      this.onActionEvent(event, status);
+    });
+  }
+
+  private onStateChange(state: PiPWindow.PiPState) {
+    switch (state) {
+      case PiPWindow.PiPState.ABOUT_TO_STOP:
+        if (this.pipState === PiPWindow.PiPState.STARTED) {
+          this.videoPlayer.release();
+        }
+        break;
+      case PiPWindow.PiPState.STOPPED:
+        this.pipController?.off('stateChange');
+        this.pipController?.off('controlPanelActionEvent');
+        break;
+      default:
+        break;
+    }
+    this.pipState = state;
+  }
+
+  private onActionEvent(event: PiPWindow.PiPActionEventType, status?: number) {
+    switch (event) {
+      case 'playbackStateChanged':
+        // 开始或停止视频
+        if (status === 0) {
+          // 停止视频
+          this.videoPlayer.pause();
+        } else if (status === 1) {
+          // 播放视频
+          this.videoPlayer.play();
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   private reset() {

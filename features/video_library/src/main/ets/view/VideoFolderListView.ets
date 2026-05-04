@@ -237,7 +237,7 @@ export struct VideoFolderListView {
 
               setTimeout(() => {
                 this.mainPageStack.pushPath({ name: 'VideoPlayer' });
-              }, 200);
+              }, 300);
             }
           });
         },
