@@ -11,6 +11,7 @@ import { fileUri } from '@kit.CoreFileKit';
 import { VideoItemViewModelList } from './VideoListViewModel';
 import { VideoItemViewModel } from './VideoItemViewModel';
 import { ContinuousTaskManager } from 'util';
+import { ShutdownOption } from '../view/ShutdownDialog';
 
 const SEEK_TIME = 10000;
 const VOLUME_VALUE = 1.0;
@@ -22,7 +23,6 @@ const MAX_SCREEN_BRIGHTNESS = 255;
 
 @Observed
 export class VideoPlayerViewModel {
-  @Track name: string = '';
   @Track duration: number = 0;
   @Track currTime: number = 0;
   @Track brightness: number = 0;
@@ -35,13 +35,16 @@ export class VideoPlayerViewModel {
   @Track isSpeeding: boolean = false;
   @Track isControlVolume: boolean = false;
   @Track isControlBrightness: boolean = false;
+  @Track shutdownAfterComplete: boolean = false;
   @Track isListenVideoBackground: boolean = true;
+  @Track shutdownOption: ShutdownOption = ShutdownOption.None;
   @Track videoRepeatMode: VideoRepeatMode = VideoRepeatMode.SINGLE_NON_REPEAT;
   @Track playbackSpeed: media.PlaybackSpeed = media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
   @Track currVideoItem?: VideoItemViewModel;
   @Track videoList?: VideoItemViewModelList;
   private videoPlayer: AVPlayerManager = new AVPlayerManager();
   private settings: Settings = new Settings();
+  private shutdownDate?: Date;
   private startSeekTime: number = 0;
   private startBrightness: number = 0;
   private startVolumeLevel: number = 0;
@@ -67,6 +70,13 @@ export class VideoPlayerViewModel {
         this.currTime = timeMs;
         MediaSessionManager.getInstance().updateElapsedTime(timeMs);
       }
+      if (!this.shutdownAfterComplete && this.shutdownDate) {
+        if (Date.now() >= this.shutdownDate.getTime()) {
+          this.shutdownOption = ShutdownOption.None;
+          this.clearShutdownDate();
+          this.pause();
+        }
+      }
     });
     this.videoPlayer.registerCallback('seekDone', (timeMs: number) => {
       this.currTime = timeMs;
@@ -78,6 +88,9 @@ export class VideoPlayerViewModel {
       MediaSessionManager.getInstance().updatePlayState(this.currTime, state);
 
       if (state === 'completed') {
+        if (this.shutdownAfterComplete) {
+          return;
+        }
         switch (this.videoRepeatMode) {
           case VideoRepeatMode.LIST_REPEAT:
             if (this.videoList) {
@@ -288,6 +301,7 @@ export class VideoPlayerViewModel {
   async release(): Promise<void> {
     await MediaSessionManager.getInstance().release();
     await this.videoPlayer.release();
+    this.reset();
   }
 
   async shareVideo(context: common.UIAbilityContext) {
@@ -447,5 +461,39 @@ export class VideoPlayerViewModel {
 
   async setControlPanelShow() {
     this.isCtrlPanelShow = !this.isCtrlPanelShow;
+  }
+
+  getShutdownTimeMs(): number {
+    if (this.shutdownAfterComplete) {
+      return this.duration - this.currTime;
+    }
+    if (this.shutdownDate) {
+      return this.shutdownDate.getTime() - Date.now();
+    }
+    return -1;
+  }
+
+  setShutdownDate(hour: number, minutes: number) {
+    const shutdownMs = Date.now() + hour * 60 * 60 * 1000 + minutes * 60 * 1000;
+    this.shutdownDate = new Date(shutdownMs);
+  }
+
+  clearShutdownDate() {
+    this.shutdownDate = undefined;
+  }
+
+  private reset() {
+    this.duration = 0;
+    this.currTime = 0;
+    this.isPlaying = false;
+    this.isLocking = false;
+    this.isLandscape = false;
+    this.isCtrlPanelShow = false;
+    this.isSeeking = false;
+    this.isSpeeding = false;
+    this.isControlVolume = false;
+    this.isControlBrightness = false;
+    this.shutdownAfterComplete = false;
+    this.playbackSpeed = media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
   }
 }

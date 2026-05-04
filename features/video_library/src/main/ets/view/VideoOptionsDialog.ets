@@ -2,6 +2,7 @@ import { media } from '@kit.MediaKit';
 import { VideoRepeatMode } from 'data_storage';
 import { common } from '@kit.AbilityKit';
 import { VideoPlayerViewModel } from '../viewmodel/VideoPlayerViewModel';
+import { ShutdownDialog } from './ShutdownDialog';
 
 const PLAYBACK_SPEED_MAP: Map<media.PlaybackSpeed, string> = new Map([
   [media.PlaybackSpeed.SPEED_FORWARD_0_50_X, '0.5'],
@@ -19,14 +20,13 @@ const REPEAT_MODE_MAP: Map<VideoRepeatMode, string> = new Map([
   [VideoRepeatMode.LIST_REPEAT, '列表循环'],
 ]);
 
-const VIDEO_PLAYER_VM = 'VideoPlayerVM';
 
 @CustomDialog
 export struct VideoOptionsDialog {
-  @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
-  repeatListScroller: Scroller = new Scroller();
-  speedListScroller: Scroller = new Scroller();
-  controller: CustomDialogController;
+  @Link videoPlayerVM: VideoPlayerViewModel;
+  private controller: CustomDialogController;
+  private speedListScroller: Scroller = new Scroller();
+  private repeatListScroller: Scroller = new Scroller();
 
   @Builder
   optionIconBuilder(icon: Resource, text: string) {
@@ -151,7 +151,7 @@ export struct VideoOptionsDialog {
         .onClick(() => {
           const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
           this.videoPlayerVM.shareVideo(context);
-          this.controller.close();
+          this.getDialogController().close();
         });
 
         Column() {
@@ -222,8 +222,14 @@ export struct VideoOptionsDialog {
         .padding(12)
         .width('100%')
         .onClick(() => {
-          // todo
-          this.controller.close();
+          this.controller = new CustomDialogController({
+            width: '100%',
+            height: '15%',
+            alignment: DialogAlignment.Bottom,
+            cornerRadius: { topLeft: 24, topRight: 24 },
+            builder: ShutdownDialog({ videoPlayerVM: this.videoPlayerVM }),
+          });
+          this.controller.open();
         });
 
         ListItem() {
@@ -246,7 +252,7 @@ export struct VideoOptionsDialog {
         .width('100%')
         .onClick(() => {
           // todo
-          this.controller.close();
+          this.getDialogController().close();
         });
 
         ListItem() {
@@ -265,10 +271,7 @@ export struct VideoOptionsDialog {
           .justifyContent(FlexAlign.SpaceBetween);
         }
         .padding(12)
-        .width('100%')
-        .onClick(() => {
-          // todo
-        });
+        .width('100%');
       }
       .width('100%')
       .borderRadius(8)

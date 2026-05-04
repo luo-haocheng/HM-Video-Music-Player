@@ -20,7 +20,7 @@ const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 export struct VideoPlayerView {
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
-  @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
+  @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel;
   private navPathStack: NavPathStack = new NavPathStack();
   private videoOptionsDialogCtrl?: CustomDialogController;
   private xComponentCtrl: XComponentController = new XComponentController();
@@ -174,7 +174,7 @@ export struct VideoPlayerView {
                   height: '100%',
                   alignment: DialogAlignment.TopEnd,
                   cornerRadius: { topLeft: 24, bottomLeft: 24 },
-                  builder: VideoOptionsDialog(),
+                  builder: VideoOptionsDialog({ videoPlayerVM: this.videoPlayerVM }),
                 });
               } else {
                 this.videoOptionsDialogCtrl = new CustomDialogController({
@@ -182,7 +182,7 @@ export struct VideoPlayerView {
                   height: '45%',
                   alignment: DialogAlignment.Bottom,
                   cornerRadius: { topLeft: 24, topRight: 24 },
-                  builder: VideoOptionsDialog(),
+                  builder: VideoOptionsDialog({ videoPlayerVM: this.videoPlayerVM }),
                 });
               }
               this.videoOptionsDialogCtrl.open();

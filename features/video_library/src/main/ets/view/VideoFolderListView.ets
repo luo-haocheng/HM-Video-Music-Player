@@ -21,8 +21,8 @@ export struct VideoFolderListView {
   @Consume(CHOICE_ALL) choiceAll: boolean = false;
   @Consume(MULTI_CHOICE) multiChoice: boolean = false;
   @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack;
+  @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel;
   @Consume(VIDEO_VIEW_OPTION) videoViewOptions: ViewOptionValue = ViewOptionValue.LIST_VIEW;
-  @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel = new VideoPlayerViewModel();
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @ObjectLink folderList: FolderItemViewModelList;
   @ObjectLink videoList: VideoItemViewModelList;
@@ -231,7 +231,6 @@ export struct VideoFolderListView {
             } else {
               this.videoPlayerVM.release();
 
-              this.videoPlayerVM = new VideoPlayerViewModel();
               this.videoPlayerVM.videoList = this.videoList;
               this.videoPlayerVM.currVideoItem = item;
 
