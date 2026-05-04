@@ -166,7 +166,7 @@ export class MediaSessionManager {
       };
       await this.session?.setAVPlaybackState(playbackState);
     } catch (error) {
-      console.error(`Failed to update avsession play state. Cause: ${JSON.stringify(error)}`);
+      console.error(`Failed to update avsession elapsed time. Cause: ${JSON.stringify(error)}`);
       return;
     }
   }

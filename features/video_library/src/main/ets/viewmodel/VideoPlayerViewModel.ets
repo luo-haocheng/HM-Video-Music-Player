@@ -1,7 +1,7 @@
 import { AVPlayerManager, MediaSessionManager } from 'player';
 import { common, Context } from '@kit.AbilityKit';
 import { media } from '@kit.MediaKit';
-import { display, window } from '@kit.ArkUI';
+import { display, PiPWindow, window } from '@kit.ArkUI';
 import { settings } from '@kit.BasicServicesKit';
 import { audio } from '@kit.AudioKit';
 import { SettingKey, Settings, VideoRepeatMode } from 'data_storage';
@@ -18,8 +18,10 @@ const VOLUME_VALUE = 1.0;
 const BRIGHT_VALUE = 0.067;
 const ONE_HUNDRED_VP = 100;
 const MAX_VOLUME_LEVEL = 15;
+const MAIN_NAV_ID = 'MainNav';
 const MAX_WINDOW_BRIGHTNESS = 1.0;
 const MAX_SCREEN_BRIGHTNESS = 255;
+
 
 @Observed
 export class VideoPlayerViewModel {
@@ -35,13 +37,14 @@ export class VideoPlayerViewModel {
   @Track isSpeeding: boolean = false;
   @Track isControlVolume: boolean = false;
   @Track isControlBrightness: boolean = false;
+  @Track currVideoItem?: VideoItemViewModel;
+  @Track videoList?: VideoItemViewModelList;
   @Track shutdownAfterComplete: boolean = false;
   @Track isListenVideoBackground: boolean = true;
   @Track shutdownOption: ShutdownOption = ShutdownOption.None;
+  @Track xComponentCtrl: XComponentController = new XComponentController();
   @Track videoRepeatMode: VideoRepeatMode = VideoRepeatMode.SINGLE_NON_REPEAT;
   @Track playbackSpeed: media.PlaybackSpeed = media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
-  @Track currVideoItem?: VideoItemViewModel;
-  @Track videoList?: VideoItemViewModelList;
   private videoPlayer: AVPlayerManager = new AVPlayerManager();
   private settings: Settings = new Settings();
   private shutdownDate?: Date;
@@ -50,6 +53,7 @@ export class VideoPlayerViewModel {
   private startVolumeLevel: number = 0;
   private isBackground: boolean = false;
   private slideLeftSide: boolean = false;
+  private pipController?: PiPWindow.PiPController;
 
   constructor() {
     let audioMgr = audio.getAudioManager();
@@ -283,6 +287,50 @@ export class VideoPlayerViewModel {
     this.settings.putSetting(SettingKey.LISTEN_VIDEO_BACKGROUND, isOn);
   }
 
+  async startPip(context: Context): Promise<void> {
+    if (!PiPWindow.isPiPEnabled()) {
+      console.error(`picture in picture disabled for current OS`);
+      return;
+    }
+    if (!this.currVideoItem) {
+      console.error(`Current video item is undefined when start pip`);
+      return;
+    }
+
+    const metadata = JSON.parse(this.currVideoItem.videoInfo.metadata) as media.AVMetadata;
+
+    const config: PiPWindow.PiPConfiguration = {
+      context: context,
+      navigationId: MAIN_NAV_ID,
+      componentController: this.xComponentCtrl,
+      templateType: PiPWindow.PiPTemplateType.VIDEO_PLAY,
+      contentWidth: metadata.videoWidth ? parseInt(metadata.videoWidth) : undefined,
+      contentHeight: metadata.videoHeight ? parseInt(metadata.videoHeight) : undefined,
+    };
+    try {
+      this.pipController = await PiPWindow.create(config);
+      await this.pipController.startPiP();
+    } catch (error) {
+      console.error(`Failed to start picture in picture`);
+    }
+  }
+
+  async stopPip(): Promise<void> {
+    if (this.pipController) {
+      try {
+        await this.pipController.stopPiP();
+      } catch (error) {
+        console.error(`Failed to invoke stopPiP. Cause: ${JSON.stringify(error)}`);
+      }
+    }
+  }
+
+  async release(): Promise<void> {
+    await MediaSessionManager.getInstance().release();
+    await this.videoPlayer.release();
+    this.reset();
+  }
+
   onForeground() {
     this.isBackground = false;
   }
@@ -296,12 +344,6 @@ export class VideoPlayerViewModel {
         this.pause();
       }
     }
-  }
-
-  async release(): Promise<void> {
-    await MediaSessionManager.getInstance().release();
-    await this.videoPlayer.release();
-    this.reset();
   }
 
   async shareVideo(context: common.UIAbilityContext) {

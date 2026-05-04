@@ -23,6 +23,7 @@ const REPEAT_MODE_MAP: Map<VideoRepeatMode, string> = new Map([
 
 @CustomDialog
 export struct VideoOptionsDialog {
+  @Require mainPageStack: NavPathStack;
   @Link videoPlayerVM: VideoPlayerViewModel;
   private controller: CustomDialogController;
   private speedListScroller: Scroller = new Scroller();
@@ -159,8 +160,11 @@ export struct VideoOptionsDialog {
         }
         .width(40)
         .height(65)
-        .onClick(() => {
-          // todo
+        .onClick(async () => {
+          const context = this.getUIContext().getHostContext() as Context;
+          await this.videoPlayerVM.startPip(context);
+          this.mainPageStack.pop();
+          this.controller.close();
         });
 
         Column() {

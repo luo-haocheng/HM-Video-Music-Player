@@ -3,6 +3,7 @@ import { VideoLibraryView, VideoPlayerViewModel } from 'video_library';
 import { ApplicationStateChangeCallback, common } from '@kit.AbilityKit';
 import { ContinuousTaskManager } from 'util';
 
+const MAIN_NAV_ID = 'MainNav';
 const VIDEO_PLAYER_VM = 'VideoPlayerVM';
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MAIN_PAGE_STACK = 'MainPageStack';
@@ -93,6 +94,7 @@ struct Index {
       .backgroundColor('#F1F3F5')
       .padding({ bottom: this.getUIContext().px2vp(this.bottomRectHeight) });
     }
+    .id(MAIN_NAV_ID)
     .hideToolBar(true)
     .mode(NavigationMode.Stack);
   }

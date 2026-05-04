@@ -21,9 +21,8 @@ export struct VideoPlayerView {
   @StorageProp(TOP_RECT_HEIGHT) topRectHeight: number = 0;
   @StorageProp(BOTTOM_RECT_HEIGHT) bottomRectHeight: number = 0;
   @Consume(VIDEO_PLAYER_VM) videoPlayerVM: VideoPlayerViewModel;
-  private navPathStack: NavPathStack = new NavPathStack();
+  private mainPathStack: NavPathStack = new NavPathStack();
   private videoOptionsDialogCtrl?: CustomDialogController;
-  private xComponentCtrl: XComponentController = new XComponentController();
 
   private timeStr(timeMs: number): string {
     let helper = (num: number): string => {
@@ -45,14 +44,14 @@ export struct VideoPlayerView {
       Stack() {
         XComponent({
           type: XComponentType.SURFACE,
-          controller: this.xComponentCtrl,
+          controller: this.videoPlayerVM.xComponentCtrl,
         })
           .width('100%')
           .height('100%')
           .renderFit(RenderFit.RESIZE_CONTAIN)
           .onLoad(async () => {
             const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-            const surfaceId = this.xComponentCtrl.getXComponentSurfaceId();
+            const surfaceId = this.videoPlayerVM.xComponentCtrl.getXComponentSurfaceId();
             await this.videoPlayerVM.initPlayer(surfaceId, context);
             await this.videoPlayerVM.setVideoAsset(context);
           });
@@ -156,7 +155,7 @@ export struct VideoPlayerView {
             }
             .backgroundColor(Color.Transparent)
             .onClick(() => {
-              this.navPathStack.pop();
+              this.mainPathStack.pop();
               this.videoPlayerVM.release();
             });
 
@@ -174,7 +173,7 @@ export struct VideoPlayerView {
                   height: '100%',
                   alignment: DialogAlignment.TopEnd,
                   cornerRadius: { topLeft: 24, bottomLeft: 24 },
-                  builder: VideoOptionsDialog({ videoPlayerVM: this.videoPlayerVM }),
+                  builder: VideoOptionsDialog({ mainPageStack: this.mainPathStack, videoPlayerVM: this.videoPlayerVM }),
                 });
               } else {
                 this.videoOptionsDialogCtrl = new CustomDialogController({
@@ -182,7 +181,7 @@ export struct VideoPlayerView {
                   height: '45%',
                   alignment: DialogAlignment.Bottom,
                   cornerRadius: { topLeft: 24, topRight: 24 },
-                  builder: VideoOptionsDialog({ videoPlayerVM: this.videoPlayerVM }),
+                  builder: VideoOptionsDialog({ mainPageStack: this.mainPathStack, videoPlayerVM: this.videoPlayerVM }),
                 });
               }
               this.videoOptionsDialogCtrl.open();
@@ -415,7 +414,7 @@ export struct VideoPlayerView {
       this.videoPlayerVM.setWindowOrientation(context, window.Orientation.PORTRAIT);
     })
     .onReady((navContext: NavDestinationContext) => {
-      this.navPathStack = navContext.pathStack;
+      this.mainPathStack = navContext.pathStack;
     });
   }
 }

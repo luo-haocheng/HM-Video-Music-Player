@@ -225,16 +225,19 @@ export struct VideoFolderListView {
               }
             }
           })
-          .onClick(() => {
+          .onClick(async () => {
             if (this.multiChoice) {
               item.isChoice = !item.isChoice;
             } else {
-              this.videoPlayerVM.release();
+              await this.videoPlayerVM.stopPip();
+              await this.videoPlayerVM.release();
 
-              this.videoPlayerVM.videoList = this.videoList;
               this.videoPlayerVM.currVideoItem = item;
+              this.videoPlayerVM.videoList = this.videoList;
 
-              this.mainPageStack.pushPath({ name: 'VideoPlayer' });
+              setTimeout(() => {
+                this.mainPageStack.pushPath({ name: 'VideoPlayer' });
+              }, 200);
             }
           });
         },
