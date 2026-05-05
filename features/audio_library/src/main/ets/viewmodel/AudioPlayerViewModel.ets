@@ -15,6 +15,7 @@ import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
 import { common } from '@kit.AbilityKit';
 import { ShutdownOption } from '../view/ShutdownDialog';
+import { window } from '@kit.ArkUI';
 
 const TOGGLE_FAVORITE_EVENT = 'ToggleFavorite';
 
@@ -290,6 +291,19 @@ export class AudioPlayerViewModel {
       })
       .catch((err: BusinessError<void>) => {
         console.error(`ShareController show error. Cause: ${JSON.stringify(err)}`);
+      });
+  }
+
+  async setWindowOrientation(context: common.UIAbilityContext, orientation: window.Orientation): Promise<void> {
+    await context.windowStage.getMainWindow()
+      .then((windowClass: window.Window) => {
+        windowClass.setPreferredOrientation(orientation)
+          .catch((error: BusinessError) => {
+            console.error(`Failed to set window orientation to ${orientation}, Cause: ${JSON.stringify(error)}`);
+          });
+      })
+      .catch((error: BusinessError) => {
+        console.error(`Failed to getMainWindow, Cause: ${JSON.stringify(error)}`);
       });
   }
 

@@ -5,6 +5,7 @@ import { common } from '@kit.AbilityKit';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 import { media } from '@kit.MediaKit';
 import { ShutdownDialog } from './ShutdownDialog';
+import { window } from '@kit.ArkUI';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MAIN_PAGE_STACK = 'MainPageStack';
@@ -202,7 +203,10 @@ export struct AudioOptionsDialog {
         }
         .width('100%')
         .onClick(() => {
-          // todo
+          const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+          this.audioPlayerVM.setWindowOrientation(context, window.Orientation.LANDSCAPE);
+          this.mainPageStack.pushPath({ name: 'AudioLandscape' });
+          this.controller.close();
         });
 
         ListItem() {

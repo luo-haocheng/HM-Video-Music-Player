@@ -13,19 +13,6 @@ export struct AudioPlayerView {
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
   private currPlaylistDialogController?: CustomDialogController;
 
-  @Builder
-  pickerBuilder() {
-    Button({ type: ButtonType.Circle, stateEffect: false }) {
-      Image($r('app.media.dot_radiowaves_left_and_right'))
-        .width(24)
-        .aspectRatio(1)
-        .fillColor(Color.Black);
-    }
-    .width('100%')
-    .height('100%')
-    .backgroundColor(Color.Transparent);
-  }
-
   private timeStr(timeMs: number): string {
     let helper = (num: number): string => {
       return num >= 10 ? `${num}` : `0${num}`;

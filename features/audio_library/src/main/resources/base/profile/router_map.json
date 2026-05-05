@@ -9,6 +9,11 @@
       "name": "AudioImmersive",
       "pageSourceFile": "src/main/ets/view/AudioImmersiveView.ets",
       "buildFunction": "AudioImmersiveBuilder"
+    },
+    {
+      "name": "AudioLandscape",
+      "pageSourceFile": "src/main/ets/view/AudioLandscapeView.ets",
+      "buildFunction": "AudioLandscapeBuilder"
     }
   ]
 }
