@@ -1,16 +1,18 @@
-import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
 import { AddToPlaylistDialog } from './AddToPlaylistDialog';
 import { AlbumDialog } from './AlbumDialog';
 import { ArtistDialog } from './ArtistDialog';
+import { common } from '@kit.AbilityKit';
+import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 
+const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MAIN_PAGE_STACK = 'MainPageStack';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @CustomDialog
 export struct AudioOptionsDialog {
-  currAudioItem?: AudioItemViewModel;
   controller: CustomDialogController;
   @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
+  @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
 
   @Builder
   optionItemBuilder(icon: Resource, text: string) {
@@ -37,8 +39,8 @@ export struct AudioOptionsDialog {
   build() {
     Column() {
       Row({ space: 12 }) {
-        if (this.currAudioItem && this.currAudioItem.albumCover) {
-          Image(this.currAudioItem.albumCover)
+        if (this.audioPlayerVM.currAudioItem && this.audioPlayerVM.currAudioItem.albumCover) {
+          Image(this.audioPlayerVM.currAudioItem.albumCover)
             .width(48)
             .aspectRatio(1)
             .borderRadius(8);
@@ -49,7 +51,7 @@ export struct AudioOptionsDialog {
             .borderRadius(8);
         }
 
-        Text(this.currAudioItem?.title)
+        Text(this.audioPlayerVM.currAudioItem?.title)
           .fontSize(12)
           .fontColor(Color.Black);
       }
@@ -61,18 +63,18 @@ export struct AudioOptionsDialog {
 
       List() {
         ListItem() {
-          this.optionItemBuilder($r('app.media.portrait'), `歌手:  ${this.currAudioItem?.artist}`);
+          this.optionItemBuilder($r('app.media.portrait'), `歌手:  ${this.audioPlayerVM.currAudioItem?.artist}`);
         }
         .width('100%')
         .onClick(() => {
           this.controller.close();
 
-          if (this.currAudioItem) {
+          if (this.audioPlayerVM.currAudioItem) {
             this.controller = new CustomDialogController({
               width: '100%',
               height: '60%',
               alignment: DialogAlignment.Bottom,
-              builder: ArtistDialog({ artist: this.currAudioItem.audioInfo.artist }),
+              builder: ArtistDialog({ artist: this.audioPlayerVM.currAudioItem.audioInfo.artist }),
               offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
             });
             this.controller.open();
@@ -80,18 +82,18 @@ export struct AudioOptionsDialog {
         });
 
         ListItem() {
-          this.optionItemBuilder($r('app.media.record_circle'), `专辑:  ${this.currAudioItem?.album}`);
+          this.optionItemBuilder($r('app.media.record_circle'), `专辑:  ${this.audioPlayerVM.currAudioItem?.album}`);
         }
         .width('100%')
         .onClick(() => {
           this.controller.close();
 
-          if (this.currAudioItem) {
+          if (this.audioPlayerVM.currAudioItem) {
             this.controller = new CustomDialogController({
               width: '100%',
               height: '60%',
               alignment: DialogAlignment.Bottom,
-              builder: AlbumDialog({ album: this.currAudioItem.audioInfo.album }),
+              builder: AlbumDialog({ album: this.audioPlayerVM.currAudioItem.audioInfo.album }),
               offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
             });
             this.controller.open();
@@ -105,12 +107,12 @@ export struct AudioOptionsDialog {
         .onClick(() => {
           this.controller.close();
 
-          if (this.currAudioItem) {
+          if (this.audioPlayerVM.currAudioItem) {
             this.controller = new CustomDialogController({
               width: '100%',
               height: '60%',
               alignment: DialogAlignment.Bottom,
-              builder: AddToPlaylistDialog({ audioInfoList: [this.currAudioItem.audioInfo] }),
+              builder: AddToPlaylistDialog({ audioInfoList: [this.audioPlayerVM.currAudioItem.audioInfo] }),
               offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
             });
             this.controller.open();
@@ -146,7 +148,9 @@ export struct AudioOptionsDialog {
         }
         .width('100%')
         .onClick(() => {
-          // todo
+          const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+          this.audioPlayerVM.shareAudio(context);
+          this.controller.close();
         });
 
         ListItem() {

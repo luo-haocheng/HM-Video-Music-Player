@@ -95,7 +95,7 @@ export struct AudioImmersiveView {
           .backgroundColor(Color.Transparent)
           .onClick(() => {
             this.mainPageStack.pop();
-          })
+          });
 
           Button({ type: ButtonType.Circle, stateEffect: false }) {
             Image($r('app.media.dot_grid_1x2'))
@@ -111,19 +111,19 @@ export struct AudioImmersiveView {
                 height: '60%',
                 alignment: DialogAlignment.Bottom,
                 cornerRadius: { topLeft: 24, topRight: 24 },
-                builder: AudioOptionsDialog({ currAudioItem: this.audioPlayerVM.currAudioItem }),
-                offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+                offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) },
+                builder: AudioOptionsDialog(),
               });
               this.audioOptionsDialogCtrl.open();
             }
-          })
+          });
         }
         .height(32)
         .width('100%')
         .padding({ left: 16, right: 16 })
         .alignItems(VerticalAlign.Center)
         .justifyContent(FlexAlign.SpaceBetween);
-      }
+      };
     }
     .padding({
       top: this.getUIContext().px2vp(this.topRectHeight),

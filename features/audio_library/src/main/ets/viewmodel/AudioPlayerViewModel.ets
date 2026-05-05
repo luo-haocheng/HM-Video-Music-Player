@@ -11,6 +11,10 @@ import { fileIo } from '@kit.CoreFileKit';
 import { LyricsInfo } from '../model/LyricsInfoModel';
 import { emitter } from '@kit.BasicServicesKit';
 import { ContinuousTaskManager } from 'util';
+import { uniformTypeDescriptor as utd } from '@kit.ArkData';
+import { systemShare } from '@kit.ShareKit';
+import { fileUri } from '@kit.CoreFileKit';
+import { common } from '@kit.AbilityKit';
 
 const TOGGLE_FAVORITE_EVENT = 'ToggleFavorite';
 
@@ -245,6 +249,31 @@ export class AudioPlayerViewModel {
         this.audioList.splice(delIdx, 1);
       }
     }
+  }
+
+  async shareAudio(context: common.UIAbilityContext) {
+    if (!this.currAudioItem) {
+      return;
+    }
+
+    let utdTypeId = utd.getUniformDataTypeByFilenameExtension('.mp3', utd.UniformDataType.MP3);
+    let shareData: systemShare.SharedData | undefined = undefined;
+    shareData = new systemShare.SharedData({
+      utd: utdTypeId,
+      title: this.currAudioItem.title,
+      uri: fileUri.getUriFromPath(this.currAudioItem.audioInfo.audioPath),
+    });
+    let controller: systemShare.ShareController = new systemShare.ShareController(shareData);
+    await controller.show(context, ({
+      selectionMode: systemShare.SelectionMode.SINGLE,
+      previewMode: systemShare.SharePreviewMode.DETAIL,
+    }))
+      .then(() => {
+        console.info(`ShareController show success.`);
+      })
+      .catch((err: BusinessError<void>) => {
+        console.error(`ShareController show error. Cause: ${JSON.stringify(err)}`);
+      });
   }
 
   private updateLyrics(timeMs: number) {
