@@ -7,13 +7,12 @@ import { AudioItemViewModel } from './AudioItemViewModel';
 import { AudioItemViewModelList } from './AudioListViewModel';
 import { avSession as AVSessionMananger } from '@kit.AVSessionKit';
 import { AudioLibraryStore } from 'data_storage/src/main/ets/rdbms/AudioLibraryStore';
-import { fileIo } from '@kit.CoreFileKit';
+import { fileIo, fileUri } from '@kit.CoreFileKit';
 import { LyricsInfo } from '../model/LyricsInfoModel';
 import { emitter } from '@kit.BasicServicesKit';
 import { ContinuousTaskManager } from 'util';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
-import { fileUri } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 
 const TOGGLE_FAVORITE_EVENT = 'ToggleFavorite';
@@ -32,6 +31,7 @@ export class AudioPlayerViewModel {
   @Track audioList: AudioItemViewModelList = new AudioItemViewModelList();
   @Track repeatMode: AudioRepeatMode = AudioRepeatMode.SINGLE_REPEAT;
   @Track lyricsScroller: Scroller = new Scroller();
+  @Track playbackSpeed: media.PlaybackSpeed = media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
   private isBackground: boolean = false;
   private settings: Settings = new Settings();
   private playerState: media.AVPlayerState = 'idle';
@@ -274,6 +274,42 @@ export class AudioPlayerViewModel {
       .catch((err: BusinessError<void>) => {
         console.error(`ShareController show error. Cause: ${JSON.stringify(err)}`);
       });
+  }
+
+  setSpeed(speed: media.PlaybackSpeed): void {
+    this.audioPlayer.setSpeed(speed);
+    switch (speed) {
+      case media.PlaybackSpeed.SPEED_FORWARD_0_75_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.75);
+        break;
+      case media.PlaybackSpeed.SPEED_FORWARD_1_00_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 1.00);
+        break;
+      case media.PlaybackSpeed.SPEED_FORWARD_1_25_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 1.25);
+        break;
+      case media.PlaybackSpeed.SPEED_FORWARD_1_75_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 1.75);
+        break;
+      case media.PlaybackSpeed.SPEED_FORWARD_2_00_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 2.00);
+        break;
+      case media.PlaybackSpeed.SPEED_FORWARD_0_50_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.50);
+        break;
+      case media.PlaybackSpeed.SPEED_FORWARD_1_50_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 1.50);
+        break;
+      case media.PlaybackSpeed.SPEED_FORWARD_3_00_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 3.00);
+        break;
+      case media.PlaybackSpeed.SPEED_FORWARD_0_25_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.25);
+        break;
+      case media.PlaybackSpeed.SPEED_FORWARD_0_125_X:
+        MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.125);
+        break;
+    }
   }
 
   private updateLyrics(timeMs: number) {

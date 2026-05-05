@@ -3,16 +3,27 @@ import { AlbumDialog } from './AlbumDialog';
 import { ArtistDialog } from './ArtistDialog';
 import { common } from '@kit.AbilityKit';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
+import { media } from '@kit.MediaKit';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MAIN_PAGE_STACK = 'MainPageStack';
 const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
+const PLAYBACK_SPEED_MAP: Map<media.PlaybackSpeed, string> = new Map([
+  [media.PlaybackSpeed.SPEED_FORWARD_0_50_X, '0.5'],
+  [media.PlaybackSpeed.SPEED_FORWARD_0_75_X, '0.75'],
+  [media.PlaybackSpeed.SPEED_FORWARD_1_00_X, '1'],
+  [media.PlaybackSpeed.SPEED_FORWARD_1_25_X, '1.25'],
+  [media.PlaybackSpeed.SPEED_FORWARD_1_50_X, '1.50'],
+  [media.PlaybackSpeed.SPEED_FORWARD_2_00_X, '2'],
+]);
+
 @CustomDialog
 export struct AudioOptionsDialog {
-  controller: CustomDialogController;
   @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
   @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
+  private controller: CustomDialogController;
+  private speedListScroller: Scroller = new Scroller();
 
   @Builder
   optionItemBuilder(icon: Resource, text: string) {
@@ -25,7 +36,6 @@ export struct AudioOptionsDialog {
         .fontSize(14)
         .fontColor(Color.Black);
     }
-    .width('100%')
     .justifyContent(FlexAlign.Start)
     .alignItems(VerticalAlign.Center)
     .padding({
@@ -33,6 +43,40 @@ export struct AudioOptionsDialog {
       left: 8,
       right: 8,
       bottom: 12
+    });
+  }
+
+  @Builder
+  speedOptionsBuilder() {
+    List({ scroller: this.speedListScroller }) {
+      ForEach(
+        Array.from(PLAYBACK_SPEED_MAP.entries()),
+        (entry: [media.PlaybackSpeed, string]) => {
+          ListItem() {
+            Text(entry[1])
+              .fontSize(10)
+              .textAlign(TextAlign.Center)
+              .fontColor(this.audioPlayerVM.playbackSpeed === entry[0] ? '#FF007DFF' : Color.Gray);
+          }
+          .width(40)
+          .onClick(() => {
+            this.audioPlayerVM.setSpeed(entry[0]);
+            this.audioPlayerVM.playbackSpeed = entry[0];
+          });
+        },
+      );
+    }
+    .width('50%')
+    .scrollBar(BarState.Off)
+    .listDirection(Axis.Horizontal)
+    .divider({ strokeWidth: 0.5, color: Color.Gray })
+    .onAppear(() => {
+      const speedIdx = Array.from(PLAYBACK_SPEED_MAP.keys()).findIndex((playbackSpeed: media.PlaybackSpeed) => {
+        return this.audioPlayerVM.playbackSpeed === playbackSpeed;
+      });
+      if (speedIdx !== -1) {
+        this.speedListScroller.scrollToIndex(speedIdx, false, ScrollAlign.CENTER);
+      }
     });
   }
 
@@ -63,7 +107,12 @@ export struct AudioOptionsDialog {
 
       List() {
         ListItem() {
-          this.optionItemBuilder($r('app.media.portrait'), `歌手:  ${this.audioPlayerVM.currAudioItem?.artist}`);
+          Row() {
+            this.optionItemBuilder($r('app.media.portrait'), `歌手:  ${this.audioPlayerVM.currAudioItem?.artist}`);
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .width('100%')
         .onClick(() => {
@@ -82,7 +131,12 @@ export struct AudioOptionsDialog {
         });
 
         ListItem() {
-          this.optionItemBuilder($r('app.media.record_circle'), `专辑:  ${this.audioPlayerVM.currAudioItem?.album}`);
+          Row() {
+            this.optionItemBuilder($r('app.media.record_circle'), `专辑:  ${this.audioPlayerVM.currAudioItem?.album}`);
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .width('100%')
         .onClick(() => {
@@ -101,7 +155,12 @@ export struct AudioOptionsDialog {
         });
 
         ListItem() {
-          this.optionItemBuilder($r('app.media.plus_square'), '添加到歌单');
+          Row() {
+            this.optionItemBuilder($r('app.media.plus_square'), '添加到歌单');
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .width('100%')
         .onClick(() => {
@@ -120,7 +179,12 @@ export struct AudioOptionsDialog {
         });
 
         ListItem() {
-          this.optionItemBuilder($r('app.media.square_grid_2x2'), '播放器样式');
+          Row() {
+            this.optionItemBuilder($r('app.media.square_grid_2x2'), '播放器样式');
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .width('100%')
         .onClick(() => {
@@ -128,7 +192,12 @@ export struct AudioOptionsDialog {
         });
 
         ListItem() {
-          this.optionItemBuilder($r('app.media.rectangle_rotate'), '横屏模式');
+          Row() {
+            this.optionItemBuilder($r('app.media.rectangle_rotate'), '横屏模式');
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .width('100%')
         .onClick(() => {
@@ -136,7 +205,12 @@ export struct AudioOptionsDialog {
         });
 
         ListItem() {
-          this.optionItemBuilder($r('app.media.rectangle_and_arrowshape_turn_up_right'), '系统投播');
+          Row() {
+            this.optionItemBuilder($r('app.media.rectangle_and_arrowshape_turn_up_right'), '系统投播');
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .width('100%')
         .onClick(() => {
@@ -144,7 +218,12 @@ export struct AudioOptionsDialog {
         });
 
         ListItem() {
-          this.optionItemBuilder($r('app.media.share'), '系统分享');
+          Row() {
+            this.optionItemBuilder($r('app.media.share'), '系统分享');
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .width('100%')
         .onClick(() => {
@@ -154,7 +233,12 @@ export struct AudioOptionsDialog {
         });
 
         ListItem() {
-          this.optionItemBuilder($r('app.media.timer'), '定时关闭');
+          Row() {
+            this.optionItemBuilder($r('app.media.timer'), '定时关闭');
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
         .width('100%')
         .onClick(() => {
@@ -162,16 +246,24 @@ export struct AudioOptionsDialog {
         });
 
         ListItem() {
-          this.optionItemBuilder($r('app.media.fast_forward'), '播放倍速');
+          Row() {
+            this.optionItemBuilder($r('app.media.fast_forward'), '播放倍速');
+
+            this.speedOptionsBuilder();
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.SpaceBetween);
         }
-        .width('100%')
-        .onClick(() => {
-          // todo
-        });
+        .width('100%');
       }
       .width('100%')
       .layoutWeight(1)
-      .scrollBar(BarState.Off);
+      .contentEndOffset(8)
+      .contentStartOffset(8)
+      .scrollBar(BarState.Off)
+      .divider({ strokeWidth: 0.5, startMargin: 46, color: '#33182431' });
+
     }
     .padding(16)
     .width('100%')
