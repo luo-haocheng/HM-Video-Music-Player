@@ -4,6 +4,7 @@ import { ArtistDialog } from './ArtistDialog';
 import { common } from '@kit.AbilityKit';
 import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
 import { media } from '@kit.MediaKit';
+import { ShutdownDialog } from './ShutdownDialog';
 
 const AUDIO_PLAYER_VM = 'AudioPlayerVM';
 const MAIN_PAGE_STACK = 'MainPageStack';
@@ -242,7 +243,15 @@ export struct AudioOptionsDialog {
         }
         .width('100%')
         .onClick(() => {
-          // todo
+          this.controller = new CustomDialogController({
+            width: '100%',
+            height: '15%',
+            alignment: DialogAlignment.Bottom,
+            cornerRadius: { topLeft: 24, topRight: 24 },
+            offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) },
+            builder: ShutdownDialog({ audioPlayerVM: this.audioPlayerVM }),
+          });
+          this.controller.open();
         });
 
         ListItem() {

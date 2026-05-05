@@ -94,6 +94,9 @@ export class VideoPlayerViewModel {
 
       if (state === 'completed') {
         if (this.shutdownAfterComplete) {
+          this.clearShutdownDate();
+          this.shutdownAfterComplete = false;
+          this.shutdownOption = ShutdownOption.None;
           return;
         }
         switch (this.videoRepeatMode) {

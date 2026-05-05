@@ -14,6 +14,7 @@ import { ContinuousTaskManager } from 'util';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { systemShare } from '@kit.ShareKit';
 import { common } from '@kit.AbilityKit';
+import { ShutdownOption } from '../view/ShutdownDialog';
 
 const TOGGLE_FAVORITE_EVENT = 'ToggleFavorite';
 
@@ -27,10 +28,13 @@ export class AudioPlayerViewModel {
   @Track currLyrics: string = '';
   @Track currLyricsIdx: number = 0;
   @Track lyricsInfoArr: Array<LyricsInfo> = [];
+  @Track lyricsScroller: Scroller = new Scroller();
   @Track currAudioItem?: AudioItemViewModel;
   @Track audioList: AudioItemViewModelList = new AudioItemViewModelList();
+  private shutdownDate?: Date;
+  @Track shutdownAfterComplete: boolean = false;
+  @Track shutdownOption: ShutdownOption = ShutdownOption.None;
   @Track repeatMode: AudioRepeatMode = AudioRepeatMode.SINGLE_REPEAT;
-  @Track lyricsScroller: Scroller = new Scroller();
   @Track playbackSpeed: media.PlaybackSpeed = media.PlaybackSpeed.SPEED_FORWARD_1_00_X;
   private isBackground: boolean = false;
   private settings: Settings = new Settings();
@@ -72,6 +76,13 @@ export class AudioPlayerViewModel {
         this.currTime = timeMs;
         MediaSessionManager.getInstance().updateElapsedTime(timeMs);
       }
+      if (!this.shutdownAfterComplete && this.shutdownDate) {
+        if (Date.now() >= this.shutdownDate.getTime()) {
+          this.shutdownOption = ShutdownOption.None;
+          this.clearShutdownDate();
+          this.pause();
+        }
+      }
       this.updateLyrics(timeMs);
     });
     this.audioPlayer.registerCallback('seekDone', (timeMs: number) => {
@@ -93,6 +104,12 @@ export class AudioPlayerViewModel {
       MediaSessionManager.getInstance().updatePlayState(this.currTime, state);
 
       if (state === 'completed') {
+        if (this.shutdownAfterComplete) {
+          this.clearShutdownDate();
+          this.shutdownAfterComplete = false;
+          this.shutdownOption = ShutdownOption.None;
+          return;
+        }
         if (this.repeatMode === AudioRepeatMode.SINGLE_REPEAT) {
           if (this.currAudioItem) {
             this.setAudioAsset(this.currAudioItem.audioInfo, context);
@@ -310,6 +327,25 @@ export class AudioPlayerViewModel {
         MediaSessionManager.getInstance().updatePlaySpeed(this.currTime, 0.125);
         break;
     }
+  }
+
+  getShutdownTimeMs(): number {
+    if (this.shutdownAfterComplete) {
+      return this.duration - this.currTime;
+    }
+    if (this.shutdownDate) {
+      return this.shutdownDate.getTime() - Date.now();
+    }
+    return -1;
+  }
+
+  setShutdownDate(hour: number, minutes: number) {
+    const shutdownMs = Date.now() + hour * 60 * 60 * 1000 + minutes * 60 * 1000;
+    this.shutdownDate = new Date(shutdownMs);
+  }
+
+  clearShutdownDate() {
+    this.shutdownDate = undefined;
   }
 
   private updateLyrics(timeMs: number) {
