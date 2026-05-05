@@ -1,0 +1,124 @@
+import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
+import { AudioItemViewModelList } from '../viewmodel/AudioListViewModel';
+import { LengthMetrics } from '@kit.ArkUI';
+import { AudioPlayerViewModel } from '../viewmodel/AudioPlayerViewModel';
+import { AudioLibraryStore } from 'data_storage';
+
+const AUDIO_PLAYER_VM = 'AudioPlayerVM';
+
+@CustomDialog
+export struct ArtistDialog {
+  @Require artist: string | null;
+  @State audioList: AudioItemViewModelList = new AudioItemViewModelList();
+  @Consume(AUDIO_PLAYER_VM) audioPlayerVM: AudioPlayerViewModel = new AudioPlayerViewModel();
+  private controller: CustomDialogController;
+  private audioStore: AudioLibraryStore = new AudioLibraryStore();
+
+  async aboutToAppear(): Promise<void> {
+    const context = this.getUIContext().getHostContext() as Context;
+    await this.audioStore.initStore(context);
+
+    const audioInfoList = await this.audioStore.selectAudioByArtist(this.artist);
+    for (let i = 0; i < audioInfoList.length; ++i) {
+      let audioItem = new AudioItemViewModel();
+      audioItem.updateAudioItem(audioInfoList[i]);
+      this.audioList.push(audioItem);
+    }
+  }
+
+  @Builder
+  audioItemBuilder(audioItem: AudioItemViewModel, index: number) {
+    Flex({
+      direction: FlexDirection.Row,
+      justifyContent: FlexAlign.Start,
+      alignItems: ItemAlign.Center,
+      space: { main: LengthMetrics.vp(16) }
+    }) {
+      Stack() {
+        Text(this.audioList.length.toString())
+          .fontSize(16)
+          .fontColor(Color.Transparent);
+
+        Text(index.toString())
+          .fontSize(16)
+          .fontColor(this.audioPlayerVM.currAudioItem?.id === audioItem.id ? '#FF007DFF' : Color.Gray);
+      }
+      .layoutWeight(0);
+
+      Row() {
+        Text(audioItem.title)
+          .fontSize(14)
+          .fontColor(this.audioPlayerVM.currAudioItem?.id === audioItem.id ? '#FF007DFF' : Color.Black);
+        Text(' · ')
+          .fontSize(14)
+          .fontColor(this.audioPlayerVM.currAudioItem?.id === audioItem.id ? '#FF007DFF' : Color.Black);
+        Text(audioItem.artist)
+          .fontSize(14)
+          .fontColor(this.audioPlayerVM.currAudioItem?.id === audioItem.id ? '#FF007DFF' : Color.Black);
+      }
+      .height('100%')
+      .layoutWeight(1)
+      .borderColor('#33182431')
+      .justifyContent(FlexAlign.Start)
+      .alignItems(VerticalAlign.Center)
+      .borderWidth({ bottom: this.audioList.length === index ? 0 : 1 });
+    }
+    .height(50)
+    .width('100%')
+    .backgroundColor(Color.White)
+    .padding({ left: 8, right: 8 });
+  }
+
+  build() {
+    Flex({
+      direction: FlexDirection.Column,
+      justifyContent: FlexAlign.Start,
+      alignItems: ItemAlign.Center,
+    }) {
+      Row() {
+        Text(this.artist ?? '未知歌手')
+          .fontSize(18)
+          .fontColor(Color.Black)
+          .fontWeight(FontWeight.Bold);
+      }
+      .width('100%')
+      .layoutWeight(0)
+      .margin({ bottom: 16 })
+      .justifyContent(FlexAlign.Start)
+      .alignItems(VerticalAlign.Center);
+
+      Column() {
+        List() {
+          ForEach(
+            this.audioList,
+            (audioItem: AudioItemViewModel, index: number) => {
+              ListItem() {
+                this.audioItemBuilder(audioItem, index + 1);
+              }
+              .onClick(async () => {
+                const context = this.getUIContext().getHostContext() as Context;
+                await this.audioPlayerVM.init(context);
+                this.audioPlayerVM.updatePlaylist(this.audioList, audioItem);
+                await this.audioPlayerVM.setAudioAsset(audioItem.audioInfo, context);
+              });
+            }
+          );
+        }
+        .width('100%')
+        .borderRadius(8)
+        .contentEndOffset(8)
+        .contentStartOffset(8)
+        .scrollBar(BarState.Off)
+        .backgroundColor(Color.White);
+      }
+      .width('100%')
+      .layoutWeight(1)
+      .justifyContent(FlexAlign.Start)
+      .alignItems(HorizontalAlign.Center);
+    }
+    .padding(16)
+    .width('100%')
+    .height('100%')
+    .backgroundColor('#F1F3F5');
+  }
+}

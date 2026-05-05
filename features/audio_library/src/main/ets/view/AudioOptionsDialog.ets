@@ -1,16 +1,23 @@
 import { AudioItemViewModel } from '../viewmodel/AudioItemViewModel';
+import { AddToPlaylistDialog } from './AddToPlaylistDialog';
+import { AlbumDialog } from './AlbumDialog';
+import { ArtistDialog } from './ArtistDialog';
+
+const MAIN_PAGE_STACK = 'MainPageStack';
+const BOTTOM_RECT_HEIGHT = 'BottomRectHeight';
 
 @CustomDialog
 export struct AudioOptionsDialog {
   currAudioItem?: AudioItemViewModel;
   controller: CustomDialogController;
+  @Consume(MAIN_PAGE_STACK) mainPageStack: NavPathStack = new NavPathStack();
 
   @Builder
   optionItemBuilder(icon: Resource, text: string) {
     Row({ space: 12 }) {
       Image(icon)
         .width(24)
-        .aspectRatio(1)
+        .aspectRatio(1);
 
       Text(text)
         .fontSize(14)
@@ -58,7 +65,18 @@ export struct AudioOptionsDialog {
         }
         .width('100%')
         .onClick(() => {
-          // todo
+          this.controller.close();
+
+          if (this.currAudioItem) {
+            this.controller = new CustomDialogController({
+              width: '100%',
+              height: '60%',
+              alignment: DialogAlignment.Bottom,
+              builder: ArtistDialog({ artist: this.currAudioItem.audioInfo.artist }),
+              offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+            });
+            this.controller.open();
+          }
         });
 
         ListItem() {
@@ -66,7 +84,18 @@ export struct AudioOptionsDialog {
         }
         .width('100%')
         .onClick(() => {
-          // todo
+          this.controller.close();
+
+          if (this.currAudioItem) {
+            this.controller = new CustomDialogController({
+              width: '100%',
+              height: '60%',
+              alignment: DialogAlignment.Bottom,
+              builder: AlbumDialog({ album: this.currAudioItem.audioInfo.album }),
+              offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+            });
+            this.controller.open();
+          }
         });
 
         ListItem() {
@@ -74,7 +103,18 @@ export struct AudioOptionsDialog {
         }
         .width('100%')
         .onClick(() => {
-          // todo
+          this.controller.close();
+
+          if (this.currAudioItem) {
+            this.controller = new CustomDialogController({
+              width: '100%',
+              height: '60%',
+              alignment: DialogAlignment.Bottom,
+              builder: AddToPlaylistDialog({ audioInfoList: [this.currAudioItem.audioInfo] }),
+              offset: { dx: 0, dy: this.getUIContext().px2vp(AppStorage.get(BOTTOM_RECT_HEIGHT)) }
+            });
+            this.controller.open();
+          }
         });
 
         ListItem() {
