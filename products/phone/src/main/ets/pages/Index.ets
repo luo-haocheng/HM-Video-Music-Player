@@ -76,12 +76,6 @@ struct Index {
             AudioLibraryView();
           }
           .tabBar(this.tabBarBuilder($r('app.media.music'), '音频', 1));
-
-          TabContent() {
-            Text('设置')
-              .fontSize(30);
-          }
-          .tabBar(this.tabBarBuilder($r('app.media.gear'), '设置', 2));
         }
         .scrollable(false)
         .barBackgroundColor('#F1F3F5')

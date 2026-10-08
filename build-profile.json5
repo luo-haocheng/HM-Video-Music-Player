@@ -1,25 +1,10 @@
 {
   "app": {
-    "signingConfigs": [
-      {
-        "name": "default",
-        "type": "HarmonyOS",
-        "material": {
-          "certpath": "C:\\Users\\HaoCheng Luo\\.ohos\\config\\default_AloePlayer_6mfIrurG70wuOCExk3CWpRX3pdp5JP8hc_yE-qRShto=.cer",
-          "keyAlias": "debugKey",
-          "keyPassword": "00000019BF692D9CAACF427B3BC79DEFED7C22274AEDB75641E5035D38676E1ADB6588F945186FAE19",
-          "profile": "C:\\Users\\HaoCheng Luo\\.ohos\\config\\default_AloePlayer_6mfIrurG70wuOCExk3CWpRX3pdp5JP8hc_yE-qRShto=.p7b",
-          "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\HaoCheng Luo\\.ohos\\config\\default_AloePlayer_6mfIrurG70wuOCExk3CWpRX3pdp5JP8hc_yE-qRShto=.p12",
-          "storePassword": "000000197B3FE4D13A0FC26B8B641E9E26925FEA3EE0786DB9F49400B8AFEA37B97D7222873F3291DC"
-        }
-      }
-    ],
     "products": [
       {
         "name": "default",
         "signingConfig": "default",
-        "targetSdkVersion": "6.0.0(20)",
+        "targetSdkVersion": "6.1.1(24)",
         "compatibleSdkVersion": "6.0.0(20)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
@@ -32,10 +17,25 @@
     ],
     "buildModeSet": [
       {
-        "name": "debug",
+        "name": "debug"
       },
       {
         "name": "release"
+      }
+    ],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\HaoCheng Luo\\.ohos\\config\\default_HMPlayer_uKk1wMh3AWZ5zrRZ4BZsjCg7_SqFoJVhQcquXFVwNX0=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001A6A9342B10480ECB20F9C1397C7D33C2120E93C60FB99B9308AA0E5DD3C807A7023341E166C34",
+          "profile": "C:\\Users\\HaoCheng Luo\\.ohos\\config\\default_HMPlayer_uKk1wMh3AWZ5zrRZ4BZsjCg7_SqFoJVhQcquXFVwNX0=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\HaoCheng Luo\\.ohos\\config\\default_HMPlayer_uKk1wMh3AWZ5zrRZ4BZsjCg7_SqFoJVhQcquXFVwNX0=.p12",
+          "storePassword": "0000001A10A42012F9B3990BA5771A11383E4070E00313A1B8F29C18BC2A7D70529C915BF7D71B61EE2A"
+        }
       }
     ]
   },
